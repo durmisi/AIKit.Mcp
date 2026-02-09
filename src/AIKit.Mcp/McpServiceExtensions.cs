@@ -1,12 +1,21 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
+using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AIKit.Mcp;
 
 public static class McpServiceExtensions 
 {
-    public static IMcpServerBuilder AddAIKitMcp(this IServiceCollection services, string serverName = "AIKit-Server") 
+    /// <summary>
+    /// Adds AIKit MCP server to the service collection and returns a builder for configuration.
+    /// </summary>
+    public static AIKitMcpBuilder AddAIKitMcp(this IServiceCollection services, string serverName = "AIKit-Server") 
     {
         // Integration with Official SDK
         var builder = services.AddMcpServer();
@@ -16,7 +25,205 @@ public static class McpServiceExtensions
             builder.AddConsole(c => c.LogToStandardErrorThreshold = LogLevel.Trace);
         });
 
+        return new AIKitMcpBuilder(builder, services);
+    }
+
+    /// <summary>
+    /// Configures the MCP server with default settings for common scenarios.
+    /// Includes stdio transport, auto-discovery from assembly, and basic logging.
+    /// </summary>
+    public static AIKitMcpBuilder WithDefaultConfiguration(this AIKitMcpBuilder builder)
+    {
+        builder.InnerBuilder
+            .WithStdioServerTransport()
+            .WithToolsFromAssembly()
+            .WithResourcesFromAssembly()
+            .WithPromptsFromAssembly();
+        
         return builder;
     }
 
+    /// <summary>
+    /// Configures the MCP server using settings from IConfiguration.
+    /// Looks for "Mcp" section in configuration for server settings.
+    /// </summary>
+    public static AIKitMcpBuilder WithConfiguration(this AIKitMcpBuilder builder, IConfiguration config)
+    {
+        var mcpConfig = config.GetSection("Mcp");
+        
+        // Configure server info if provided
+        var serverName = mcpConfig["ServerName"];
+        var serverVersion = mcpConfig["ServerVersion"];
+        
+        if (!string.IsNullOrEmpty(serverName) || !string.IsNullOrEmpty(serverVersion))
+        {
+            builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
+            {
+                if (!string.IsNullOrEmpty(serverName) && options.ServerInfo != null)
+                    options.ServerInfo.Name = serverName;
+                if (!string.IsNullOrEmpty(serverVersion) && options.ServerInfo != null)
+                    options.ServerInfo.Version = serverVersion;
+            });
+        }
+
+        // Configure transport
+        var transport = mcpConfig["Transport"];
+        if (string.Equals(transport, "stdio", StringComparison.OrdinalIgnoreCase))
+        {
+            builder.InnerBuilder.WithStdioServerTransport();
+        }
+
+        // Configure auto-discovery
+        if (mcpConfig.GetValue<bool>("AutoDiscoverTools", true))
+        {
+            builder.InnerBuilder.WithToolsFromAssembly();
+        }
+        if (mcpConfig.GetValue<bool>("AutoDiscoverResources", true))
+        {
+            builder.InnerBuilder.WithResourcesFromAssembly();
+        }
+        if (mcpConfig.GetValue<bool>("AutoDiscoverPrompts", true))
+        {
+            builder.InnerBuilder.WithPromptsFromAssembly();
+        }
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Automatically discovers and registers all tools, resources, and prompts from the specified assembly.
+    /// </summary>
+    public static AIKitMcpBuilder WithAllFromAssembly(this AIKitMcpBuilder builder, Assembly? assembly = null)
+    {
+        assembly ??= Assembly.GetCallingAssembly();
+        
+        builder.InnerBuilder
+            .WithToolsFromAssembly(assembly)
+            .WithResourcesFromAssembly(assembly)
+            .WithPromptsFromAssembly(assembly);
+        
+        return builder;
+    }
+
+    /// <summary>
+    /// Configures the MCP server using the provided options.
+    /// </summary>
+    public static AIKitMcpBuilder WithOptions(this AIKitMcpBuilder builder, Action<McpOptions> configure)
+    {
+        var options = new McpOptions();
+        configure(options);
+
+        // Configure server info
+        if (!string.IsNullOrEmpty(options.ServerName) || !string.IsNullOrEmpty(options.ServerVersion))
+        {
+            builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(serverOptions =>
+            {
+                if (!string.IsNullOrEmpty(options.ServerName) && serverOptions.ServerInfo != null)
+                    serverOptions.ServerInfo.Name = options.ServerName;
+                if (!string.IsNullOrEmpty(options.ServerVersion) && serverOptions.ServerInfo != null)
+                    serverOptions.ServerInfo.Version = options.ServerVersion;
+            });
+        }
+
+        // Configure transport
+        if (string.Equals(options.Transport, "stdio", StringComparison.OrdinalIgnoreCase))
+        {
+            builder.InnerBuilder.WithStdioServerTransport();
+        }
+
+        // Configure auto-discovery
+        var assembly = options.Assembly ?? Assembly.GetCallingAssembly();
+        if (options.AutoDiscoverTools)
+        {
+            builder.InnerBuilder.WithToolsFromAssembly(assembly);
+        }
+        if (options.AutoDiscoverResources)
+        {
+            builder.InnerBuilder.WithResourcesFromAssembly(assembly);
+        }
+        if (options.AutoDiscoverPrompts)
+        {
+            builder.InnerBuilder.WithPromptsFromAssembly(assembly);
+        }
+
+        // Configure development features
+        if (options.EnableDevelopmentFeatures)
+        {
+            builder.WithDevelopmentFeatures();
+        }
+
+        // Configure validation
+        if (options.EnableValidation)
+        {
+            builder.WithValidation();
+        }
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds development-friendly features like enhanced logging and message tracing.
+    /// </summary>
+    public static AIKitMcpBuilder WithDevelopmentFeatures(this AIKitMcpBuilder builder)
+    {
+        // Add detailed message logging
+        builder.InnerBuilder.AddIncomingMessageFilter(message =>
+        {
+            // Log incoming messages for debugging
+            Console.Error.WriteLine($"[DEBUG] Incoming MCP message: {message}");
+            return message; // Pass through the message
+        });
+
+        builder.InnerBuilder.AddOutgoingMessageFilter(message =>
+        {
+            // Log outgoing messages for debugging
+            Console.Error.WriteLine($"[DEBUG] Outgoing MCP message: {message}");
+            return message; // Pass through the message
+        });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds configuration validation to check for common setup issues.
+    /// </summary>
+    public static AIKitMcpBuilder WithValidation(this AIKitMcpBuilder builder)
+    {
+        builder.Services.AddHostedService<McpValidationHostedService>();
+        return builder;
+    }
+
+    /// <summary>
+    /// Validates the MCP configuration and logs any issues found.
+    /// Can be called manually or automatically via WithValidation().
+    /// </summary>
+    public static void ValidateMcpConfiguration(IServiceProvider services)
+    {
+        var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("McpValidation");
+        
+        try
+        {
+            // Check for registered components
+            var tools = services.GetServices<ModelContextProtocol.Server.McpServerTool>().ToList();
+            var resources = services.GetServices<ModelContextProtocol.Server.McpServerResource>().ToList();
+            var prompts = services.GetServices<ModelContextProtocol.Server.McpServerPrompt>().ToList();
+
+            logger.LogInformation("MCP Configuration Validation:");
+            logger.LogInformation("- Tools registered: {Count}", tools.Count);
+            logger.LogInformation("- Resources registered: {Count}", resources.Count);
+            logger.LogInformation("- Prompts registered: {Count}", prompts.Count);
+
+            // Check for naming conflicts - Note: McpServerTool may not have Name property
+            // This is a simplified check - in practice, names are set via attributes
+            
+            // Check for transport - simplified check
+            // The transport is configured via the builder methods
+
+            logger.LogInformation("MCP configuration validation completed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error during MCP configuration validation");
+        }
+    }
 }

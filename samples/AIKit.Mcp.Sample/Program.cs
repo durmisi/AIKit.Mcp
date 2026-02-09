@@ -5,51 +5,48 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
+using AIKit.Mcp.Sample;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Add console logging for startup messages
+// Configure logging
 builder.Logging.AddConsole();
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
-// Add AIKit MCP with STDIO transport
+// Configure AIKit MCP server using the new options pattern
 builder.Services.AddAIKitMcp()
-    .WithStdioServerTransport()
-    .WithToolsFromAssembly();  // Automatically discover tools, resources, and prompts from assembly
+    .WithOptions(options =>
+    {
+        // Server identification
+        options.ServerName = "AIKit.Sample.Server";
+        options.ServerVersion = "1.0.0";
+
+        // Transport configuration
+        options.Transport = "stdio";
+
+        // Auto-discovery settings
+        options.AutoDiscoverTools = true;
+        options.AutoDiscoverResources = true;
+        options.AutoDiscoverPrompts = true;
+
+        // Development features
+        options.EnableDevelopmentFeatures = true; // Enable message tracing
+        options.EnableValidation = true;          // Enable startup validation
+
+        // Use the current assembly for component discovery
+        options.Assembly = typeof(Program).Assembly;
+    });
 
 // Register business logic classes (services will be resolved via DI)
-builder.Services.AddScoped<MyTools>();
-builder.Services.AddScoped<MyResources>();
-builder.Services.AddScoped<MyPrompts>();
+builder.Services.AddScoped<MathTools>();
+builder.Services.AddScoped<FileSystemResources>();
+builder.Services.AddScoped<ConversationPrompts>();
 
 var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("AIKit MCP Server is starting...");
+logger.LogInformation("🚀 AIKit MCP Sample Server is starting...");
+logger.LogInformation("📋 Available tools: Math operations");
+logger.LogInformation("📁 Available resources: File system access");
+logger.LogInformation("💬 Available prompts: Conversation helpers");
 
 await host.RunAsync();
-
-// Example tool class
-[McpServerToolType]
-public class MyTools
-{
-    [McpServerTool(Name = "echo")]
-    public string Echo(string message) => $"Echo: {message}";
-
-    [McpServerTool]
-    public int Add(int a, int b) => a + b;
-}
-
-// Example resource class
-[McpServerToolType]
-public class MyResources
-{
-    [McpServerResource(UriTemplate = "file://config", Name = "Config File")]
-    public string GetConfig() => "key=value";
-}
-
-// Example prompt class
-[McpServerToolType]
-public class MyPrompts
-{
-    [McpServerPrompt(Name = "greeting")]
-    public string GetGreeting(string name) => $"Hello {name}!";
-}
