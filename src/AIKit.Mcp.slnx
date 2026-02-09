@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../samples/AIKit.Mcp.Sample/AIKit.Mcp.Sample.csproj" />
+  <Project Path="AIKit.Mcp/AIKit.Mcp.csproj" />
+</Solution>
