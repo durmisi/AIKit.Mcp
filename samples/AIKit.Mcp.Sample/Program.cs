@@ -1,4 +1,23 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿// AIKit.Mcp Sample Application
+//
+// This sample demonstrates the AIKit.Mcp library features including:
+// - Fluent configuration API for MCP server setup
+// - Auto-discovery of tools, resources, and prompts
+// - Advanced MCP features (tasks, progress, elicitation, completion, sampling)
+// - Authentication & authorization support for HTTP transport
+//   * OAuth 2.0 integration for client-side authentication
+//   * JWT Bearer token validation
+//   * Header forwarding for service authentication
+//   * Protected resource metadata for fine-grained access control
+//
+// To enable HTTP transport with authentication:
+// 1. Change Transport to "http"
+// 2. Set RequireAuthentication = true
+// 3. Configure OAuthOptions or JwtOptions
+// 4. Enable header forwarding if needed
+// 5. Use WebApplication.CreateBuilder instead of Host.CreateApplicationBuilder
+//
+// See https://aka.ms/new-console-template for more information
 using AIKit.Mcp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -28,6 +47,35 @@ builder.Services.AddAIKitMcp()
         // Requires ModelContextProtocol.AspNetCore package and web host setup
         options.HttpBasePath = "/mcp";
         options.RequireAuthentication = false; // Set to true for production
+
+        // Authentication configuration (only used when Transport is "http")
+        options.AuthenticationScheme = "Bearer"; // JWT Bearer authentication
+        options.EnableHeaderForwarding = true;   // Forward auth headers to services
+
+        // OAuth 2.0 configuration for client-side authentication
+        options.OAuthOptions = new AIKit.Mcp.OAuthOptions
+        {
+            ClientId = "your-client-id",                    // OAuth 2.0 client ID
+            ClientSecret = "your-client-secret",            // OAuth 2.0 client secret
+            AuthorizationServerUrl = new Uri("https://your-oauth-provider.com"), // OAuth 2.0 server URL
+            Scopes = new List<string> { "api.read", "api.write" } // OAuth 2.0 scopes
+        };
+
+        // JWT Bearer configuration (alternative to OAuth)
+        // options.JwtOptions = new AIKit.Mcp.JwtOptions
+        // {
+        //     Authority = "https://your-jwt-issuer.com",
+        //     Audience = "your-api-audience"
+        // };
+
+        // Protected resource metadata for OAuth 2.0 resource server
+        options.ProtectedResourceMetadata = new AIKit.Mcp.ProtectedResourceMetadata
+        {
+            Resource = new Uri("api://my-service/data"),
+            ScopesSupported = new List<string> { "api.read", "api.write" },
+            ResourceName = "Sensitive Data API",
+            AuthorizationServers = new List<Uri> { new Uri("https://your-oauth-provider.com") }
+        };
 
         // Auto-discovery settings
         options.AutoDiscoverTools = true;

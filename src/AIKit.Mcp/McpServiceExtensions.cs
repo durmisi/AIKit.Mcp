@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using ModelContextProtocol.AspNetCore;
 using ModelContextProtocol.Server;
 using System.Reflection;
@@ -151,13 +152,20 @@ public static class McpServiceExtensions
         }
         else if (string.Equals(options.Transport, "http", StringComparison.OrdinalIgnoreCase))
         {
-            // HTTP transport requires additional configuration
-            // builder.Services.AddMcpHttp(options => {
-            //     options.BasePath = options.HttpBasePath ?? "/mcp";
-            //     options.RequireAuthentication = options.RequireAuthentication;
-            // });
-            // For now, fall back to stdio
-            builder.InnerBuilder.WithStdioServerTransport();
+            // HTTP transport with authentication support
+            ConfigureHttpTransport(builder, options);
+        }
+
+        // Configure authentication
+        if (options.RequireAuthentication || !string.IsNullOrEmpty(options.AuthenticationScheme))
+        {
+            ConfigureAuthentication(builder, options);
+        }
+
+        // Configure header forwarding
+        if (options.EnableHeaderForwarding)
+        {
+            builder.Services.AddHttpContextAccessor();
         }
 
         // Configure auto-discovery
@@ -182,9 +190,10 @@ public static class McpServiceExtensions
         }
 
         // Configure advanced features
+        builder.WithTasks(); // Always register task store to satisfy MCP SDK requirements
         if (options.EnableTasks)
         {
-            builder.WithTasks();
+            // Task store is already registered, additional configuration can be added here if needed
         }
         if (options.EnableElicitation)
         {
@@ -204,6 +213,146 @@ public static class McpServiceExtensions
         }
 
         return builder;
+    }
+
+    /// <summary>
+    /// Configures HTTP transport with authentication support.
+    /// </summary>
+    private static void ConfigureHttpTransport(AIKitMcpBuilder builder, McpOptions options)
+    {
+        // Enable HTTP transport
+        builder.InnerBuilder.WithHttpTransport();
+
+        // Configure HTTP options if available
+        if (!string.IsNullOrEmpty(options.HttpBasePath))
+        {
+            // Note: The SDK's HTTP configuration may need to be done at the WebApplication level
+            // This is a placeholder for future HTTP configuration
+        }
+    }
+
+    /// <summary>
+    /// Configures authentication based on the specified options.
+    /// </summary>
+    private static void ConfigureAuthentication(AIKitMcpBuilder builder, McpOptions options)
+    {
+        // Configure authentication scheme
+        if (!string.IsNullOrEmpty(options.AuthenticationScheme))
+        {
+            switch (options.AuthenticationScheme.ToLowerInvariant())
+            {
+                case "oauth":
+                    ConfigureOAuthAuthentication(builder, options);
+                    break;
+                case "jwt":
+                    ConfigureJwtAuthentication(builder, options);
+                    break;
+                case "custom":
+                    ConfigureCustomAuthentication(builder, options);
+                    break;
+                default:
+                    throw new ArgumentException($"Unsupported authentication scheme: {options.AuthenticationScheme}");
+            }
+        }
+        else if (options.RequireAuthentication)
+        {
+            // Default to JWT Bearer for backward compatibility
+            ConfigureJwtAuthentication(builder, options);
+        }
+    }
+
+    /// <summary>
+    /// Configures OAuth 2.0 authentication.
+    /// </summary>
+    private static void ConfigureOAuthAuthentication(AIKitMcpBuilder builder, McpOptions options)
+    {
+        if (options.OAuthOptions == null)
+        {
+            throw new InvalidOperationException("OAuthOptions must be configured when using OAuth authentication scheme.");
+        }
+
+        // Configure ASP.NET Core authentication for OAuth
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultChallengeScheme = "McpOAuth";
+            options.DefaultAuthenticateScheme = "Bearer";
+        })
+        .AddJwtBearer("Bearer", jwtOptions =>
+        {
+            if (!string.IsNullOrEmpty(options.JwtOptions?.Authority))
+            {
+                jwtOptions.Authority = options.JwtOptions.Authority;
+            }
+            if (!string.IsNullOrEmpty(options.JwtOptions?.Audience))
+            {
+                jwtOptions.TokenValidationParameters.ValidAudience = options.JwtOptions.Audience;
+            }
+        });
+
+        // Configure protected resource metadata
+        if (options.ProtectedResourceMetadata != null)
+        {
+            ConfigureProtectedResourceMetadata(builder, options.ProtectedResourceMetadata);
+        }
+    }
+
+    /// <summary>
+    /// Configures JWT Bearer authentication.
+    /// </summary>
+    private static void ConfigureJwtAuthentication(AIKitMcpBuilder builder, McpOptions options)
+    {
+        builder.Services.AddAuthentication("Bearer")
+            .AddJwtBearer(jwtOptions =>
+            {
+                if (options.JwtOptions != null)
+                {
+                    if (!string.IsNullOrEmpty(options.JwtOptions.Authority))
+                    {
+                        jwtOptions.Authority = options.JwtOptions.Authority;
+                    }
+                    if (!string.IsNullOrEmpty(options.JwtOptions.Audience))
+                    {
+                        jwtOptions.TokenValidationParameters.ValidAudience = options.JwtOptions.Audience;
+                    }
+                    if (!string.IsNullOrEmpty(options.JwtOptions.Issuer))
+                    {
+                        jwtOptions.TokenValidationParameters.ValidIssuer = options.JwtOptions.Issuer;
+                    }
+                }
+            });
+
+        // Configure protected resource metadata
+        if (options.ProtectedResourceMetadata != null)
+        {
+            ConfigureProtectedResourceMetadata(builder, options.ProtectedResourceMetadata);
+        }
+    }
+
+    /// <summary>
+    /// Configures custom authentication.
+    /// </summary>
+    private static void ConfigureCustomAuthentication(AIKitMcpBuilder builder, McpOptions options)
+    {
+        if (options.CustomAuthHandler == null)
+        {
+            throw new InvalidOperationException("CustomAuthHandler must be configured when using custom authentication scheme.");
+        }
+
+        // Register custom authentication handler
+        builder.Services.AddSingleton(options.CustomAuthHandler);
+    }
+
+    /// <summary>
+    /// Configures protected resource metadata for OAuth 2.0.
+    /// </summary>
+    private static void ConfigureProtectedResourceMetadata(AIKitMcpBuilder builder, ProtectedResourceMetadata metadata)
+    {
+        // Note: The SDK's authentication extensions may not be available in this version
+        // This is a placeholder for future implementation when MCP authentication packages are available
+        builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>("ProtectedResource", options =>
+        {
+            // Configure resource metadata when SDK supports it
+        });
     }
 
     /// <summary>
@@ -329,6 +478,77 @@ public static class McpServiceExtensions
     }
 
     /// <summary>
+    /// Configures OAuth 2.0 authentication for the MCP server.
+    /// </summary>
+    public static AIKitMcpBuilder WithOAuthAuthentication(this AIKitMcpBuilder builder, Action<OAuthOptions> configure)
+    {
+        var options = new OAuthOptions();
+        configure(options);
+
+        return builder.WithOptions(mcpOptions =>
+        {
+            mcpOptions.AuthenticationScheme = "OAuth";
+            mcpOptions.OAuthOptions = options;
+            mcpOptions.RequireAuthentication = true;
+        });
+    }
+
+    /// <summary>
+    /// Configures JWT Bearer authentication for the MCP server.
+    /// </summary>
+    public static AIKitMcpBuilder WithJwtAuthentication(this AIKitMcpBuilder builder, Action<JwtOptions> configure)
+    {
+        var options = new JwtOptions();
+        configure(options);
+
+        return builder.WithOptions(mcpOptions =>
+        {
+            mcpOptions.AuthenticationScheme = "JWT";
+            mcpOptions.JwtOptions = options;
+            mcpOptions.RequireAuthentication = true;
+        });
+    }
+
+    /// <summary>
+    /// Configures custom authentication for the MCP server.
+    /// </summary>
+    public static AIKitMcpBuilder WithCustomAuthentication(this AIKitMcpBuilder builder, Func<IServiceProvider, Task> authHandler)
+    {
+        return builder.WithOptions(mcpOptions =>
+        {
+            mcpOptions.AuthenticationScheme = "Custom";
+            mcpOptions.CustomAuthHandler = authHandler;
+            mcpOptions.RequireAuthentication = true;
+        });
+    }
+
+    /// <summary>
+    /// Configures protected resource metadata for OAuth 2.0 resource server.
+    /// </summary>
+    public static AIKitMcpBuilder WithProtectedResourceMetadata(this AIKitMcpBuilder builder, Action<ProtectedResourceMetadata> configure)
+    {
+        var metadata = new ProtectedResourceMetadata();
+        configure(metadata);
+
+        return builder.WithOptions(mcpOptions =>
+        {
+            mcpOptions.ProtectedResourceMetadata = metadata;
+        });
+    }
+
+    /// <summary>
+    /// Enables header forwarding for client-side authentication scenarios.
+    /// This allows forwarding authentication headers from incoming requests to external services.
+    /// </summary>
+    public static AIKitMcpBuilder WithHeaderForwarding(this AIKitMcpBuilder builder)
+    {
+        return builder.WithOptions(mcpOptions =>
+        {
+            mcpOptions.EnableHeaderForwarding = true;
+        });
+    }
+
+    /// <summary>
     /// Adds a custom task store implementation for MCP Tasks.
     /// </summary>
     public static AIKitMcpBuilder WithTaskStore<TTaskStore>(this AIKitMcpBuilder builder)
@@ -424,11 +644,42 @@ public static class McpServiceExtensions
                 logger.LogWarning("Server info not configured. Suggestion: Set ServerName and ServerVersion in options.");
             }
 
+            // Authentication validation
+            ValidateAuthenticationConfiguration(services, logger);
+
             logger.LogInformation("MCP configuration validation completed");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error during MCP configuration validation");
+        }
+    }
+
+    private static void ValidateAuthenticationConfiguration(IServiceProvider services, ILogger logger)
+    {
+        // Check if authentication is configured
+        var authService = services.GetService<Microsoft.AspNetCore.Authentication.IAuthenticationService>();
+        if (authService != null)
+        {
+            logger.LogInformation("- Authentication: Configured");
+
+            // Check for JWT Bearer authentication
+            var jwtBearerOptions = services.GetService<Microsoft.Extensions.Options.IOptions<Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions>>();
+            if (jwtBearerOptions != null)
+            {
+                logger.LogInformation("- JWT Bearer authentication: Available");
+            }
+
+            // Check for header forwarding
+            var httpContextAccessor = services.GetService<Microsoft.AspNetCore.Http.IHttpContextAccessor>();
+            if (httpContextAccessor != null)
+            {
+                logger.LogInformation("- Header forwarding: Enabled");
+            }
+        }
+        else
+        {
+            logger.LogInformation("- Authentication: Not configured (stdio transport or no auth required)");
         }
     }
 

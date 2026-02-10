@@ -466,6 +466,102 @@ public class McpServiceExtensionsTests
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.AtLeastOnce);
     }
+
+    [Fact]
+    public void WithOAuthAuthentication_ConfiguresOAuthOptions()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithOAuthAuthentication(options =>
+        {
+            options.ClientId = "test-client";
+            options.ClientSecret = "test-secret";
+            options.AuthorizationServerUrl = new Uri("https://auth.example.com");
+            options.Scopes.Add("mcp:tools");
+        });
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+    }
+
+    [Fact]
+    public void WithJwtAuthentication_ConfiguresJwtOptions()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithJwtAuthentication(options =>
+        {
+            options.Authority = "https://auth.example.com";
+            options.Audience = "mcp-server";
+        });
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+    }
+
+    [Fact]
+    public void WithHeaderForwarding_EnablesHeaderForwarding()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithHeaderForwarding();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+    }
+
+    [Fact]
+    public void WithCustomAuthentication_ConfiguresCustomAuthHandler()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+        Task CustomAuthHandler(IServiceProvider sp) => Task.CompletedTask;
+
+        // Act
+        var result = builder.WithCustomAuthentication(CustomAuthHandler);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+    }
+
+    [Fact]
+    public void WithProtectedResourceMetadata_ConfiguresProtectedResourceMetadata()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithProtectedResourceMetadata(metadata =>
+        {
+            metadata.Resource = new Uri("api://test-resource");
+            metadata.ScopesSupported = new List<string> { "read", "write" };
+            metadata.ResourceName = "Test Resource";
+        });
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+    }
 }
 
 [McpServerToolType]
