@@ -24,11 +24,27 @@ public class HttpTransportOptions
     public bool RequireAuthentication { get; set; }
 
     /// <summary>
+    /// Authentication configuration.
+    /// </summary>
+    public AuthenticationOptions? Authentication { get; set; }
+}
+
+/// <summary>
+/// Base class for authentication options.
+/// </summary>
+public abstract class AuthenticationOptions
+{
+    /// <summary>
     /// The authentication scheme to use (e.g., "Bearer", "oauth", "jwt").
     /// </summary>
     public string? AuthenticationScheme { get; set; }
+}
 
-    // OAuth options
+/// <summary>
+/// OAuth 2.0 authentication options.
+/// </summary>
+public class OAuthAuth : AuthenticationOptions
+{
     /// <summary>
     /// OAuth 2.0 client ID.
     /// </summary>
@@ -53,26 +69,6 @@ public class HttpTransportOptions
     /// OAuth 2.0 authorization redirect delegate.
     /// </summary>
     public Func<Uri, Uri, CancellationToken, Task<string?>>? OAuthAuthorizationRedirectDelegate { get; set; }
-
-    // JWT options
-    /// <summary>
-    /// JWT issuer.
-    /// </summary>
-    public string? JwtIssuer { get; set; }
-    /// <summary>
-    /// JWT audience.
-    /// </summary>
-    public string? JwtAudience { get; set; }
-    /// <summary>
-    /// JWT authority.
-    /// </summary>
-    public string? JwtAuthority { get; set; }
-    /// <summary>
-    /// JWT validation parameters.
-    /// </summary>
-    public Dictionary<string, object> JwtValidationParameters { get; set; } = new();
-
-    // Protected resource metadata
     /// <summary>
     /// Protected resource URI.
     /// </summary>
@@ -94,7 +90,53 @@ public class HttpTransportOptions
     /// </summary>
     public Uri? ProtectedResourceDocumentation { get; set; }
 
-    // Custom
+    // JWT properties for OAuth (since OAuth uses JWT Bearer)
+    /// <summary>
+    /// JWT issuer.
+    /// </summary>
+    public string? JwtIssuer { get; set; }
+    /// <summary>
+    /// JWT audience.
+    /// </summary>
+    public string? JwtAudience { get; set; }
+    /// <summary>
+    /// JWT authority.
+    /// </summary>
+    public string? JwtAuthority { get; set; }
+    /// <summary>
+    /// JWT validation parameters.
+    /// </summary>
+    public Dictionary<string, object> JwtValidationParameters { get; set; } = new();
+}
+
+/// <summary>
+/// JWT authentication options.
+/// </summary>
+public class JwtAuth : AuthenticationOptions
+{
+    /// <summary>
+    /// JWT issuer.
+    /// </summary>
+    public string? JwtIssuer { get; set; }
+    /// <summary>
+    /// JWT audience.
+    /// </summary>
+    public string? JwtAudience { get; set; }
+    /// <summary>
+    /// JWT authority.
+    /// </summary>
+    public string? JwtAuthority { get; set; }
+    /// <summary>
+    /// JWT validation parameters.
+    /// </summary>
+    public Dictionary<string, object> JwtValidationParameters { get; set; } = new();
+}
+
+/// <summary>
+/// Custom authentication options.
+/// </summary>
+public class CustomAuth : AuthenticationOptions
+{
     /// <summary>
     /// Custom authentication handler.
     /// </summary>
@@ -317,32 +359,43 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureAuthentication()
     {
-        if (!_isHttpTransport || _httpOptions == null || (!_httpOptions.RequireAuthentication && string.IsNullOrEmpty(_httpOptions.AuthenticationScheme))) return;
+        if (!_isHttpTransport || _httpOptions == null || !_httpOptions.RequireAuthentication || _httpOptions.Authentication == null) return;
 
-        var scheme = _httpOptions.AuthenticationScheme?.ToLowerInvariant() ?? "jwt";
+        var auth = _httpOptions.Authentication;
 
-        switch (scheme)
+        switch (auth)
         {
-            case "oauth":
-                if (string.IsNullOrEmpty(_httpOptions.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
+            case OAuthAuth oauth:
+                if (string.IsNullOrEmpty(oauth.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
                 _services.AddAuthentication(a => {
                     a.DefaultChallengeScheme = "McpOAuth";
                     a.DefaultAuthenticateScheme = "Bearer";
-                }).AddJwtBearer("Bearer", j => ApplyJwt(j, _httpOptions));
+                }).AddJwtBearer("Bearer", j => ApplyJwt(j, oauth));
                 break;
 
-            case "jwt":
-                _services.AddAuthentication("Bearer").AddJwtBearer(j => ApplyJwt(j, _httpOptions));
+            case JwtAuth jwt:
+                _services.AddAuthentication("Bearer").AddJwtBearer(j => ApplyJwt(j, jwt));
                 break;
 
-            case "custom":
-                if (_httpOptions.CustomAuthHandler == null) throw new InvalidOperationException("CustomAuthHandler missing.");
-                _services.AddSingleton(_httpOptions.CustomAuthHandler);
+            case CustomAuth custom:
+                if (custom.CustomAuthHandler == null) throw new InvalidOperationException("CustomAuthHandler missing.");
+                _services.AddSingleton(custom.CustomAuthHandler);
                 break;
+
+            default:
+                throw new InvalidOperationException("Unknown authentication type.");
         }
     }
 
-    private void ApplyJwt(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions target, HttpTransportOptions source)
+    private void ApplyJwt(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions target, OAuthAuth source)
+    {
+        target.Authority = source.JwtAuthority ?? target.Authority;
+        target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;
+        target.TokenValidationParameters.ValidIssuer = source.JwtIssuer ?? target.TokenValidationParameters.ValidIssuer;
+        // Note: ValidationParameters not used here, perhaps extend if needed
+    }
+
+    private void ApplyJwt(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions target, JwtAuth source)
     {
         target.Authority = source.JwtAuthority ?? target.Authority;
         target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;

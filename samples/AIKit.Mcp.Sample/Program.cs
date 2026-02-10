@@ -47,20 +47,33 @@ var mcpBuilder = builder.Services.AddAIKitMcp(mcp =>
     {
         opts.HttpBasePath = "/mcp";
         opts.RequireAuthentication = false; // Set to true for production
-        opts.AuthenticationScheme = "Bearer"; // JWT Bearer authentication
-        // OAuth 2.0 configuration for client-side authentication
-        opts.OAuthClientId = "your-client-id";                    // OAuth 2.0 client ID
-        opts.OAuthClientSecret = "your-client-secret";            // OAuth 2.0 client secret
-        opts.OAuthAuthorizationServerUrl = new Uri("https://your-oauth-provider.com"); // OAuth 2.0 server URL
-        opts.OAuthScopes = new List<string> { "api.read", "api.write" }; // OAuth 2.0 scopes
-        // JWT Bearer configuration (alternative to OAuth)
-        // opts.JwtAuthority = "https://your-jwt-issuer.com";
-        // opts.JwtAudience = "your-api-audience";
-        // Protected resource metadata for OAuth 2.0 resource server
-        opts.ProtectedResource = new Uri("api://my-service/data");
-        opts.ProtectedScopesSupported = new List<string> { "api.read", "api.write" };
-        opts.ProtectedResourceName = "Sensitive Data API";
-        opts.ProtectedAuthorizationServers = new List<Uri> { new Uri("https://your-oauth-provider.com") };
+        opts.Authentication = new OAuthAuth
+        {
+            AuthenticationScheme = "Bearer", // JWT Bearer authentication
+            // OAuth 2.0 configuration for client-side authentication
+            OAuthClientId = "your-client-id",                    // OAuth 2.0 client ID
+            OAuthClientSecret = "your-client-secret",            // OAuth 2.0 client secret
+            OAuthAuthorizationServerUrl = new Uri("https://your-oauth-provider.com"), // OAuth 2.0 server URL
+            OAuthScopes = new List<string> { "api.read", "api.write" }, // OAuth 2.0 scopes
+            // Protected resource metadata for OAuth 2.0 resource server
+            ProtectedResource = new Uri("api://my-service/data"),
+            ProtectedScopesSupported = new List<string> { "api.read", "api.write" },
+            ProtectedResourceName = "Sensitive Data API",
+            ProtectedAuthorizationServers = new List<Uri> { new Uri("https://your-oauth-provider.com") }
+        };
+        // Alternative: JWT authentication
+        // opts.Authentication = new JwtAuth
+        // {
+        //     AuthenticationScheme = "Bearer",
+        //     JwtAuthority = "https://your-jwt-issuer.com",
+        //     JwtAudience = "your-api-audience"
+        // };
+        // Alternative: Custom authentication
+        // opts.Authentication = new CustomAuth
+        // {
+        //     AuthenticationScheme = "Custom",
+        //     CustomAuthHandler = async (sp) => { /* custom logic */ }
+        // };
     });
 
     // Auto-discovery settings
