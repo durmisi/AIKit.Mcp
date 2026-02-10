@@ -30,6 +30,8 @@ public class TestStartup
                 opts.HttpBasePath = "/mcp";
             });
 
+            mcp.AutoDiscoverTools = true;
+            mcp.AutoDiscoverResources = true;   
             mcp.AutoDiscoverPrompts = false;
             mcp.EnableProgress = true;
             mcp.EnableCompletion = true;
@@ -38,8 +40,6 @@ public class TestStartup
             mcp.EnableValidation = true;
         });
 
-        services.AddScoped<TestTools>();
-        services.AddScoped<TestResources>();
         Console.WriteLine("TestStartup.ConfigureServices completed");
     }
 

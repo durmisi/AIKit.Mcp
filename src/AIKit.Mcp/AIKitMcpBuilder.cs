@@ -307,8 +307,17 @@ public sealed class AIKitMcpBuilder
     private void ConfigureDiscovery()
     {
         var assembly = this.Assembly ?? Assembly.GetCallingAssembly();
-        if (this.AutoDiscoverTools) _mcpServerBuilder.WithToolsFromAssembly(assembly);
-        if (this.AutoDiscoverResources) _mcpServerBuilder.WithResourcesFromAssembly(assembly);
+        
+        if (this.AutoDiscoverTools)
+        {
+            _mcpServerBuilder.WithToolsFromAssembly(assembly);
+        }
+        
+        if (this.AutoDiscoverResources)
+        {
+            _mcpServerBuilder.WithResourcesFromAssembly(assembly);
+        }
+        
         if (this.AutoDiscoverPrompts) _mcpServerBuilder.WithPromptsFromAssembly(assembly);
     }
 
