@@ -56,7 +56,7 @@ public class McpServiceExtensionsTests
             {
                 ["Mcp:ServerName"] = "TestServer",
                 ["Mcp:ServerVersion"] = "1.0.0",
-                ["Mcp:Transport"] = "stdio",
+                ["Mcp:Transport"] = "Stdio",
                 ["Mcp:AutoDiscoverTools"] = "true",
                 ["Mcp:AutoDiscoverResources"] = "true",
                 ["Mcp:AutoDiscoverPrompts"] = "true"
@@ -151,7 +151,7 @@ public class McpServiceExtensionsTests
         var result = builder.WithOptions(options =>
         {
             options.ServerName = "TestServer";
-            options.Transport = "stdio";
+            options.Transport = TransportType.Stdio;
             options.AutoDiscoverTools = true;
             options.EnableDevelopmentFeatures = true;
             options.EnableValidation = true;
@@ -361,7 +361,7 @@ public class McpServiceExtensionsTests
             .WithOptions(options =>
             {
                 options.ServerName = "TestServer";
-                options.Transport = "stdio";
+                options.Transport = TransportType.Stdio;
                 options.AutoDiscoverTools = true;
             });
 
@@ -386,7 +386,7 @@ public class McpServiceExtensionsTests
             .WithOptions(options =>
             {
                 options.ServerName = "TestServer";
-                options.Transport = "stdio";
+                options.Transport = TransportType.Stdio;
                 options.AutoDiscoverTools = true;
             })
             .WithTasks(); // Add task store to avoid early failure
@@ -420,7 +420,7 @@ public class McpServiceExtensionsTests
             .WithOptions(options =>
             {
                 options.ServerName = "TestServer";
-                options.Transport = "http";
+                options.Transport = TransportType.Http;
                 options.HttpBasePath = "/mcp";
                 options.RequireAuthentication = true;
             });
@@ -446,7 +446,7 @@ public class McpServiceExtensionsTests
             .WithOptions(options =>
             {
                 options.ServerName = "TestServer";
-                options.Transport = "http";
+                options.Transport = TransportType.Http;
                 options.HttpBasePath = ""; // Empty base path
             })
             .WithTasks(); // Add task store to avoid early failure

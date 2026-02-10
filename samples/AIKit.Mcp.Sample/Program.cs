@@ -41,7 +41,7 @@ builder.Services.AddAIKitMcp()
         options.ServerVersion = "1.0.0";
 
         // Transport configuration
-        options.Transport = "stdio"; // Change to "http" for HTTP transport
+        options.Transport = TransportType.Stdio; // Change to TransportType.Http for HTTP transport
 
         // HTTP transport options (only used when Transport is "http")
         // Requires ModelContextProtocol.AspNetCore package and web host setup

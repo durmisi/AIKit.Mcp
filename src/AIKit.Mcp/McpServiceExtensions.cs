@@ -65,9 +65,18 @@ public static class McpServiceExtensions
         }
 
         // Configure transport
-        var transport = mcpConfig["Transport"];
-        if (string.Equals(transport, "stdio", StringComparison.OrdinalIgnoreCase))
+        var transportString = mcpConfig["Transport"];
+        if (Enum.TryParse<TransportType>(transportString, true, out var transportType))
         {
+            if (transportType == TransportType.Stdio)
+            {
+                builder.InnerBuilder.WithStdioServerTransport();
+            }
+            // HTTP transport will be configured later in WithOptions if needed
+        }
+        else if (!string.IsNullOrEmpty(transportString))
+        {
+            // Default to stdio if parsing fails
             builder.InnerBuilder.WithStdioServerTransport();
         }
 
@@ -146,11 +155,11 @@ public static class McpServiceExtensions
         }
 
         // Configure transport
-        if (string.Equals(options.Transport, "stdio", StringComparison.OrdinalIgnoreCase))
+        if (options.Transport == TransportType.Stdio)
         {
             builder.InnerBuilder.WithStdioServerTransport();
         }
-        else if (string.Equals(options.Transport, "http", StringComparison.OrdinalIgnoreCase))
+        else if (options.Transport == TransportType.Http)
         {
             // HTTP transport with authentication support
             ConfigureHttpTransport(builder, options);

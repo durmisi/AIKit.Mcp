@@ -3,6 +3,22 @@ using System.Reflection;
 namespace AIKit.Mcp;
 
 /// <summary>
+/// Supported transport types for MCP servers.
+/// </summary>
+public enum TransportType
+{
+    /// <summary>
+    /// Standard input/output transport for command-line applications.
+    /// </summary>
+    Stdio,
+
+    /// <summary>
+    /// HTTP transport for web-based MCP servers.
+    /// </summary>
+    Http
+}
+
+/// <summary>
 /// Options for configuring AIKit MCP server.
 /// </summary>
 public class McpOptions
@@ -18,9 +34,9 @@ public class McpOptions
     public string? ServerVersion { get; set; }
 
     /// <summary>
-    /// The transport type (e.g., "stdio", "http").
+    /// The transport type for the MCP server.
     /// </summary>
-    public string Transport { get; set; } = "stdio";
+    public TransportType Transport { get; set; } = TransportType.Stdio;
 
     /// <summary>
     /// Whether to auto-discover tools from assemblies.

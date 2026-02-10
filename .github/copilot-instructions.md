@@ -323,7 +323,7 @@ Enable HTTP-based MCP servers for web integration (requires ModelContextProtocol
 // Configure HTTP transport in options
 builder.Services.AddAIKitMcp()
     .WithOptions(options => {
-        options.Transport = "http";
+        options.Transport = TransportType.Http;
         options.HttpBasePath = "/mcp";
         options.RequireAuthentication = false; // Set to true for production
     });
