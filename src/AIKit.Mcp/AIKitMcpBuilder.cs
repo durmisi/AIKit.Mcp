@@ -19,11 +19,6 @@ public class HttpTransportOptions
     public string? HttpBasePath { get; set; }
 
     /// <summary>
-    /// Whether authentication is required for HTTP transport.
-    /// </summary>
-    public bool RequireAuthentication { get; set; }
-
-    /// <summary>
     /// Authentication configuration.
     /// </summary>
     public AuthenticationOptions? Authentication { get; set; }
@@ -359,7 +354,7 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureAuthentication()
     {
-        if (!_isHttpTransport || _httpOptions == null || !_httpOptions.RequireAuthentication || _httpOptions.Authentication == null) return;
+        if (!_isHttpTransport || _httpOptions == null || _httpOptions.Authentication == null) return;
 
         var auth = _httpOptions.Authentication;
 
