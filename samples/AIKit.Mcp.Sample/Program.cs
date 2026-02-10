@@ -50,7 +50,6 @@ builder.Services.AddAIKitMcp()
 
         // Authentication configuration (only used when Transport is "http")
         options.AuthenticationScheme = "Bearer"; // JWT Bearer authentication
-        options.EnableHeaderForwarding = true;   // Forward auth headers to services
 
         // OAuth 2.0 configuration for client-side authentication
         options.OAuthOptions = new AIKit.Mcp.OAuthOptions
@@ -87,7 +86,6 @@ builder.Services.AddAIKitMcp()
         options.EnableValidation = true;          // Enable startup validation
 
         // Enable advanced MCP features
-        options.EnableTasks = true;           // Enable long-running operations
         options.EnableProgress = true;        // Enable progress notifications
         options.EnableElicitation = true;     // Enable user input requests
         options.EnableCompletion = true;      // Enable auto-completion
@@ -118,6 +116,7 @@ builder.Services.AddScoped<MathTools>();
 builder.Services.AddScoped<FileSystemResources>();
 builder.Services.AddScoped<ConversationPrompts>();
 builder.Services.AddScoped<InteractiveTools>();
+builder.Services.AddScoped<HttpContextTools>();
 
 var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILogger<Program>>();

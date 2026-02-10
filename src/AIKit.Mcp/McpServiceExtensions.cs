@@ -114,10 +114,8 @@ public static class McpServiceExtensions
         }
 
         // Configure advanced features
-        if (mcpConfig.GetValue<bool>("EnableTasks", false))
-        {
-            builder.WithTasks();
-        }
+        builder.WithTasks(); // Always enable tasks
+        
         if (mcpConfig.GetValue<bool>("EnableElicitation", false))
         {
             builder.WithElicitation();
@@ -190,12 +188,6 @@ public static class McpServiceExtensions
             ConfigureAuthentication(builder, options);
         }
 
-        // Configure header forwarding
-        if (options.EnableHeaderForwarding)
-        {
-            builder.Services.AddHttpContextAccessor();
-        }
-
         // Configure auto-discovery
         var assembly = options.Assembly ?? Assembly.GetCallingAssembly();
         if (options.AutoDiscoverTools)
@@ -214,15 +206,24 @@ public static class McpServiceExtensions
         // Configure development features
         if (options.EnableDevelopmentFeatures)
         {
-            builder.WithDevelopmentFeatures();
+            // Add detailed message logging
+            builder.InnerBuilder.AddIncomingMessageFilter(message =>
+            {
+                // Log incoming messages for debugging
+                Console.Error.WriteLine($"[DEBUG] Incoming MCP message: {message}");
+                return message; // Pass through the message
+            });
+
+            builder.InnerBuilder.AddOutgoingMessageFilter(message =>
+            {
+                // Log outgoing messages for debugging
+                Console.Error.WriteLine($"[DEBUG] Outgoing MCP message: {message}");
+                return message; // Pass through the message
+            });
         }
 
         // Configure advanced features
         builder.WithTasks(); // Always register task store to satisfy MCP SDK requirements
-        if (options.EnableTasks)
-        {
-            // Task store is already registered, additional configuration can be added here if needed
-        }
         if (options.EnableElicitation)
         {
             builder.WithElicitation();
@@ -401,28 +402,7 @@ public static class McpServiceExtensions
         });
     }
 
-    /// <summary>
-    /// Adds development-friendly features like enhanced logging and message tracing.
-    /// </summary>
-    public static AIKitMcpBuilder WithDevelopmentFeatures(this AIKitMcpBuilder builder)
-    {
-        // Add detailed message logging
-        builder.InnerBuilder.AddIncomingMessageFilter(message =>
-        {
-            // Log incoming messages for debugging
-            Console.Error.WriteLine($"[DEBUG] Incoming MCP message: {message}");
-            return message; // Pass through the message
-        });
-
-        builder.InnerBuilder.AddOutgoingMessageFilter(message =>
-        {
-            // Log outgoing messages for debugging
-            Console.Error.WriteLine($"[DEBUG] Outgoing MCP message: {message}");
-            return message; // Pass through the message
-        });
-
-        return builder;
-    }
+   
 
     /// <summary>
     /// Adds configuration validation to check for common setup issues.
@@ -579,18 +559,6 @@ public static class McpServiceExtensions
         return builder.WithOptions(mcpOptions =>
         {
             mcpOptions.ProtectedResourceMetadata = metadata;
-        });
-    }
-
-    /// <summary>
-    /// Enables header forwarding for client-side authentication scenarios.
-    /// This allows forwarding authentication headers from incoming requests to external services.
-    /// </summary>
-    public static AIKitMcpBuilder WithHeaderForwarding(this AIKitMcpBuilder builder)
-    {
-        return builder.WithOptions(mcpOptions =>
-        {
-            mcpOptions.EnableHeaderForwarding = true;
         });
     }
 

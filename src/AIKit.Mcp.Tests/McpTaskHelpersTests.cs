@@ -77,7 +77,6 @@ public class McpServerExtensionsTests
         var options = new McpOptions();
 
         // Assert - Verify new properties exist and have default values
-        Assert.False(options.EnableTasks);
         Assert.False(options.EnableElicitation);
         Assert.False(options.EnableProgress);
         Assert.False(options.EnableCompletion);
@@ -90,7 +89,6 @@ public class McpServerExtensionsTests
         // Arrange & Act
         var options = new McpOptions
         {
-            EnableTasks = true,
             EnableElicitation = true,
             EnableProgress = true,
             EnableCompletion = true,
@@ -98,7 +96,6 @@ public class McpServerExtensionsTests
         };
 
         // Assert
-        Assert.True(options.EnableTasks);
         Assert.True(options.EnableElicitation);
         Assert.True(options.EnableProgress);
         Assert.True(options.EnableCompletion);

@@ -70,11 +70,6 @@ public class McpOptions
     public bool EnableValidation { get; set; }
 
     /// <summary>
-    /// Whether to enable MCP Tasks support for long-running operations.
-    /// </summary>
-    public bool EnableTasks { get; set; }
-
-    /// <summary>
     /// Whether to enable elicitation support for requesting user input.
     /// </summary>
     public bool EnableElicitation { get; set; }
@@ -130,11 +125,6 @@ public class McpOptions
     /// Custom authentication handler delegate for extensibility.
     /// </summary>
     public Func<IServiceProvider, Task>? CustomAuthHandler { get; set; }
-
-    /// <summary>
-    /// Whether to enable header forwarding for client-side authentication scenarios.
-    /// </summary>
-    public bool EnableHeaderForwarding { get; set; }
 
     // Assembly
 

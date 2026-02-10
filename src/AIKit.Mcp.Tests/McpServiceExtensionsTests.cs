@@ -105,22 +105,6 @@ public class McpServiceExtensionsTests
     }
 
     [Fact]
-    public void WithDevelopmentFeatures_AddsMessageFilters()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var builder = services.AddAIKitMcp();
-
-        // Act
-        var result = builder.WithDevelopmentFeatures();
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.IsType<AIKitMcpBuilder>(result);
-        Assert.Same(builder, result);
-    }
-
-    [Fact]
     public void WithValidation_AddsHostedService()
     {
         // Arrange
@@ -229,27 +213,6 @@ public class McpServiceExtensionsTests
     }
 
     [Fact]
-    public void WithOptions_EnablesTasks_WhenConfigured()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var builder = services.AddAIKitMcp();
-
-        // Act
-        var result = builder.WithOptions(options =>
-        {
-            options.EnableTasks = true;
-        });
-
-        // Assert
-        Assert.NotNull(result);
-
-        // Verify task store was registered
-        var taskStoreDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(ModelContextProtocol.IMcpTaskStore));
-        Assert.NotNull(taskStoreDescriptor);
-    }
-
-    [Fact]
     public void WithOptions_EnablesValidation_WhenConfigured()
     {
         // Arrange
@@ -280,7 +243,6 @@ public class McpServiceExtensionsTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Mcp:EnableTasks"] = "true",
                 ["Mcp:EnableElicitation"] = "true",
                 ["Mcp:EnableProgress"] = "true",
                 ["Mcp:EnableCompletion"] = "true",
@@ -294,7 +256,7 @@ public class McpServiceExtensionsTests
         // Assert
         Assert.NotNull(result);
 
-        // Verify task store was registered when EnableTasks is true
+        // Verify task store was registered (always enabled)
         var taskStoreDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(ModelContextProtocol.IMcpTaskStore));
         Assert.NotNull(taskStoreDescriptor);
     }
@@ -504,22 +466,6 @@ public class McpServiceExtensionsTests
             options.Authority = "https://auth.example.com";
             options.Audience = "mcp-server";
         });
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.IsType<AIKitMcpBuilder>(result);
-        Assert.Same(builder, result);
-    }
-
-    [Fact]
-    public void WithHeaderForwarding_EnablesHeaderForwarding()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var builder = services.AddAIKitMcp();
-
-        // Act
-        var result = builder.WithHeaderForwarding();
 
         // Assert
         Assert.NotNull(result);

@@ -21,7 +21,6 @@ builder.Services.AddAIKitMcp()
         options.Transport = "stdio";
         options.AutoDiscoverTools = true;
         options.EnableValidation = true;
-        options.EnableTasks = true;        // Enable MCP Tasks support
         options.EnableElicitation = true;  // Enable user input requests
         options.EnableProgress = true;     // Enable progress notifications
         options.EnableCompletion = true;   // Enable auto-completion
@@ -65,9 +64,6 @@ builder.Services.AddAIKitMcp()
 AIKit.Mcp provides built-in support for MCP Tasks, enabling long-running operations with polling:
 
 ```csharp
-// Enable tasks in options
-options.EnableTasks = true;
-
 // Or explicitly
 builder.WithTasks();  // In-memory store
 builder.WithTaskStore<CustomTaskStore>();  // Custom implementation
@@ -366,7 +362,6 @@ cd samples/AIKit.Mcp.Sample && dotnet run
     "AutoDiscoverTools": true,
     "AutoDiscoverResources": true,
     "AutoDiscoverPrompts": true,
-    "EnableTasks": false,
     "EnableElicitation": false,
     "EnableProgress": false,
     "EnableCompletion": false,
