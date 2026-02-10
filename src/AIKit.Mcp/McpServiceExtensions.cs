@@ -9,43 +9,47 @@ namespace AIKit.Mcp;
 public static class McpServiceExtensions
 {
     /// <summary>
-    /// Adds AIKit MCP server to the service collection and returns a builder for configuration.
+    /// Adds AIKit MCP server to the service collection.
     /// </summary>
-    public static AIKitMcpBuilder AddAIKitMcp(this IServiceCollection services, string serverName = "AIKit-Server")
+    public static IServiceCollection AddAIKitMcp(this IServiceCollection services, string serverName = "AIKit-Server")
     {
         // Integration with Official SDK
         var builder = services.AddMcpServer();
 
-        return new AIKitMcpBuilder(builder, services);
+        // Store the builder for use in extensions
+        services.AddSingleton(builder);
+
+        return services;
     }
 
     /// <summary>
     /// Configures the MCP server with default settings for common scenarios.
     /// Includes stdio transport, auto-discovery from assembly, and basic logging.
     /// </summary>
-    public static AIKitMcpBuilder WithDefaultConfiguration(this AIKitMcpBuilder builder)
+    public static IServiceCollection WithDefaultConfiguration(this IServiceCollection services)
     {
-        builder.WithLogging();  // Add default logging
+        services.WithLogging();  // Add default logging
 
-        builder.InnerBuilder
+        var builder = services.GetRequiredService<IMcpServerBuilder>();
+        builder
             .WithStdioServerTransport()
             .WithToolsFromAssembly()
             .WithResourcesFromAssembly()
             .WithPromptsFromAssembly();
 
-        return builder;
+        return services;
     }
 
     /// <summary>
     /// Configures logging for the MCP server.
     /// By default, redirects logs to stderr to keep stdio clean for JSON-RPC.
     /// </summary>
-    public static AIKitMcpBuilder WithLogging(this AIKitMcpBuilder builder, Action<LoggingOptions>? configure = null)
+    public static IServiceCollection WithLogging(this IServiceCollection services, Action<LoggingOptions>? configure = null)
     {
         var options = new LoggingOptions();
         configure?.Invoke(options);
 
-        builder.Services.AddLogging(logging =>
+        services.AddLogging(logging =>
         {
             logging.AddConsole(c =>
             {
@@ -57,14 +61,14 @@ public static class McpServiceExtensions
             logging.SetMinimumLevel(options.MinLogLevel);
         });
 
-        return builder;
+        return services;
     }
 
     /// <summary>
     /// Configures the MCP server using settings from IConfiguration.
     /// Looks for "Mcp" section in configuration for server settings.
     /// </summary>
-    public static AIKitMcpBuilder WithConfiguration(this AIKitMcpBuilder builder, IConfiguration config)
+    public static IServiceCollection WithConfiguration(this IServiceCollection services, IConfiguration config)
     {
         var mcpConfig = config.GetSection("Mcp");
 
@@ -74,7 +78,7 @@ public static class McpServiceExtensions
 
         if (!string.IsNullOrEmpty(serverName) || !string.IsNullOrEmpty(serverVersion))
         {
-            builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
+            services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
             {
                 if (!string.IsNullOrEmpty(serverName) && options.ServerInfo != null)
                     options.ServerInfo.Name = serverName;
@@ -89,72 +93,76 @@ public static class McpServiceExtensions
         {
             if (transportType == TransportType.Stdio)
             {
-                builder.InnerBuilder.WithStdioServerTransport();
+                var builder = services.GetRequiredService<IMcpServerBuilder>();
+                builder.WithStdioServerTransport();
             }
             // HTTP transport will be configured later in WithOptions if needed
         }
         else if (!string.IsNullOrEmpty(transportString))
         {
             // Default to stdio if parsing fails
-            builder.InnerBuilder.WithStdioServerTransport();
+            var builder = services.GetRequiredService<IMcpServerBuilder>();
+            builder.WithStdioServerTransport();
         }
 
         // Configure auto-discovery
+        var builder2 = services.GetRequiredService<IMcpServerBuilder>();
         if (mcpConfig.GetValue<bool>("AutoDiscoverTools", true))
         {
-            builder.InnerBuilder.WithToolsFromAssembly();
+            builder2.WithToolsFromAssembly();
         }
         if (mcpConfig.GetValue<bool>("AutoDiscoverResources", true))
         {
-            builder.InnerBuilder.WithResourcesFromAssembly();
+            builder2.WithResourcesFromAssembly();
         }
         if (mcpConfig.GetValue<bool>("AutoDiscoverPrompts", true))
         {
-            builder.InnerBuilder.WithPromptsFromAssembly();
+            builder2.WithPromptsFromAssembly();
         }
 
         // Configure advanced features
-        builder.WithTasks(); // Always enable tasks
+        services.WithTasks(); // Always enable tasks
 
         if (mcpConfig.GetValue<bool>("EnableElicitation", false))
         {
-            builder.WithElicitation();
+            services.WithElicitation();
         }
         if (mcpConfig.GetValue<bool>("EnableProgress", false))
         {
-            builder.WithProgress();
+            services.WithProgress();
         }
         if (mcpConfig.GetValue<bool>("EnableCompletion", false))
         {
-            builder.WithCompletion();
+            services.WithCompletion();
         }
         if (mcpConfig.GetValue<bool>("EnableSampling", false))
         {
-            builder.WithSampling();
+            services.WithSampling();
         }
 
-        return builder;
+        return services;
     }
 
     /// <summary>
     /// Automatically discovers and registers all tools, resources, and prompts from the specified assembly.
     /// </summary>
-    public static AIKitMcpBuilder WithAllFromAssembly(this AIKitMcpBuilder builder, Assembly? assembly = null)
+    public static IServiceCollection WithAllFromAssembly(this IServiceCollection services, Assembly? assembly = null)
     {
         assembly ??= Assembly.GetCallingAssembly();
 
-        builder.InnerBuilder
+        var builder = services.GetRequiredService<IMcpServerBuilder>();
+        builder
             .WithToolsFromAssembly(assembly)
             .WithResourcesFromAssembly(assembly)
             .WithPromptsFromAssembly(assembly);
 
-        return builder;
+        return services;
     }
 
     /// <summary>
     /// Configures the MCP server using the provided options.
     /// </summary>
-    public static AIKitMcpBuilder WithOptions(this AIKitMcpBuilder builder, Action<McpOptions> configure)
+    public static IServiceCollection WithOptions(this IServiceCollection services, Action<McpOptions> configure)
     {
         var options = new McpOptions();
         configure(options);
@@ -265,10 +273,10 @@ public static class McpServiceExtensions
     /// <summary>
     /// Configures HTTP transport with authentication support.
     /// </summary>
-    private static void ConfigureHttpTransport(AIKitMcpBuilder builder, McpOptions options)
+    private static void ConfigureHttpTransport(IServiceCollection services, IMcpServerBuilder builder, McpOptions options)
     {
         // Enable HTTP transport
-        builder.InnerBuilder.WithHttpTransport();
+        builder.WithHttpTransport();
 
         // Configure HTTP options if available
         if (!string.IsNullOrEmpty(options.HttpBasePath))
@@ -281,7 +289,7 @@ public static class McpServiceExtensions
     /// <summary>
     /// Configures authentication based on the specified options.
     /// </summary>
-    private static void ConfigureAuthentication(AIKitMcpBuilder builder, McpOptions options)
+    private static void ConfigureAuthentication(IServiceCollection services, IMcpServerBuilder builder, McpOptions options)
     {
         // Configure authentication scheme
         if (!string.IsNullOrEmpty(options.AuthenticationScheme))
@@ -408,36 +416,36 @@ public static class McpServiceExtensions
     /// <summary>
     /// Adds configuration validation to check for common setup issues.
     /// </summary>
-    public static AIKitMcpBuilder WithValidation(this AIKitMcpBuilder builder)
+    public static IServiceCollection WithValidation(this IServiceCollection services)
     {
-        builder.Services.AddHostedService<McpValidationHostedService>();
-        return builder;
+        services.AddHostedService<McpValidationHostedService>();
+        return services;
     }
 
     /// <summary>
     /// Enables MCP Tasks support for long-running operations.
     /// Adds an in-memory task store for development and testing.
     /// </summary>
-    public static AIKitMcpBuilder WithTasks(this AIKitMcpBuilder builder)
+    public static IServiceCollection WithTasks(this IServiceCollection services)
     {
-        builder.Services.AddSingleton<ModelContextProtocol.IMcpTaskStore, ModelContextProtocol.InMemoryMcpTaskStore>();
-        return builder;
+        services.AddSingleton<ModelContextProtocol.IMcpTaskStore, ModelContextProtocol.InMemoryMcpTaskStore>();
+        return services;
     }
 
     /// <summary>
     /// Enables elicitation support for requesting additional information from users.
     /// Elicitation allows servers to request user input during tool execution.
     /// </summary>
-    public static AIKitMcpBuilder WithElicitation(this AIKitMcpBuilder builder)
+    public static IServiceCollection WithElicitation(this IServiceCollection services)
     {
         // Elicitation is enabled by default in the MCP server options
         // This method serves as documentation and ensures elicitation capability is advertised
-        builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
+        services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
         {
             options.Capabilities ??= new();
             // Elicitation capability is automatically enabled when handlers are configured
         });
-        return builder;
+        return services;
     }
 
     /// <summary>
