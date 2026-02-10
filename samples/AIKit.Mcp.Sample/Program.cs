@@ -108,12 +108,6 @@ builder.Services.AddAIKitMcp(mcp =>
     mcp.Assembly = typeof(Program).Assembly;
 });
 
-// Register business logic classes (services will be resolved via DI)
-builder.Services.AddScoped<FileSystemResources>();
-builder.Services.AddScoped<ConversationPrompts>();
-builder.Services.AddScoped<InteractiveTools>();
-builder.Services.AddScoped<HttpContextTools>();
-
 var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("🚀 AIKit MCP Sample Server is starting...");
