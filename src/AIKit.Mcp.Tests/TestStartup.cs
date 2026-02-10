@@ -28,11 +28,8 @@ public class TestStartup
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = null!;
             });
 
-            mcp.AutoDiscoverTools = true;
-            mcp.AutoDiscoverResources = true;
             mcp.AutoDiscoverPrompts = false;
             mcp.EnableProgress = true;
             mcp.EnableCompletion = true;
