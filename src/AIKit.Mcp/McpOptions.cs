@@ -73,6 +73,16 @@ public class McpOptions
     public bool EnableSampling { get; set; }
 
     /// <summary>
+    /// The base path for HTTP transport (when Transport is "http").
+    /// </summary>
+    public string? HttpBasePath { get; set; }
+
+    /// <summary>
+    /// Whether to require authentication for HTTP transport.
+    /// </summary>
+    public bool RequireAuthentication { get; set; }
+
+    /// <summary>
     /// The assembly to scan for MCP components. If null, uses the calling assembly.
     /// </summary>
     public Assembly? Assembly { get; set; }

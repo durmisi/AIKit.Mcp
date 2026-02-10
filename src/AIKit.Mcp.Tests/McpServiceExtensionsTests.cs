@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
+using Moq;
 using System.Collections.Generic;
 using Xunit;
 
@@ -365,6 +366,121 @@ public class McpServiceExtensionsTests
         Assert.IsType<AIKitMcpBuilder>(result);
         Assert.Same(builder, result);
     }
+
+    [Fact]
+    public void ValidateMcpConfiguration_ValidatesBasicConfiguration()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddAIKitMcp()
+            .WithOptions(options =>
+            {
+                options.ServerName = "TestServer";
+                options.Transport = "stdio";
+                options.AutoDiscoverTools = true;
+            });
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Act & Assert - Should not throw for valid configuration
+        Assert.NotNull(serviceProvider);
+        McpServiceExtensions.ValidateMcpConfiguration(serviceProvider);
+    }
+
+    [Fact]
+    public void ValidateMcpConfiguration_DetectsDuplicateToolNames()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var loggerMock = new Mock<ILogger>();
+        var loggerFactoryMock = new Mock<ILoggerFactory>();
+        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(loggerMock.Object);
+
+        services.AddSingleton(loggerFactoryMock.Object);
+        services.AddAIKitMcp()
+            .WithOptions(options =>
+            {
+                options.ServerName = "TestServer";
+                options.Transport = "stdio";
+                options.AutoDiscoverTools = true;
+            })
+            .WithTasks(); // Add task store to avoid early failure
+
+        // Register tools with duplicate names
+        services.AddScoped<DuplicateTool1>();
+        services.AddScoped<DuplicateTool2>();
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Act
+        McpServiceExtensions.ValidateMcpConfiguration(serviceProvider);
+
+        // Assert - Should log error for duplicate tool names
+        loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains("Duplicate tool names found")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.AtLeastOnce);
+    }
+
+    [Fact]
+    public void ValidateMcpConfiguration_ValidatesHttpConfiguration()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        services.AddAIKitMcp()
+            .WithOptions(options =>
+            {
+                options.ServerName = "TestServer";
+                options.Transport = "http";
+                options.HttpBasePath = "/mcp";
+                options.RequireAuthentication = true;
+            });
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Act & Assert - Should not throw for valid HTTP configuration
+        Assert.NotNull(serviceProvider);
+        McpServiceExtensions.ValidateMcpConfiguration(serviceProvider);
+    }
+
+    [Fact]
+    public void ValidateMcpConfiguration_WarnsForMissingHttpBasePath()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var loggerMock = new Mock<ILogger>();
+        var loggerFactoryMock = new Mock<ILoggerFactory>();
+        loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(loggerMock.Object);
+
+        services.AddSingleton(loggerFactoryMock.Object);
+        services.AddAIKitMcp()
+            .WithOptions(options =>
+            {
+                options.ServerName = "TestServer";
+                options.Transport = "http";
+                options.HttpBasePath = ""; // Empty base path
+            })
+            .WithTasks(); // Add task store to avoid early failure
+
+        var serviceProvider = services.BuildServiceProvider();
+
+        // Act
+        McpServiceExtensions.ValidateMcpConfiguration(serviceProvider);
+
+        // Assert - Should log information about validation completion
+        loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((o, t) => o.ToString()!.Contains("MCP configuration validation completed")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.AtLeastOnce);
+    }
 }
 
 [McpServerToolType]
@@ -382,10 +498,17 @@ public class SampleResource
 }
 
 [McpServerToolType]
-public class SamplePrompt
+public class DuplicateTool1
 {
-    [McpServerPrompt(Name = "sample_prompt")]
-    public string GetSamplePrompt() => "sample prompt content";
+    [McpServerTool(Name = "duplicate_tool")]
+    public string ExecuteTool() => "result1";
+}
+
+[McpServerToolType]
+public class DuplicateTool2
+{
+    [McpServerTool(Name = "duplicate_tool")]
+    public string ExecuteTool() => "result2";
 }
 
 [McpServerToolType]

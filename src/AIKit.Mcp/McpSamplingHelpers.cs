@@ -3,6 +3,7 @@ using Microsoft.Extensions.AI;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
+using System.Text.Json.Nodes;
 
 namespace AIKit.Mcp;
 
@@ -78,6 +79,61 @@ public static class McpSamplingHelpers
         };
 
         return await server.SampleAsync(messages, chatOptions, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Performs code generation using the server's sampling capability.
+    /// </summary>
+    /// <param name="server">The MCP server instance.</param>
+    /// <param name="language">The programming language for the code.</param>
+    /// <param name="description">Description of the code to generate.</param>
+    /// <param name="maxTokens">Maximum number of tokens to generate.</param>
+    /// <param name="temperature">Sampling temperature (0.0 to 1.0).</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The generated code.</returns>
+    public static async Task<string> GenerateCodeAsync(
+        McpServer server,
+        string language,
+        string description,
+        int maxTokens = 200,
+        float? temperature = null,
+        CancellationToken cancellationToken = default)
+    {
+        var prompt = $"Generate {language} code for: {description}. Provide only the code without explanations.";
+
+        return await GenerateTextAsync(server, prompt, maxTokens, temperature, cancellationToken);
+    }
+
+    /// <summary>
+    /// Performs structured output generation using JSON schema.
+    /// </summary>
+    /// <param name="server">The MCP server instance.</param>
+    /// <param name="prompt">The text prompt describing the structure.</param>
+    /// <param name="jsonSchema">The JSON schema for the output.</param>
+    /// <param name="maxTokens">Maximum number of tokens to generate.</param>
+    /// <param name="temperature">Sampling temperature (0.0 to 1.0).</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The generated JSON as a JsonNode.</returns>
+    public static async Task<JsonNode?> GenerateStructuredOutputAsync(
+        McpServer server,
+        string prompt,
+        string jsonSchema,
+        int maxTokens = 300,
+        float? temperature = null,
+        CancellationToken cancellationToken = default)
+    {
+        var fullPrompt = $"{prompt}\n\nRespond with valid JSON matching this schema:\n{jsonSchema}";
+
+        var result = await GenerateTextAsync(server, fullPrompt, maxTokens, temperature, cancellationToken);
+
+        try
+        {
+            return JsonNode.Parse(result);
+        }
+        catch
+        {
+            return null; // Invalid JSON
+        }
     }
 
     /// <summary>

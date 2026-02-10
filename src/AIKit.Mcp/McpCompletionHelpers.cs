@@ -81,6 +81,35 @@ public static class McpCompletionHelpers
     }
 
     /// <summary>
+    /// Creates a dynamic completion handler that uses a custom function to provide suggestions.
+    /// </summary>
+    /// <param name="completionFunc">Function that takes the argument name and current value, returns possible completions.</param>
+    /// <returns>A completion handler function.</returns>
+    public static McpRequestHandler<CompleteRequestParams, CompleteResult> CreateDynamicCompletionHandler(
+        Func<string, string, IEnumerable<string>> completionFunc)
+    {
+        return async (request, cancellationToken) =>
+        {
+            if (request.Params?.Argument is not { } argument)
+            {
+                return new CompleteResult();
+            }
+
+            var values = completionFunc(argument.Name, argument.Value).ToArray();
+
+            return new CompleteResult
+            {
+                Completion = new Completion
+                {
+                    Values = values,
+                    Total = values.Length,
+                    HasMore = false
+                }
+            };
+        };
+    }
+
+    /// <summary>
     /// Creates a completion handler for prompt references that filters based on a list of available prompts.
     /// </summary>
     /// <param name="promptNames">List of available prompt names.</param>

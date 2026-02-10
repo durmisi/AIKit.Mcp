@@ -2,6 +2,7 @@
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using ModelContextProtocol.Protocol;
+using System.Text.Json.Nodes;
 
 namespace AIKit.Mcp;
 

@@ -71,4 +71,43 @@ public class McpElicitationHelpersTests
                 mockServer.Object, "Visit this URL", "https://example.com"));
         Assert.Contains("Elicitation is not supported", exception.Message);
     }
+
+    [Fact]
+    public async Task RequestEmailInputAsync_ThrowsWhenElicitationNotSupported()
+    {
+        // Arrange
+        var mockServer = new Mock<McpServer>();
+
+        // Act & Assert - Should throw InvalidOperationException when elicitation is not enabled
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => McpElicitationHelpers.RequestEmailInputAsync(
+                mockServer.Object, "Enter your email"));
+        Assert.Contains("Elicitation is not supported", exception.Message);
+    }
+
+    [Fact]
+    public async Task RequestDateInputAsync_ThrowsWhenElicitationNotSupported()
+    {
+        // Arrange
+        var mockServer = new Mock<McpServer>();
+
+        // Act & Assert - Should throw InvalidOperationException when elicitation is not enabled
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => McpElicitationHelpers.RequestDateInputAsync(
+                mockServer.Object, "Select a date"));
+        Assert.Contains("Elicitation is not supported", exception.Message);
+    }
+
+    [Fact]
+    public async Task RequestNumberInputAsync_ThrowsWhenElicitationNotSupported()
+    {
+        // Arrange
+        var mockServer = new Mock<McpServer>();
+
+        // Act & Assert - Should throw InvalidOperationException when elicitation is not enabled
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => McpElicitationHelpers.RequestNumberInputAsync(
+                mockServer.Object, "Enter a number"));
+        Assert.Contains("Elicitation is not supported", exception.Message);
+    }
 }

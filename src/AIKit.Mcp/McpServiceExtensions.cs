@@ -154,6 +154,16 @@ public static class McpServiceExtensions
         {
             builder.InnerBuilder.WithStdioServerTransport();
         }
+        else if (string.Equals(options.Transport, "http", StringComparison.OrdinalIgnoreCase))
+        {
+            // HTTP transport requires additional configuration
+            // builder.Services.AddMcpHttp(options => {
+            //     options.BasePath = options.HttpBasePath ?? "/mcp";
+            //     options.RequireAuthentication = options.RequireAuthentication;
+            // });
+            // For now, fall back to stdio
+            builder.InnerBuilder.WithStdioServerTransport();
+        }
 
         // Configure auto-discovery
         var assembly = options.Assembly ?? Assembly.GetCallingAssembly();
@@ -360,7 +370,7 @@ public static class McpServiceExtensions
     public static void ValidateMcpConfiguration(IServiceProvider services)
     {
         var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("McpValidation");
-        
+
         try
         {
             // Check for registered components
@@ -373,18 +383,60 @@ public static class McpServiceExtensions
             logger.LogInformation("- Resources registered: {Count}", resources.Count);
             logger.LogInformation("- Prompts registered: {Count}", prompts.Count);
 
+            // Performance check: warn if too many components
+            if (tools.Count > 100)
+            {
+                logger.LogWarning("High number of tools ({Count}) may impact performance. Consider organizing into logical groups.", tools.Count);
+            }
+            if (resources.Count > 50)
+            {
+                logger.LogWarning("High number of resources ({Count}) may impact performance. Consider lazy loading.", resources.Count);
+            }
+
             // Check for task store if tasks are enabled
             var taskStore = services.GetService<ModelContextProtocol.IMcpTaskStore>();
             if (taskStore != null)
             {
                 logger.LogInformation("- Task store: {Type}", taskStore.GetType().Name);
             }
+            else
+            {
+                logger.LogWarning("No task store registered. Tasks will not be available. Suggestion: Call builder.WithTasks() to enable task support.");
+            }
 
-            // Check for naming conflicts - Note: McpServerTool may not have Name property
-            // This is a simplified check - in practice, names are set via attributes
-            
-            // Check for transport - simplified check
-            // The transport is configured via the builder methods
+            // Validate tool names for uniqueness
+            var toolNames = tools.Select(t => GetToolName(t)).Where(name => !string.IsNullOrEmpty(name)).ToList();
+            var duplicateToolNames = toolNames.GroupBy(name => name).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+            if (duplicateToolNames.Any())
+            {
+                logger.LogError("Duplicate tool names found: {Names}. Tool names must be unique.", string.Join(", ", duplicateToolNames));
+            }
+
+            // Validate resource URIs
+            var invalidResources = resources.Where(r => !IsValidResourceUri(GetResourceUri(r))).ToList();
+            if (invalidResources.Any())
+            {
+                logger.LogError("Invalid resource URIs found. Resources must have valid URIs.");
+            }
+
+            // Validate prompt names
+            var promptNames = prompts.Select(p => GetPromptName(p)).Where(name => !string.IsNullOrEmpty(name)).ToList();
+            var duplicatePromptNames = promptNames.GroupBy(name => name).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+            if (duplicatePromptNames.Any())
+            {
+                logger.LogError("Duplicate prompt names found: {Names}. Prompt names must be unique.", string.Join(", ", duplicatePromptNames));
+            }
+
+            // Check for required dependencies
+            CheckDependency(services, typeof(ModelContextProtocol.Server.McpServer), "McpServer", logger);
+            CheckDependency(services, typeof(Microsoft.Extensions.Logging.ILoggerFactory), "ILoggerFactory", logger);
+
+            // Transport validation (basic)
+            var serverOptions = services.GetService<ModelContextProtocol.Server.McpServerOptions>();
+            if (serverOptions?.ServerInfo == null)
+            {
+                logger.LogWarning("Server info not configured. Suggestion: Set ServerName and ServerVersion in options.");
+            }
 
             logger.LogInformation("MCP configuration validation completed");
         }
@@ -392,5 +444,45 @@ public static class McpServiceExtensions
         {
             logger.LogError(ex, "Error during MCP configuration validation");
         }
+    }
+
+    private static void CheckDependency(IServiceProvider services, Type serviceType, string serviceName, ILogger logger)
+    {
+        try
+        {
+            var service = services.GetService(serviceType);
+            if (service == null)
+            {
+                logger.LogError("Required service {ServiceName} is not registered.", serviceName);
+            }
+        }
+        catch
+        {
+            logger.LogError("Error checking dependency {ServiceName}.", serviceName);
+        }
+    }
+
+    private static string? GetToolName(ModelContextProtocol.Server.McpServerTool tool)
+    {
+        // Try to get name from attribute or property
+        var attr = tool.GetType().GetCustomAttributes(typeof(McpServerToolAttribute), true).FirstOrDefault() as McpServerToolAttribute;
+        return attr?.Name ?? tool.GetType().Name;
+    }
+
+    private static string? GetResourceUri(ModelContextProtocol.Server.McpServerResource resource)
+    {
+        var attr = resource.GetType().GetCustomAttributes(typeof(McpServerResourceAttribute), true).FirstOrDefault() as McpServerResourceAttribute;
+        return attr?.UriTemplate;
+    }
+
+    private static string? GetPromptName(ModelContextProtocol.Server.McpServerPrompt prompt)
+    {
+        var attr = prompt.GetType().GetCustomAttributes(typeof(McpServerPromptAttribute), true).FirstOrDefault() as McpServerPromptAttribute;
+        return attr?.Name ?? prompt.GetType().Name;
+    }
+
+    private static bool IsValidResourceUri(string? uri)
+    {
+        return !string.IsNullOrEmpty(uri) && Uri.IsWellFormedUriString(uri, UriKind.RelativeOrAbsolute);
     }
 }

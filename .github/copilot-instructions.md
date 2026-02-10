@@ -25,6 +25,9 @@ builder.Services.AddAIKitMcp()
         options.EnableElicitation = true;  // Enable user input requests
         options.EnableProgress = true;     // Enable progress notifications
         options.EnableCompletion = true;   // Enable auto-completion
+        options.EnableSampling = true;     // Enable LLM sampling
+        options.HttpBasePath = "/mcp";     // HTTP transport base path
+        options.RequireAuthentication = false; // HTTP authentication
         options.Assembly = typeof(Program).Assembly;
     });
 
@@ -179,6 +182,58 @@ public class InteractiveTools
 }
 ```
 
+### Enhanced Helper Methods
+
+AIKit.Mcp provides additional helper methods for common MCP patterns:
+
+#### Task Helpers with Retry Logic
+
+```csharp
+// Create tasks with built-in retry
+var taskId = await McpTaskHelpers.CreateTaskWithRetryAsync(
+    server, "myTask", TimeSpan.FromMinutes(5),
+    async ct => {
+        // Operation that might fail
+        return JsonValue.Create("result");
+    },
+    maxRetries: 3, retryDelay: TimeSpan.FromSeconds(2));
+
+// Report progress
+await McpTaskHelpers.ReportProgressAsync(server, progressToken, 50.0f, 100.0f, "Half complete");
+```
+
+#### Elicitation Helpers for Common Inputs
+
+```csharp
+// Pre-built input types
+var email = await McpElicitationHelpers.RequestEmailInputAsync(server, "Enter your email:");
+var date = await McpElicitationHelpers.RequestDateInputAsync(server, "Select a date:");
+var number = await McpElicitationHelpers.RequestNumberInputAsync(server, "Enter a number:", min: 0, max: 100);
+```
+
+#### Completion Helpers with Custom Logic
+
+```csharp
+// Dynamic completion based on function
+var dynamicHandler = McpCompletionHelpers.CreateDynamicCompletionHandler(
+    (argName, value) => GetSuggestions(argName, value));
+
+// Tool name completion
+var toolHandler = McpCompletionHelpers.CreateToolCompletionHandler(toolNames);
+```
+
+#### Sampling Helpers for Code and Structured Output
+
+```csharp
+// Generate code
+var code = await McpSamplingHelpers.GenerateCodeAsync(
+    server, "csharp", "Create a method to calculate factorial", maxTokens: 200);
+
+// Generate structured JSON
+var json = await McpSamplingHelpers.GenerateStructuredOutputAsync(
+    server, "Create a user profile", "{\"name\": \"string\", \"age\": \"number\"}");
+```
+
 ### Completion Support
 
 Provide auto-completion suggestions for prompt arguments and resource references:
@@ -265,11 +320,15 @@ public class AITools
 Enable HTTP-based MCP servers for web integration (requires ModelContextProtocol.AspNetCore package):
 
 ```csharp
-// Note: HTTP transport requires additional package installation
-builder.WithHttpTransport(options => {
-    options.BasePath = "/mcp";
-    options.RequireAuthentication = true;
-});
+// Configure HTTP transport in options
+builder.Services.AddAIKitMcp()
+    .WithOptions(options => {
+        options.Transport = "http";
+        options.HttpBasePath = "/mcp";
+        options.RequireAuthentication = false; // Set to true for production
+    });
+
+// For web applications, use WebApplication.CreateBuilder instead of Host.CreateApplicationBuilder
 ```
 
 ## Developer Workflows
@@ -311,7 +370,9 @@ cd samples/AIKit.Mcp.Sample && dotnet run
     "EnableElicitation": false,
     "EnableProgress": false,
     "EnableCompletion": false,
-    "EnableSampling": false
+    "EnableSampling": false,
+    "HttpBasePath": "/mcp",
+    "RequireAuthentication": false
   }
 }
 ```

@@ -53,4 +53,18 @@ public class McpCompletionHelpersTests
         // Assert
         Assert.NotNull(handler);
     }
+
+    [Fact]
+    public void CreateDynamicCompletionHandler_ReturnsCompletionHandler()
+    {
+        // Arrange
+        Func<string, string, IEnumerable<string>> completionFunc = (argName, value) =>
+            new[] { $"{argName}-{value}-1", $"{argName}-{value}-2" };
+
+        // Act
+        var handler = McpCompletionHelpers.CreateDynamicCompletionHandler(completionFunc);
+
+        // Assert
+        Assert.NotNull(handler);
+    }
 }

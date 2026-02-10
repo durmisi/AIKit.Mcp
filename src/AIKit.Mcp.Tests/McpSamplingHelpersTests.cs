@@ -82,4 +82,30 @@ public class McpSamplingHelpersTests
                 mockServer.Object, "Test prompt", maxTokens: 100, temperature: 0.7f));
         Assert.Contains("Sampling is not supported", exception.Message);
     }
+
+    [Fact]
+    public async Task GenerateCodeAsync_ThrowsWhenSamplingNotSupported()
+    {
+        // Arrange
+        var mockServer = new Mock<McpServer>();
+
+        // Act & Assert - Should throw InvalidOperationException when sampling is not enabled
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => McpSamplingHelpers.GenerateCodeAsync(
+                mockServer.Object, "csharp", "Create a method", maxTokens: 200));
+        Assert.Contains("Sampling is not supported", exception.Message);
+    }
+
+    [Fact]
+    public async Task GenerateStructuredOutputAsync_ThrowsWhenSamplingNotSupported()
+    {
+        // Arrange
+        var mockServer = new Mock<McpServer>();
+
+        // Act & Assert - Should throw InvalidOperationException when sampling is not enabled
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => McpSamplingHelpers.GenerateStructuredOutputAsync(
+                mockServer.Object, "Create a user profile", "{\"name\": \"string\"}"));
+        Assert.Contains("Sampling is not supported", exception.Message);
+    }
 }

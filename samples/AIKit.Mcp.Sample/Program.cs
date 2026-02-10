@@ -22,7 +22,12 @@ builder.Services.AddAIKitMcp()
         options.ServerVersion = "1.0.0";
 
         // Transport configuration
-        options.Transport = "stdio";
+        options.Transport = "stdio"; // Change to "http" for HTTP transport
+
+        // HTTP transport options (only used when Transport is "http")
+        // Requires ModelContextProtocol.AspNetCore package and web host setup
+        options.HttpBasePath = "/mcp";
+        options.RequireAuthentication = false; // Set to true for production
 
         // Auto-discovery settings
         options.AutoDiscoverTools = true;

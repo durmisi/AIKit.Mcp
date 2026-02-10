@@ -104,4 +104,30 @@ public class McpServerExtensionsTests
         Assert.True(options.EnableCompletion);
         Assert.True(options.EnableSampling);
     }
+
+    [Fact]
+    public void McpOptions_HasHttpProperties()
+    {
+        // Arrange & Act
+        var options = new McpOptions();
+
+        // Assert - Verify HTTP properties exist and have default values
+        Assert.Null(options.HttpBasePath);
+        Assert.False(options.RequireAuthentication);
+    }
+
+    [Fact]
+    public void McpOptions_CanSetHttpProperties()
+    {
+        // Arrange & Act
+        var options = new McpOptions
+        {
+            HttpBasePath = "/custom-mcp",
+            RequireAuthentication = true
+        };
+
+        // Assert
+        Assert.Equal("/custom-mcp", options.HttpBasePath);
+        Assert.True(options.RequireAuthentication);
+    }
 }
