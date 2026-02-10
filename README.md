@@ -1,5 +1,7 @@
 # AIKit.Mcp
 
+**You focus on building business logic. AIKit.Mcp handles the rest.**
+
 A .NET wrapper library for the Model Context Protocol (MCP) SDK that simplifies MCP server configuration with fluent builder patterns. Designed to reduce complexity when building MCP servers in .NET Core, providing an intuitive API on top of the official MCP SDK.
 
 ## Features
