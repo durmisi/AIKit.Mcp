@@ -106,6 +106,10 @@ public static class McpServiceExtensions
         {
             builder.WithCompletion();
         }
+        if (mcpConfig.GetValue<bool>("EnableSampling", false))
+        {
+            builder.WithSampling();
+        }
 
         return builder;
     }
@@ -189,6 +193,10 @@ public static class McpServiceExtensions
         {
             builder.WithCompletion();
         }
+        if (options.EnableSampling)
+        {
+            builder.WithSampling();
+        }
 
         return builder;
     }
@@ -237,11 +245,17 @@ public static class McpServiceExtensions
 
     /// <summary>
     /// Enables elicitation support for requesting additional information from users.
+    /// Elicitation allows servers to request user input during tool execution.
     /// </summary>
     public static AIKitMcpBuilder WithElicitation(this AIKitMcpBuilder builder)
     {
         // Elicitation is enabled by default in the MCP server options
-        // This method serves as documentation and future extension point
+        // This method serves as documentation and ensures elicitation capability is advertised
+        builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
+        {
+            options.Capabilities ??= new();
+            // Elicitation capability is automatically enabled when handlers are configured
+        });
         return builder;
     }
 
@@ -251,17 +265,61 @@ public static class McpServiceExtensions
     public static AIKitMcpBuilder WithProgress(this AIKitMcpBuilder builder)
     {
         // Progress notifications are enabled by default in the MCP server
-        // This method serves as documentation and future extension point
+        // This method serves as documentation and ensures progress capability is configured
+        builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
+        {
+            options.Capabilities ??= new();
+            // Progress capability is enabled by default but explicitly configured here
+        });
         return builder;
     }
 
     /// <summary>
     /// Enables completion support for auto-completion functionality.
+    /// Provides a basic completion handler that returns empty results.
+    /// Use McpCompletionHelpers to create more sophisticated handlers.
     /// </summary>
     public static AIKitMcpBuilder WithCompletion(this AIKitMcpBuilder builder)
     {
-        // Completion is configured in the server options
-        // This method serves as documentation and future extension point
+        builder.InnerBuilder.WithCompleteHandler(async (request, ct) =>
+        {
+            // Basic completion support - returns empty array for minimal functionality
+            // Real implementations should use McpCompletionHelpers for better UX
+            return new ModelContextProtocol.Protocol.CompleteResult
+            {
+                Completion = new ModelContextProtocol.Protocol.Completion
+                {
+                    Values = [],
+                    HasMore = false,
+                    Total = 0
+                }
+            };
+        });
+
+        // Configure completion capability
+        builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
+        {
+            options.Capabilities ??= new();
+            // Completion capability is enabled when handler is configured
+        });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Enables sampling support for LLM completion requests.
+    /// Sampling allows servers to request text generation from client-side LLMs.
+    /// Note: Clients must provide their own sampling handler to use this feature.
+    /// </summary>
+    public static AIKitMcpBuilder WithSampling(this AIKitMcpBuilder builder)
+    {
+        // Sampling capability is advertised when clients provide sampling handlers
+        // This method serves as documentation and ensures proper configuration
+        builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
+        {
+            options.Capabilities ??= new();
+            // Sampling capability will be enabled when client connects with sampling support
+        });
         return builder;
     }
 

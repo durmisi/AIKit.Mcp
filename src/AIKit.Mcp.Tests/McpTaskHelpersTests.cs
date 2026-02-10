@@ -81,6 +81,7 @@ public class McpServerExtensionsTests
         Assert.False(options.EnableElicitation);
         Assert.False(options.EnableProgress);
         Assert.False(options.EnableCompletion);
+        Assert.False(options.EnableSampling);
     }
 
     [Fact]
@@ -92,7 +93,8 @@ public class McpServerExtensionsTests
             EnableTasks = true,
             EnableElicitation = true,
             EnableProgress = true,
-            EnableCompletion = true
+            EnableCompletion = true,
+            EnableSampling = true
         };
 
         // Assert
@@ -100,5 +102,6 @@ public class McpServerExtensionsTests
         Assert.True(options.EnableElicitation);
         Assert.True(options.EnableProgress);
         Assert.True(options.EnableCompletion);
+        Assert.True(options.EnableSampling);
     }
 }

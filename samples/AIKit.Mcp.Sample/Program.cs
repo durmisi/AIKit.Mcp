@@ -33,6 +33,13 @@ builder.Services.AddAIKitMcp()
         options.EnableDevelopmentFeatures = true; // Enable message tracing
         options.EnableValidation = true;          // Enable startup validation
 
+        // Enable advanced MCP features
+        options.EnableTasks = true;           // Enable long-running operations
+        options.EnableProgress = true;        // Enable progress notifications
+        options.EnableElicitation = true;     // Enable user input requests
+        options.EnableCompletion = true;      // Enable auto-completion
+        options.EnableSampling = true;        // Enable LLM sampling
+
         // Use the current assembly for component discovery
         options.Assembly = typeof(Program).Assembly;
     });
@@ -41,12 +48,14 @@ builder.Services.AddAIKitMcp()
 builder.Services.AddScoped<MathTools>();
 builder.Services.AddScoped<FileSystemResources>();
 builder.Services.AddScoped<ConversationPrompts>();
+builder.Services.AddScoped<InteractiveTools>();
 
 var host = builder.Build();
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("🚀 AIKit MCP Sample Server is starting...");
-logger.LogInformation("📋 Available tools: Math operations");
+logger.LogInformation("📋 Available tools: Math operations, Interactive games, AI sampling");
 logger.LogInformation("📁 Available resources: File system access");
 logger.LogInformation("💬 Available prompts: Conversation helpers");
+logger.LogInformation("✨ Advanced features: Tasks, Progress, Elicitation, Completion, Sampling");
 
 await host.RunAsync();

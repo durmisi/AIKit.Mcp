@@ -119,6 +119,147 @@ await McpTaskHelpers.ReportProgressAsync(server, progressToken, 50.0f, 100.0f, "
 await server.NotifyProgressAsync(progressToken, 75.0f, 100.0f, "Almost done");
 ```
 
+### Elicitation Support
+
+Request additional information from users during tool execution using forms or external URLs:
+
+```csharp
+// Enable elicitation in options
+options.EnableElicitation = true;
+
+// Or explicitly
+builder.WithElicitation();
+
+// Use helper methods for common patterns
+[McpServerToolType]
+public class InteractiveTools
+{
+    [McpServerTool(Name = "confirm_action")]
+    public async Task<string> ConfirmAction(McpServer server)
+    {
+        var confirmed = await McpElicitationHelpers.RequestConfirmationAsync(
+            server, "Are you sure you want to proceed?", CancellationToken.None);
+
+        return confirmed ? "Action confirmed!" : "Action cancelled.";
+    }
+
+    [McpServerTool(Name = "get_user_input")]
+    public async Task<string> GetUserInput(McpServer server)
+    {
+        var name = await McpElicitationHelpers.RequestTextInputAsync(
+            server, "What's your name?", minLength: 1, maxLength: 50);
+
+        return $"Hello, {name}!";
+    }
+
+    [McpServerTool(Name = "complex_form")]
+    public async Task<string> ComplexForm(McpServer server)
+    {
+        var response = await McpElicitationHelpers.RequestFormInputAsync(
+            server,
+            "Please provide your details:",
+            new ElicitRequestParams.RequestSchema
+            {
+                Properties = new Dictionary<string, ElicitRequestParams.PrimitiveSchemaDefinition>
+                {
+                    ["Name"] = new ElicitRequestParams.StringSchema { Description = "Your full name" },
+                    ["Age"] = new ElicitRequestParams.NumberSchema { Minimum = 0, Maximum = 120 }
+                }
+            });
+
+        if (response != null)
+        {
+            var name = response["Name"]?.GetValue<string>();
+            var age = response["Age"]?.GetValue<int>();
+            return $"Received: {name}, age {age}";
+        }
+
+        return "Form cancelled.";
+    }
+}
+```
+
+### Completion Support
+
+Provide auto-completion suggestions for prompt arguments and resource references:
+
+```csharp
+// Enable completion in options
+options.EnableCompletion = true;
+
+// Or explicitly
+builder.WithCompletion();
+
+// Use helper methods to create completion handlers
+[McpServerToolType]
+public class CompletionExampleTools
+{
+    [McpServerTool(Name = "use_completion")]
+    public string UseCompletion(string style)
+    {
+        // Completion will suggest values for the 'style' parameter
+        return $"Using style: {style}";
+    }
+}
+
+// In Program.cs, configure completion
+builder.Services.AddAIKitMcp()
+    .WithCompletion()  // Basic empty completion
+    .WithOptions(options => {
+        // Configure completion handler
+        var completions = new Dictionary<string, IEnumerable<string>>
+        {
+            ["style"] = ["formal", "casual", "technical", "friendly"]
+        };
+
+        // Note: Custom completion handlers need to be set on the McpServerOptions
+        // after builder configuration
+    });
+```
+
+### Sampling Support
+
+Request LLM completions from the client for AI-powered features:
+
+```csharp
+// Enable sampling in options
+options.EnableSampling = true;
+
+// Or explicitly
+builder.WithSampling();
+
+// Use helper methods for text generation
+[McpServerToolType]
+public class AITools
+{
+    [McpServerTool(Name = "generate_summary")]
+    public async Task<string> GenerateSummary(McpServer server, string topic)
+    {
+        var summary = await McpSamplingHelpers.GenerateTextAsync(
+            server,
+            $"Summarize the key points about {topic} in 2-3 sentences.",
+            maxTokens: 150,
+            temperature: 0.7f);
+
+        return $"Summary of {topic}:\n{summary}";
+    }
+
+    [McpServerTool(Name = "chat_with_ai")]
+    public async Task<string> ChatWithAI(McpServer server, string question)
+    {
+        var response = await McpSamplingHelpers.GenerateChatResponseAsync(
+            server,
+            new[] {
+                new ChatMessage(ChatRole.System, "You are a helpful assistant."),
+                new ChatMessage(ChatRole.User, question)
+            },
+            maxTokens: 100);
+
+        return response.Messages.FirstOrDefault()?.Text ?? "No response.";
+    }
+}
+```
+
 ### HTTP Transport
 
 Enable HTTP-based MCP servers for web integration (requires ModelContextProtocol.AspNetCore package):
@@ -169,7 +310,8 @@ cd samples/AIKit.Mcp.Sample && dotnet run
     "EnableTasks": false,
     "EnableElicitation": false,
     "EnableProgress": false,
-    "EnableCompletion": false
+    "EnableCompletion": false,
+    "EnableSampling": false
   }
 }
 ```

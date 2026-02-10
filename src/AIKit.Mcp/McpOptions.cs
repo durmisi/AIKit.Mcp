@@ -68,6 +68,11 @@ public class McpOptions
     public bool EnableCompletion { get; set; }
 
     /// <summary>
+    /// Whether to enable sampling support for LLM completion requests.
+    /// </summary>
+    public bool EnableSampling { get; set; }
+
+    /// <summary>
     /// The assembly to scan for MCP components. If null, uses the calling assembly.
     /// </summary>
     public Assembly? Assembly { get; set; }

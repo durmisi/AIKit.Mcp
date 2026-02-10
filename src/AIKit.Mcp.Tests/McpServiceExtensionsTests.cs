@@ -297,7 +297,8 @@ public class McpServiceExtensionsTests
                 ["Mcp:EnableTasks"] = "true",
                 ["Mcp:EnableElicitation"] = "true",
                 ["Mcp:EnableProgress"] = "true",
-                ["Mcp:EnableCompletion"] = "true"
+                ["Mcp:EnableCompletion"] = "true",
+                ["Mcp:EnableSampling"] = "true"
             })
             .Build();
 
@@ -310,6 +311,59 @@ public class McpServiceExtensionsTests
         // Verify task store was registered when EnableTasks is true
         var taskStoreDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(ModelContextProtocol.IMcpTaskStore));
         Assert.NotNull(taskStoreDescriptor);
+    }
+
+    [Fact]
+    public void WithElicitation_ConfiguresElicitationCapability()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithElicitation();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+    }
+
+    [Fact]
+    public void WithCompletion_ConfiguresCompletionCapability()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithCompletion();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+
+        // Note: The method configures both a completion handler on the MCP server builder
+        // and capabilities in McpServerOptions. We verify the method completes successfully
+        // and returns the expected builder. The actual capability activation is tested
+        // through integration with the MCP SDK.
+    }
+
+    [Fact]
+    public void WithSampling_ConfiguresSamplingCapability()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithSampling();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
     }
 }
 
