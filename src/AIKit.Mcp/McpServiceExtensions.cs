@@ -240,6 +240,24 @@ public static class McpServiceExtensions
             builder.WithSampling();
         }
 
+        // Configure message filter
+        if (options.MessageFilter != null)
+        {
+            var filter = options.MessageFilter();
+            builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(serverOptions =>
+            {
+                serverOptions.Filters.IncomingMessageFilters.Add(filter);
+            });
+        }
+        else if (builder.MessageFilter != null)
+        {
+            var filter = builder.MessageFilter();
+            builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(serverOptions =>
+            {
+                serverOptions.Filters.IncomingMessageFilters.Add(filter);
+            });
+        }
+
         return builder;
     }
 

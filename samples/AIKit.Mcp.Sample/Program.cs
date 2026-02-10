@@ -93,6 +93,22 @@ builder.Services.AddAIKitMcp()
         options.EnableCompletion = true;      // Enable auto-completion
         options.EnableSampling = true;        // Enable LLM sampling
 
+        // Configure message-level filters for logging and monitoring
+        options.MessageFilter = () => next => async (context, cancellationToken) =>
+        {
+            // Simple message logging filter - logs to console
+            var method = context.JsonRpcMessage is ModelContextProtocol.Protocol.JsonRpcRequest request
+                ? request.Method
+                : "non-request";
+            Console.WriteLine($"📨 Incoming MCP message: {method}");
+
+            // Call the next handler in the pipeline
+            await next(context, cancellationToken);
+
+            // Log completion
+            Console.WriteLine($"📤 Message processing completed for: {method}");
+        };
+
         // Use the current assembly for component discovery
         options.Assembly = typeof(Program).Assembly;
     });

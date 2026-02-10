@@ -1,5 +1,6 @@
 using System.Reflection;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Server;
 
 namespace AIKit.Mcp;
 
@@ -141,6 +142,11 @@ public class McpOptions
     /// The assembly to scan for MCP components. If null, uses the calling assembly.
     /// </summary>
     public Assembly? Assembly { get; set; }
+
+    /// <summary>
+    /// Optional message filter to apply to incoming JSON-RPC messages.
+    /// </summary>
+    public Func<McpMessageFilter>? MessageFilter { get; set; }
 }
 
 /// <summary>
