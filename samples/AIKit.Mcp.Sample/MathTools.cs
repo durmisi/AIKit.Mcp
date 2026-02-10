@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol;
 using ModelContextProtocol.Server;
 
 namespace AIKit.Mcp.Sample;
@@ -57,5 +58,24 @@ public class MathTools
 
         _logger.LogInformation("Fibonacci({N}) = {Result}", n, b);
         return b;
+    }
+
+    [McpServerTool(Name = "long_calculation")]
+    public async Task<double> LongCalculation(int iterations, IProgress<ProgressNotificationValue> progress)
+    {
+        double result = 0;
+        for (int i = 0; i < iterations; i++)
+        {
+            result += Math.Sin(i) * Math.Cos(i);
+            progress.Report(new ProgressNotificationValue
+            {
+                Progress = i + 1,
+                Total = iterations,
+                Message = $"Processing iteration {i + 1} of {iterations}"
+            });
+            await Task.Delay(10); // Simulate work
+        }
+        _logger.LogInformation("Long calculation completed with {Iterations} iterations", iterations);
+        return result;
     }
 }

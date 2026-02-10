@@ -93,10 +93,30 @@ public class LongRunningTools
 
 ### Progress Notifications
 
-Report progress for long-running operations (simplified implementation):
+Report progress for long-running operations using the SDK's built-in progress support:
 
 ```csharp
-await server.NotifyProgressAsync("operation-123", 0.5, "Halfway complete");
+// In tool methods, add IProgress<ProgressNotificationValue> parameter
+[McpServerTool(Name = "long_operation")]
+public async Task<string> LongOperation(int steps, IProgress<ProgressNotificationValue> progress)
+{
+    for (int i = 1; i <= steps; i++)
+    {
+        // Do work...
+        progress.Report(new ProgressNotificationValue
+        {
+            Progress = i,
+            Total = steps,
+            Message = $"Step {i} of {steps} completed"
+        });
+        await Task.Delay(100);
+    }
+    return "Operation completed";
+}
+
+// Or use helper methods for manual progress reporting
+await McpTaskHelpers.ReportProgressAsync(server, progressToken, 50.0f, 100.0f, "Halfway complete");
+await server.NotifyProgressAsync(progressToken, 75.0f, 100.0f, "Almost done");
 ```
 
 ### HTTP Transport
