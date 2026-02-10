@@ -21,7 +21,6 @@ using AIKit.Mcp;
 using AIKit.Mcp.Sample;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,7 +30,7 @@ builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // Configure AIKit MCP server using the new options pattern
-var mcpBuilder = builder.Services.AddAIKitMcp(mcp =>
+builder.Services.AddAIKitMcp(mcp =>
 {
     // Server identification
     mcp.ServerName = "AIKit.Sample.Server";
