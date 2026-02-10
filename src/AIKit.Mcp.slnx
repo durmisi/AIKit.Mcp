@@ -1,5 +1,7 @@
 <Solution>
-  <Project Path="../samples/AIKit.Mcp.Sample/AIKit.Mcp.Sample.csproj" />
+  <Folder Name="/Samples/">
+    <Project Path="../samples/AIKit.Mcp.Sample/AIKit.Mcp.Sample.csproj" />
+  </Folder>
   <Project Path="AIKit.Mcp/AIKit.Mcp.csproj" />
   <Project Path="AIKit.Mcp.Tests/AIKit.Mcp.Tests.csproj" />
 </Solution>

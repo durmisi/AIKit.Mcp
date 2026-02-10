@@ -18,11 +18,6 @@ public static class McpServiceExtensions
         // Integration with Official SDK
         var builder = services.AddMcpServer();
 
-        // Redirect logs to stderr to keep the stdio pipe clean for JSON-RPC
-        services.AddLogging(builder => {
-            builder.AddConsole(c => c.LogToStandardErrorThreshold = LogLevel.Trace);
-        });
-
         return new AIKitMcpBuilder(builder, services);
     }
 
@@ -32,12 +27,36 @@ public static class McpServiceExtensions
     /// </summary>
     public static AIKitMcpBuilder WithDefaultConfiguration(this AIKitMcpBuilder builder)
     {
+        builder.WithLogging();  // Add default logging
+
         builder.InnerBuilder
             .WithStdioServerTransport()
             .WithToolsFromAssembly()
             .WithResourcesFromAssembly()
             .WithPromptsFromAssembly();
         
+        return builder;
+    }
+
+    /// <summary>
+    /// Configures logging for the MCP server.
+    /// By default, redirects logs to stderr to keep stdio clean for JSON-RPC.
+    /// </summary>
+    public static AIKitMcpBuilder WithLogging(this AIKitMcpBuilder builder, Action<LoggingOptions>? configure = null)
+    {
+        var options = new LoggingOptions();
+        configure?.Invoke(options);
+
+        builder.Services.AddLogging(logging => {
+            logging.AddConsole(c => {
+                if (options.RedirectToStderr)
+                {
+                    c.LogToStandardErrorThreshold = options.MinLogLevel;
+                }
+            });
+            logging.SetMinimumLevel(options.MinLogLevel);
+        });
+
         return builder;
     }
 

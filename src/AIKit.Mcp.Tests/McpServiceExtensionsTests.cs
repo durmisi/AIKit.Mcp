@@ -358,6 +358,7 @@ public class McpServiceExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddAIKitMcp()
+            .WithLogging()  // Add logging for validation
             .WithOptions(options =>
             {
                 options.ServerName = "TestServer";
@@ -417,6 +418,7 @@ public class McpServiceExtensionsTests
         // Arrange
         var services = new ServiceCollection();
         services.AddAIKitMcp()
+            .WithLogging()  // Add logging for validation
             .WithOptions(options =>
             {
                 options.ServerName = "TestServer";

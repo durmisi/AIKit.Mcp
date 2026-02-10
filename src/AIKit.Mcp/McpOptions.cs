@@ -1,4 +1,5 @@
 using System.Reflection;
+using Microsoft.Extensions.Logging;
 
 namespace AIKit.Mcp;
 
@@ -233,4 +234,22 @@ public class ProtectedResourceMetadata
     /// URL to resource documentation.
     /// </summary>
     public Uri? ResourceDocumentation { get; set; }
+}
+
+/// <summary>
+/// Logging configuration options for MCP servers.
+/// </summary>
+public class LoggingOptions
+{
+    /// <summary>
+    /// Whether to redirect logs to stderr to keep stdio clean for JSON-RPC.
+    /// Defaults to true for MCP servers.
+    /// </summary>
+    public bool RedirectToStderr { get; set; } = true;
+
+    /// <summary>
+    /// The minimum log level to output.
+    /// Defaults to Trace to capture all logs.
+    /// </summary>
+    public LogLevel MinLogLevel { get; set; } = LogLevel.Trace;
 }
