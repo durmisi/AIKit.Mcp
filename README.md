@@ -20,29 +20,59 @@ AIKit.Mcp provides a clean abstraction over the MCP SDK, allowing you to focus o
 
 ```mermaid
 graph TB
-    A[Developer] --> B[AIKit Mcp Builder]
-    B --> C[MCP Server]
+    %% Developer
+    A[Developer]
 
-    C --> D[Transport Layer]
-    D --> D1[Stdio]
-    D --> D2[HTTP]
+    %% Builder Layer
+    subgraph Builder["AIKit SDK / Builder"]
+        B[AIKit MCP Builder]
+    end
 
-    C --> E[Authentication]
-    E --> E1[OAuth 2.0]
-    E --> E2[JWT Bearer]
-    E --> E3[Custom]
+    %% Runtime Layer
+    subgraph Runtime["MCP Server Runtime"]
+        C[MCP Server]
 
-    C --> F[Auto-Discovery]
-    F --> F1[Tools<br/>[McpServerTool]]
-    F --> F2[Resources<br/>[McpServerResource]]
-    F --> F3[Prompts<br/>[McpServerPrompt]]
+        subgraph Transport["Transport Layer"]
+            D1[STDIO]
+            D2[HTTP]
+        end
 
-    C --> G[Advanced Features]
-    G --> G1[Progress]
-    G --> G2[Tasks]
-    G --> G3[Sampling]
+        subgraph Auth["Authentication"]
+            E1[OAuth 2.0]
+            E2[JWT Bearer]
+            E3[Custom]
+        end
 
-    B --> H[Business Logic, Your Tools, Resources]
+        subgraph Discovery["Auto-Discovery"]
+            F1[MCP Tools]
+            F2[MCP Resources]
+            F3[MCP Prompts]
+        end
+
+        subgraph Advanced["Advanced Features"]
+            G1[Progress]
+            G2[Tasks]
+            G3[Sampling]
+        end
+    end
+
+    %% Developer Extensions
+    subgraph Extensions["Developer-Provided Extensions"]
+        H[Business Logic<br/>Custom Tools<br/>Resources]
+    end
+
+    %% Flow
+    A --> B
+    B --> C
+
+    C --> Transport
+    C --> Auth
+    C --> Discovery
+    C --> Advanced
+
+    B --> H
+    H --> C
+
 ```
 
 ## Installation
