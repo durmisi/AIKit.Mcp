@@ -38,6 +38,8 @@ public class McpOptions
     /// </summary>
     public TransportType Transport { get; set; } = TransportType.Stdio;
 
+    // Discovery Options
+
     /// <summary>
     /// Whether to auto-discover tools from assemblies.
     /// </summary>
@@ -52,6 +54,8 @@ public class McpOptions
     /// Whether to auto-discover prompts from assemblies.
     /// </summary>
     public bool AutoDiscoverPrompts { get; set; } = true;
+
+    // Feature Flags
 
     /// <summary>
     /// Whether to enable development features like message tracing.
@@ -87,6 +91,8 @@ public class McpOptions
     /// Whether to enable sampling support for LLM completion requests.
     /// </summary>
     public bool EnableSampling { get; set; }
+
+    // HTTP and Authentication Options
 
     /// <summary>
     /// The base path for HTTP transport (when Transport is "http").
@@ -127,6 +133,8 @@ public class McpOptions
     /// Whether to enable header forwarding for client-side authentication scenarios.
     /// </summary>
     public bool EnableHeaderForwarding { get; set; }
+
+    // Assembly
 
     /// <summary>
     /// The assembly to scan for MCP components. If null, uses the calling assembly.
