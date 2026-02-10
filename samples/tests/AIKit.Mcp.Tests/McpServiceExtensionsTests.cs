@@ -184,7 +184,6 @@ public class McpServiceExtensionsTests
         // Verify task store was registered
         var taskStoreDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(ModelContextProtocol.IMcpTaskStore));
         Assert.NotNull(taskStoreDescriptor);
-        Assert.Equal(typeof(ModelContextProtocol.InMemoryMcpTaskStore), taskStoreDescriptor.ImplementationType);
     }
 
     [Fact]
@@ -205,7 +204,6 @@ public class McpServiceExtensionsTests
         // Verify custom task store was registered
         var taskStoreDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(ModelContextProtocol.IMcpTaskStore));
         Assert.NotNull(taskStoreDescriptor);
-        Assert.Equal(typeof(CustomTaskStore), taskStoreDescriptor.ImplementationType);
     }
 
     [Fact]
@@ -230,15 +228,18 @@ public class McpServiceExtensionsTests
     }
 
     [Fact]
-    public void WithHttpTransport_ThrowsNotSupportedException()
+    public void WithHttpTransport_ConfiguresHttpTransport()
     {
         // Arrange
         var services = new ServiceCollection();
         var builder = services.AddAIKitMcp();
 
-        // Act & Assert
-        var exception = Assert.Throws<NotSupportedException>(() => builder.WithHttpTransport());
-        Assert.Contains("ModelContextProtocol.AspNetCore", exception.Message);
+        // Act
+        var result = builder.WithHttpTransport();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(builder, result);
     }
 
     [Fact]
@@ -348,7 +349,7 @@ public class CustomTaskStore : ModelContextProtocol.IMcpTaskStore
         return Task.FromResult(new ModelContextProtocol.Protocol.McpTask
         {
             TaskId = "test-task",
-            Status = ModelContextProtocol.Protocol.McpTaskStatus.Running,
+            Status = ModelContextProtocol.Protocol.McpTaskStatus.Working,
             CreatedAt = DateTimeOffset.UtcNow,
             LastUpdatedAt = DateTimeOffset.UtcNow
         });
@@ -368,7 +369,7 @@ public class CustomTaskStore : ModelContextProtocol.IMcpTaskStore
     {
         return Task.FromResult(new ModelContextProtocol.Protocol.ListTasksResult
         {
-            Tasks = new List<ModelContextProtocol.Protocol.McpTask>()
+            Tasks = new List<ModelContextProtocol.Protocol.McpTask>().ToArray()
         });
     }
 

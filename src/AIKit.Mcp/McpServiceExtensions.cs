@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol;
+using ModelContextProtocol.AspNetCore;
 using ModelContextProtocol.Server;
 using System.Linq;
 using System.Reflection;
@@ -266,11 +268,10 @@ public static class McpServiceExtensions
     /// <summary>
     /// Enables HTTP transport for ASP.NET Core integration.
     /// </summary>
-    public static AIKitMcpBuilder WithHttpTransport(this AIKitMcpBuilder builder, Action<object>? configure = null)
+    public static AIKitMcpBuilder WithHttpTransport(this AIKitMcpBuilder builder, Action<HttpServerTransportOptions>? configure = null)
     {
-        // HTTP transport requires ModelContextProtocol.AspNetCore package
-        // For now, this is a placeholder - users need to add the package manually
-        throw new NotSupportedException("HTTP transport requires ModelContextProtocol.AspNetCore package. Please install it and use the official builder methods.");
+        builder.InnerBuilder.WithHttpTransport(configure);
+        return builder;
     }
 
     /// <summary>
