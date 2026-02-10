@@ -11,7 +11,6 @@ A .NET wrapper library for the Model Context Protocol (MCP) SDK that simplifies 
 - **Authentication**: OAuth 2.0, JWT Bearer, and custom authentication for HTTP transport
 - **Auto-Discovery**: Automatically discovers tools, resources, and prompts from assemblies
 - **Advanced MCP Features**: Tasks, progress notifications, completion, sampling, and elicitation
-- **Multi-Framework**: Supports .NET 6.0, 8.0, 9.0, and 10.0
 - **Logging**: Configurable logging with stderr redirection for clean stdio
 
 ## Architecture
