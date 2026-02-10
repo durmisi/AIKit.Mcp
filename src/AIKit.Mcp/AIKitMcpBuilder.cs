@@ -8,13 +8,95 @@ using System.Reflection;
 
 namespace AIKit.Mcp;
 
+/// <summary>
+/// Supported transport types for MCP servers.
+/// </summary>
+public enum TransportType
+{
+    /// <summary>
+    /// Standard input/output transport for command-line applications.
+    /// </summary>
+    Stdio,
+
+    /// <summary>
+    /// HTTP transport for web-based MCP servers.
+    /// </summary>
+    Http
+}
+
+/// <summary>
+/// Logging configuration options for MCP servers.
+/// </summary>
+public class LoggingOptions
+{
+    /// <summary>
+    /// Whether to redirect logs to stderr to keep stdio clean for JSON-RPC.
+    /// Defaults to true for MCP servers.
+    /// </summary>
+    public bool RedirectToStderr { get; set; } = true;
+
+    /// <summary>
+    /// The minimum log level to output.
+    /// Defaults to Trace to capture all logs.
+    /// </summary>
+    public LogLevel MinLogLevel { get; set; } = LogLevel.Trace;
+}
+
 public sealed class AIKitMcpBuilder
 {
     public IServiceCollection Services { get; }
+    
     public IMcpServerBuilder McpServerBuilder { get; }
-    public McpOptions Options { get; } = new();
-
-    private Func<McpMessageFilter>? _messageFilter;
+    
+    // Server metadata
+    public string? ServerName { get; set; }
+    public string? ServerVersion { get; set; }
+    
+    // Transport
+    public TransportType Transport { get; set; } = TransportType.Stdio;
+    public string? HttpBasePath { get; set; }
+    
+    // Discovery
+    public bool AutoDiscoverTools { get; set; } = true;
+    public bool AutoDiscoverResources { get; set; } = true;
+    public bool AutoDiscoverPrompts { get; set; } = true;
+    public Assembly? Assembly { get; set; }
+    
+    // Features
+    public bool EnableDevelopmentFeatures { get; set; }
+    public bool EnableValidation { get; set; }
+    public bool EnableProgress { get; set; }
+    public bool EnableCompletion { get; set; }
+    public bool EnableSampling { get; set; }
+    
+    // Authentication
+    public bool RequireAuthentication { get; set; }
+    public string? AuthenticationScheme { get; set; }
+    
+    // OAuth options
+    public string? OAuthClientId { get; set; }
+    public string? OAuthClientSecret { get; set; }
+    public Uri? OAuthRedirectUri { get; set; }
+    public Uri? OAuthAuthorizationServerUrl { get; set; }
+    public List<string> OAuthScopes { get; set; } = new();
+    public Func<Uri, Uri, CancellationToken, Task<string?>>? OAuthAuthorizationRedirectDelegate { get; set; }
+    
+    // JWT options
+    public string? JwtIssuer { get; set; }
+    public string? JwtAudience { get; set; }
+    public string? JwtAuthority { get; set; }
+    public Dictionary<string, object> JwtValidationParameters { get; set; } = new();
+    
+    // Protected resource metadata
+    public Uri? ProtectedResource { get; set; }
+    public List<Uri> ProtectedAuthorizationServers { get; set; } = new();
+    public List<string> ProtectedScopesSupported { get; set; } = new();
+    public string? ProtectedResourceName { get; set; }
+    public Uri? ProtectedResourceDocumentation { get; set; }
+    
+    // Custom
+    public Func<IServiceProvider, Task>? CustomAuthHandler { get; set; }
+    public Func<McpMessageFilter>? MessageFilter { get; set; }
 
     public AIKitMcpBuilder(IServiceCollection services)
     {
@@ -29,15 +111,6 @@ public sealed class AIKitMcpBuilder
     {
         ApplyOptionsToSdk();
         return McpServerBuilder;
-    }
-
-    /// <summary>
-    /// Configures the MCP server using a fluent action.
-    /// </summary>
-    public AIKitMcpBuilder WithOptions(Action<McpOptions> configure)
-    {
-        configure(Options);
-        return this;
     }
 
 
@@ -99,19 +172,19 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureMetadata()
     {
-        if (string.IsNullOrEmpty(Options.ServerName) && string.IsNullOrEmpty(Options.ServerVersion)) return;
+        if (string.IsNullOrEmpty(this.ServerName) && string.IsNullOrEmpty(this.ServerVersion)) return;
 
         Services.Configure<McpServerOptions>(opt =>
         {
             if (opt.ServerInfo == null) return;
-            if (!string.IsNullOrEmpty(Options.ServerName)) opt.ServerInfo.Name = Options.ServerName;
-            if (!string.IsNullOrEmpty(Options.ServerVersion)) opt.ServerInfo.Version = Options.ServerVersion;
+            if (!string.IsNullOrEmpty(this.ServerName)) opt.ServerInfo.Name = this.ServerName;
+            if (!string.IsNullOrEmpty(this.ServerVersion)) opt.ServerInfo.Version = this.ServerVersion;
         });
     }
 
     private void ConfigureTransport()
     {
-        if (Options.Transport == TransportType.Http)
+        if (this.Transport == TransportType.Http)
             McpServerBuilder.WithHttpTransport();
         else
             McpServerBuilder.WithStdioServerTransport();
@@ -119,10 +192,10 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureDiscovery()
     {
-        var assembly = Options.Assembly ?? Assembly.GetCallingAssembly();
-        if (Options.AutoDiscoverTools) McpServerBuilder.WithToolsFromAssembly(assembly);
-        if (Options.AutoDiscoverResources) McpServerBuilder.WithResourcesFromAssembly(assembly);
-        if (Options.AutoDiscoverPrompts) McpServerBuilder.WithPromptsFromAssembly(assembly);
+        var assembly = this.Assembly ?? Assembly.GetCallingAssembly();
+        if (this.AutoDiscoverTools) McpServerBuilder.WithToolsFromAssembly(assembly);
+        if (this.AutoDiscoverResources) McpServerBuilder.WithResourcesFromAssembly(assembly);
+        if (this.AutoDiscoverPrompts) McpServerBuilder.WithPromptsFromAssembly(assembly);
     }
 
     private void ConfigureFeatures()
@@ -135,11 +208,11 @@ public sealed class AIKitMcpBuilder
         {
             opt.Capabilities ??= new();
             
-            if (Options.MessageFilter != null)
-                opt.Filters.IncomingMessageFilters.Add(Options.MessageFilter());
+            if (this.MessageFilter != null)
+                opt.Filters.IncomingMessageFilters.Add(this.MessageFilter());
         });
 
-        if (Options.EnableCompletion)
+        if (this.EnableCompletion)
         {
             McpServerBuilder.WithCompleteHandler(async (req, ct) => new CompleteResult
             {
@@ -152,7 +225,7 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureDiagnostics()
     {
-        if (!Options.EnableDevelopmentFeatures) return;
+        if (!this.EnableDevelopmentFeatures) return;
 
         McpServerBuilder.AddIncomingMessageFilter(msg => {
             Console.Error.WriteLine($"[DEBUG] IN: {msg}");
@@ -167,36 +240,36 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureAuthentication()
     {
-        if (!Options.RequireAuthentication && string.IsNullOrEmpty(Options.AuthenticationScheme)) return;
+        if (!this.RequireAuthentication && string.IsNullOrEmpty(this.AuthenticationScheme)) return;
 
-        var scheme = Options.AuthenticationScheme?.ToLowerInvariant() ?? "jwt";
+        var scheme = this.AuthenticationScheme?.ToLowerInvariant() ?? "jwt";
 
         switch (scheme)
         {
             case "oauth":
-                if (Options.OAuthOptions == null) throw new InvalidOperationException("OAuthOptions missing.");
+                if (string.IsNullOrEmpty(this.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
                 Services.AddAuthentication(a => {
                     a.DefaultChallengeScheme = "McpOAuth";
                     a.DefaultAuthenticateScheme = "Bearer";
-                }).AddJwtBearer("Bearer", j => ApplyJwt(j, Options.JwtOptions));
+                }).AddJwtBearer("Bearer", j => ApplyJwt(j, this));
                 break;
 
             case "jwt":
-                Services.AddAuthentication("Bearer").AddJwtBearer(j => ApplyJwt(j, Options.JwtOptions));
+                Services.AddAuthentication("Bearer").AddJwtBearer(j => ApplyJwt(j, this));
                 break;
 
             case "custom":
-                if (Options.CustomAuthHandler == null) throw new InvalidOperationException("CustomAuthHandler missing.");
-                Services.AddSingleton(Options.CustomAuthHandler);
+                if (this.CustomAuthHandler == null) throw new InvalidOperationException("CustomAuthHandler missing.");
+                Services.AddSingleton(this.CustomAuthHandler);
                 break;
         }
     }
 
-    private void ApplyJwt(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions target, JwtOptions? source)
+    private void ApplyJwt(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions target, AIKitMcpBuilder source)
     {
-        if (source == null) return;
-        target.Authority = source.Authority ?? target.Authority;
-        target.TokenValidationParameters.ValidAudience = source.Audience ?? target.TokenValidationParameters.ValidAudience;
-        target.TokenValidationParameters.ValidIssuer = source.Issuer ?? target.TokenValidationParameters.ValidIssuer;
+        target.Authority = source.JwtAuthority ?? target.Authority;
+        target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;
+        target.TokenValidationParameters.ValidIssuer = source.JwtIssuer ?? target.TokenValidationParameters.ValidIssuer;
+        // Note: ValidationParameters not used here, perhaps extend if needed
     }
 }
