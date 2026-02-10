@@ -1,4 +1,3 @@
-using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
 namespace AIKit.Mcp.Tests;

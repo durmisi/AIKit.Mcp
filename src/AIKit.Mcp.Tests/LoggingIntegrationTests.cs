@@ -1,9 +1,5 @@
-using AIKit.Mcp;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Protocol;
-using ModelContextProtocol.Server;
-using Xunit;
 
 namespace AIKit.Mcp.Tests;
 

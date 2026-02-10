@@ -19,7 +19,6 @@
 //
 // See https://aka.ms/new-console-template for more information
 using AIKit.Mcp;
-using AIKit.Mcp.Sample;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

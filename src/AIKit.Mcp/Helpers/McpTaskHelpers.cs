@@ -3,7 +3,7 @@ using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
-namespace AIKit.Mcp;
+namespace AIKit.Mcp.Helpers;
 
 /// <summary>
 /// Helper methods for working with MCP Tasks in AIKit.Mcp.

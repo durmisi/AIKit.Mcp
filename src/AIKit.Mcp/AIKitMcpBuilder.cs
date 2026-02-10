@@ -1,18 +1,13 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
-using System.Reflection;
-using OpenTelemetry;
-using OpenTelemetry.Trace;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Instrumentation.AspNetCore;
-using OpenTelemetry.Instrumentation.Http;
-using OpenTelemetry.Exporter;
+using OpenTelemetry.Trace;
+using System.Reflection;
 
 namespace AIKit.Mcp;
 
@@ -52,42 +47,52 @@ public class OAuthAuth : AuthenticationOptions
     /// OAuth 2.0 client ID.
     /// </summary>
     public string? OAuthClientId { get; set; }
+
     /// <summary>
     /// OAuth 2.0 client secret.
     /// </summary>
     public string? OAuthClientSecret { get; set; }
+
     /// <summary>
     /// OAuth 2.0 redirect URI.
     /// </summary>
     public Uri? OAuthRedirectUri { get; set; }
+
     /// <summary>
     /// OAuth 2.0 authorization server URL.
     /// </summary>
     public Uri? OAuthAuthorizationServerUrl { get; set; }
+
     /// <summary>
     /// OAuth 2.0 scopes.
     /// </summary>
     public List<string> OAuthScopes { get; set; } = new();
+
     /// <summary>
     /// OAuth 2.0 authorization redirect delegate.
     /// </summary>
     public Func<Uri, Uri, CancellationToken, Task<string?>>? OAuthAuthorizationRedirectDelegate { get; set; }
+
     /// <summary>
     /// Protected resource URI.
     /// </summary>
     public Uri? ProtectedResource { get; set; }
+
     /// <summary>
     /// Protected authorization servers.
     /// </summary>
     public List<Uri> ProtectedAuthorizationServers { get; set; } = new();
+
     /// <summary>
     /// Protected scopes supported.
     /// </summary>
     public List<string> ProtectedScopesSupported { get; set; } = new();
+
     /// <summary>
     /// Protected resource name.
     /// </summary>
     public string? ProtectedResourceName { get; set; }
+
     /// <summary>
     /// Protected resource documentation.
     /// </summary>
@@ -98,14 +103,17 @@ public class OAuthAuth : AuthenticationOptions
     /// JWT issuer.
     /// </summary>
     public string? JwtIssuer { get; set; }
+
     /// <summary>
     /// JWT audience.
     /// </summary>
     public string? JwtAudience { get; set; }
+
     /// <summary>
     /// JWT authority.
     /// </summary>
     public string? JwtAuthority { get; set; }
+
     /// <summary>
     /// JWT validation parameters.
     /// </summary>
@@ -121,14 +129,17 @@ public class JwtAuth : AuthenticationOptions
     /// JWT issuer.
     /// </summary>
     public string? JwtIssuer { get; set; }
+
     /// <summary>
     /// JWT audience.
     /// </summary>
     public string? JwtAudience { get; set; }
+
     /// <summary>
     /// JWT authority.
     /// </summary>
     public string? JwtAuthority { get; set; }
+
     /// <summary>
     /// JWT validation parameters.
     /// </summary>
@@ -208,36 +219,41 @@ public class OpenTelemetryOptions
 public sealed class AIKitMcpBuilder
 {
     private IServiceCollection _services { get; }
-    
+
     private IMcpServerBuilder _mcpServerBuilder { get; }
-    
+
     // Server metadata
     public string? ServerName { get; set; }
+
     public string? ServerVersion { get; set; }
-    
+
     // Transport (private)
     private bool _isHttpTransport = false;
+
     private bool _transportConfigured = false;
     private HttpTransportOptions? _httpOptions;
-    
+
     // Discovery
     public bool AutoDiscoverTools { get; set; } = true;
+
     public bool AutoDiscoverResources { get; set; } = true;
     public bool AutoDiscoverPrompts { get; set; } = true;
     public Assembly? Assembly { get; set; }
-    
+
     // Features
     public bool EnableDevelopmentFeatures { get; set; }
+
     public bool EnableValidation { get; set; }
     public bool EnableProgress { get; set; }
     public bool EnableCompletion { get; set; }
     public bool EnableSampling { get; set; }
-    
+
     // Custom
     public Func<McpMessageFilter>? MessageFilter { get; set; }
 
     // Logging and Observability
     private LoggingOptions? _loggingOptions;
+
     private OpenTelemetryOptions? _openTelemetryOptions;
 
     public AIKitMcpBuilder(IServiceCollection services)
@@ -253,7 +269,7 @@ public sealed class AIKitMcpBuilder
     {
         if (_transportConfigured)
             throw new InvalidOperationException("Transport has already been configured. Only one transport type can be set.");
-        
+
         _isHttpTransport = false;
         _transportConfigured = true;
         return this;
@@ -266,7 +282,7 @@ public sealed class AIKitMcpBuilder
     {
         if (_transportConfigured)
             throw new InvalidOperationException("Transport has already been configured. Only one transport type can be set.");
-        
+
         var options = new HttpTransportOptions();
         configure?.Invoke(options);
 
@@ -294,7 +310,6 @@ public sealed class AIKitMcpBuilder
         return _mcpServerBuilder;
     }
 
-
     /// <summary>
     /// Sets up default logging to stderr.
     /// </summary>
@@ -320,7 +335,7 @@ public sealed class AIKitMcpBuilder
     /// <summary>
     /// Registers a custom Task Store implementation.
     /// </summary>
-    public AIKitMcpBuilder WithTaskStore<TTaskStore>() where TTaskStore : class, 
+    public AIKitMcpBuilder WithTaskStore<TTaskStore>() where TTaskStore : class,
         IMcpTaskStore
     {
         _services.AddSingleton<IMcpTaskStore, TTaskStore>();
@@ -362,17 +377,17 @@ public sealed class AIKitMcpBuilder
     private void ConfigureDiscovery()
     {
         var assembly = this.Assembly ?? Assembly.GetCallingAssembly();
-        
+
         if (this.AutoDiscoverTools)
         {
             _mcpServerBuilder.WithToolsFromAssembly(assembly);
         }
-        
+
         if (this.AutoDiscoverResources)
         {
             _mcpServerBuilder.WithResourcesFromAssembly(assembly);
         }
-        
+
         if (this.AutoDiscoverPrompts) _mcpServerBuilder.WithPromptsFromAssembly(assembly);
     }
 
@@ -385,7 +400,7 @@ public sealed class AIKitMcpBuilder
         _services.Configure<McpServerOptions>(opt =>
         {
             opt.Capabilities ??= new();
-            
+
             if (this.MessageFilter != null)
                 opt.Filters.IncomingMessageFilters.Add(this.MessageFilter());
         });
@@ -405,12 +420,14 @@ public sealed class AIKitMcpBuilder
     {
         if (!this.EnableDevelopmentFeatures) return;
 
-        _mcpServerBuilder.AddIncomingMessageFilter(msg => {
+        _mcpServerBuilder.AddIncomingMessageFilter(msg =>
+        {
             Console.Error.WriteLine($"[DEBUG] IN: {msg}");
             return msg;
         });
 
-        _mcpServerBuilder.AddOutgoingMessageFilter(msg => {
+        _mcpServerBuilder.AddOutgoingMessageFilter(msg =>
+        {
             Console.Error.WriteLine($"[DEBUG] OUT: {msg}");
             return msg;
         });
@@ -512,7 +529,8 @@ public sealed class AIKitMcpBuilder
         {
             case OAuthAuth oauth:
                 if (string.IsNullOrEmpty(oauth.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
-                _services.AddAuthentication(a => {
+                _services.AddAuthentication(a =>
+                {
                     a.DefaultChallengeScheme = "McpOAuth";
                     a.DefaultAuthenticateScheme = "Bearer";
                 }).AddJwtBearer("Bearer", j => ApplyJwt(j, oauth));

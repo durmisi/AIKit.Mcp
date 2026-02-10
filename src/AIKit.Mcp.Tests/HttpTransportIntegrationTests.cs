@@ -1,13 +1,11 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using ModelContextProtocol.Protocol;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using ModelContextProtocol.Protocol;
-using Xunit;
 using Xunit.Abstractions;
-using AIKit.Mcp;
 
 namespace AIKit.Mcp.Tests;
 
@@ -45,7 +43,6 @@ public class HttpTransportIntegrationTests
             mcp.EnableSampling = false;
             mcp.EnableDevelopmentFeatures = true;
             mcp.EnableValidation = true;
-
         });
 
         builder.Services.AddScoped<TestTools>();

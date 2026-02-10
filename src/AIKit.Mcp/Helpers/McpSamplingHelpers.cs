@@ -5,7 +5,7 @@ using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using System.Text.Json.Nodes;
 
-namespace AIKit.Mcp;
+namespace AIKit.Mcp.Helpers;
 
 /// <summary>
 /// Provides simplified methods for handling sampling requests in MCP servers.
