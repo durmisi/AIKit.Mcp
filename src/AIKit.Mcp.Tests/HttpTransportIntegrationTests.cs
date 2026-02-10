@@ -46,7 +46,6 @@ public class HttpTransportIntegrationTests
             mcp.EnableDevelopmentFeatures = true;
             mcp.EnableValidation = true;
 
-            mcp.Assembly = typeof(TestStartup).Assembly;
         });
 
         builder.Services.AddScoped<TestTools>();

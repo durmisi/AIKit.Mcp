@@ -36,8 +36,6 @@ public class TestStartup
             mcp.EnableSampling = false;
             mcp.EnableDevelopmentFeatures = true;
             mcp.EnableValidation = true;
-
-            mcp.Assembly = typeof(TestStartup).Assembly;
         });
 
         services.AddScoped<TestTools>();
