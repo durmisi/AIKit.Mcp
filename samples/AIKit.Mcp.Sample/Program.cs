@@ -103,9 +103,6 @@ builder.Services.AddAIKitMcp(mcp =>
         // Log completion
         Console.WriteLine($"📤 Message processing completed for: {method}");
     };
-
-    // Use the current assembly for component discovery
-    mcp.Assembly = typeof(Program).Assembly;
 });
 
 var app = builder.Build();
