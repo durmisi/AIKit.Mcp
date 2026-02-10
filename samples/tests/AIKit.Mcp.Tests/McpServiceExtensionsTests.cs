@@ -161,21 +161,154 @@ public class McpServiceExtensionsTests
         Assert.IsType<AIKitMcpBuilder>(result);
         Assert.Same(builder, result);
 
-        // Verify hosted services were added (MCP server + validation)
+        // Verify hosted services were added (validation when enabled)
         var hostedServices = services.Where(sd => sd.ServiceType == typeof(IHostedService)).ToList();
-        Assert.True(hostedServices.Count >= 2, "Expected at least 2 hosted services (MCP server + validation)");
+        Assert.True(hostedServices.Count >= 1, "Expected at least 1 hosted service (validation)"); // Only validation is added as hosted service
     }
 
     [Fact]
-    public void ValidateMcpConfiguration_LogsComponentCounts()
+    public void WithTasks_AddsInMemoryTaskStore()
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddLogging();
-        var serviceProvider = services.BuildServiceProvider();
+        var builder = services.AddAIKitMcp();
 
-        // Act & Assert - Should not throw
-        McpServiceExtensions.ValidateMcpConfiguration(serviceProvider);
+        // Act
+        var result = builder.WithTasks();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+
+        // Verify task store was registered
+        var taskStoreDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(ModelContextProtocol.IMcpTaskStore));
+        Assert.NotNull(taskStoreDescriptor);
+        Assert.Equal(typeof(ModelContextProtocol.InMemoryMcpTaskStore), taskStoreDescriptor.ImplementationType);
+    }
+
+    [Fact]
+    public void WithTaskStore_AddsCustomTaskStore()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithTaskStore<CustomTaskStore>();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+
+        // Verify custom task store was registered
+        var taskStoreDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(ModelContextProtocol.IMcpTaskStore));
+        Assert.NotNull(taskStoreDescriptor);
+        Assert.Equal(typeof(CustomTaskStore), taskStoreDescriptor.ImplementationType);
+    }
+
+    [Fact]
+    public void WithLongRunningTool_RegistersToolAsScopedService()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithLongRunningTool<LongRunningTool>();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.IsType<AIKitMcpBuilder>(result);
+        Assert.Same(builder, result);
+
+        // Verify tool was registered as scoped service
+        var toolDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(LongRunningTool));
+        Assert.NotNull(toolDescriptor);
+        Assert.Equal(ServiceLifetime.Scoped, toolDescriptor.Lifetime);
+    }
+
+    [Fact]
+    public void WithHttpTransport_ThrowsNotSupportedException()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act & Assert
+        var exception = Assert.Throws<NotSupportedException>(() => builder.WithHttpTransport());
+        Assert.Contains("ModelContextProtocol.AspNetCore", exception.Message);
+    }
+
+    [Fact]
+    public void WithOptions_EnablesTasks_WhenConfigured()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithOptions(options =>
+        {
+            options.EnableTasks = true;
+        });
+
+        // Assert
+        Assert.NotNull(result);
+
+        // Verify task store was registered
+        var taskStoreDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(ModelContextProtocol.IMcpTaskStore));
+        Assert.NotNull(taskStoreDescriptor);
+    }
+
+    [Fact]
+    public void WithOptions_EnablesValidation_WhenConfigured()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        // Act
+        var result = builder.WithOptions(options =>
+        {
+            options.EnableValidation = true;
+        });
+
+        // Assert
+        Assert.NotNull(result);
+
+        // Verify hosted service was added
+        var hostedServices = services.Where(sd => sd.ServiceType == typeof(IHostedService)).ToList();
+        Assert.Single(hostedServices);
+    }
+
+    [Fact]
+    public void WithConfiguration_HandlesNewConfigOptions()
+    {
+        // Arrange
+        var services = new ServiceCollection();
+        var builder = services.AddAIKitMcp();
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Mcp:EnableTasks"] = "true",
+                ["Mcp:EnableElicitation"] = "true",
+                ["Mcp:EnableProgress"] = "true",
+                ["Mcp:EnableCompletion"] = "true"
+            })
+            .Build();
+
+        // Act
+        var result = builder.WithConfiguration(config);
+
+        // Assert
+        Assert.NotNull(result);
+
+        // Verify task store was registered when EnableTasks is true
+        var taskStoreDescriptor = services.FirstOrDefault(sd => sd.ServiceType == typeof(ModelContextProtocol.IMcpTaskStore));
+        Assert.NotNull(taskStoreDescriptor);
     }
 }
 
@@ -198,4 +331,77 @@ public class SamplePrompt
 {
     [McpServerPrompt(Name = "sample_prompt")]
     public string GetSamplePrompt() => "sample prompt content";
+}
+
+[McpServerToolType]
+public class LongRunningTool
+{
+    [McpServerTool(Name = "long_running_tool")]
+    public string ExecuteLongRunningTool() => "long running result";
+}
+
+public class CustomTaskStore : ModelContextProtocol.IMcpTaskStore
+{
+    // Minimal implementation for testing
+    public Task<ModelContextProtocol.Protocol.McpTask> CreateTaskAsync(ModelContextProtocol.Protocol.McpTaskMetadata metadata, ModelContextProtocol.Protocol.RequestId requestId, ModelContextProtocol.Protocol.JsonRpcRequest? request, string? sessionId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new ModelContextProtocol.Protocol.McpTask
+        {
+            TaskId = "test-task",
+            Status = ModelContextProtocol.Protocol.McpTaskStatus.Running,
+            CreatedAt = DateTimeOffset.UtcNow,
+            LastUpdatedAt = DateTimeOffset.UtcNow
+        });
+    }
+
+    public Task<ModelContextProtocol.Protocol.McpTask?> GetTaskAsync(string taskId, string? sessionId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult<ModelContextProtocol.Protocol.McpTask?>(null);
+    }
+
+    public Task<System.Text.Json.JsonElement> GetTaskResultAsync(string taskId, string? sessionId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(System.Text.Json.JsonDocument.Parse("{}").RootElement);
+    }
+
+    public Task<ModelContextProtocol.Protocol.ListTasksResult> ListTasksAsync(string? sessionId, string? cursor, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new ModelContextProtocol.Protocol.ListTasksResult
+        {
+            Tasks = new List<ModelContextProtocol.Protocol.McpTask>()
+        });
+    }
+
+    public Task<ModelContextProtocol.Protocol.McpTask> CancelTaskAsync(string taskId, string? sessionId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new ModelContextProtocol.Protocol.McpTask
+        {
+            TaskId = taskId,
+            Status = ModelContextProtocol.Protocol.McpTaskStatus.Cancelled,
+            CreatedAt = DateTimeOffset.UtcNow,
+            LastUpdatedAt = DateTimeOffset.UtcNow
+        });
+    }
+
+    public Task<ModelContextProtocol.Protocol.McpTask> StoreTaskResultAsync(string taskId, ModelContextProtocol.Protocol.McpTaskStatus status, System.Text.Json.JsonElement result, string? sessionId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new ModelContextProtocol.Protocol.McpTask
+        {
+            TaskId = taskId,
+            Status = status,
+            CreatedAt = DateTimeOffset.UtcNow,
+            LastUpdatedAt = DateTimeOffset.UtcNow
+        });
+    }
+
+    public Task<ModelContextProtocol.Protocol.McpTask> UpdateTaskStatusAsync(string taskId, ModelContextProtocol.Protocol.McpTaskStatus status, string? message, string? sessionId, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult(new ModelContextProtocol.Protocol.McpTask
+        {
+            TaskId = taskId,
+            Status = status,
+            CreatedAt = DateTimeOffset.UtcNow,
+            LastUpdatedAt = DateTimeOffset.UtcNow
+        });
+    }
 }

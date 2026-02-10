@@ -18,7 +18,7 @@ public class McpOptions
     public string? ServerVersion { get; set; }
 
     /// <summary>
-    /// The transport type (e.g., "stdio").
+    /// The transport type (e.g., "stdio", "http").
     /// </summary>
     public string Transport { get; set; } = "stdio";
 
@@ -46,6 +46,26 @@ public class McpOptions
     /// Whether to enable configuration validation.
     /// </summary>
     public bool EnableValidation { get; set; }
+
+    /// <summary>
+    /// Whether to enable MCP Tasks support for long-running operations.
+    /// </summary>
+    public bool EnableTasks { get; set; }
+
+    /// <summary>
+    /// Whether to enable elicitation support for requesting user input.
+    /// </summary>
+    public bool EnableElicitation { get; set; }
+
+    /// <summary>
+    /// Whether to enable progress tracking for long-running operations.
+    /// </summary>
+    public bool EnableProgress { get; set; }
+
+    /// <summary>
+    /// Whether to enable completion support for auto-completion.
+    /// </summary>
+    public bool EnableCompletion { get; set; }
 
     /// <summary>
     /// The assembly to scan for MCP components. If null, uses the calling assembly.

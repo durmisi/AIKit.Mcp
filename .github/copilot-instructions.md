@@ -21,6 +21,10 @@ builder.Services.AddAIKitMcp()
         options.Transport = "stdio";
         options.AutoDiscoverTools = true;
         options.EnableValidation = true;
+        options.EnableTasks = true;        // Enable MCP Tasks support
+        options.EnableElicitation = true;  // Enable user input requests
+        options.EnableProgress = true;     // Enable progress notifications
+        options.EnableCompletion = true;   // Enable auto-completion
         options.Assembly = typeof(Program).Assembly;
     });
 
@@ -31,6 +35,12 @@ builder.Services.AddAIKitMcp()
 // Default configuration
 builder.Services.AddAIKitMcp()
     .WithDefaultConfiguration();
+
+// Advanced features
+builder.Services.AddAIKitMcp()
+    .WithTasks()                          // Add in-memory task store
+    .WithTaskStore<CustomTaskStore>()     // Add custom task store implementation
+    .WithLongRunningTool<MyTool>()        // Register tools for long-running operations
 ```
 
 ### Component Registration
@@ -44,6 +54,62 @@ builder.Services.AddAIKitMcp()
 
 - Logs redirect to stderr to keep stdio clean for JSON-RPC
 - Use structured logging: `_logger.LogInformation("Operation {Param} = {Result}", param, result)`
+
+## Advanced Features
+
+### MCP Tasks Support
+
+AIKit.Mcp provides built-in support for MCP Tasks, enabling long-running operations with polling:
+
+```csharp
+// Enable tasks in options
+options.EnableTasks = true;
+
+// Or explicitly
+builder.WithTasks();  // In-memory store
+builder.WithTaskStore<CustomTaskStore>();  // Custom implementation
+
+// Use in tools
+[McpServerToolType]
+public class LongRunningTools
+{
+    [McpServerTool]
+    public async Task<string> ProcessLargeDataset(McpServer server)
+    {
+        // Create a task that runs in the background
+        var taskId = await server.CreateTaskAsync(
+            taskId: Guid.NewGuid().ToString(),
+            executionDuration: TimeSpan.FromMinutes(5),
+            async cancellationToken => {
+                // Long-running work here
+                await Task.Delay(10000, cancellationToken);
+                return JsonValue.Create("Processing complete");
+            });
+
+        return $"Task started with ID: {taskId}";
+    }
+}
+```
+
+### Progress Notifications
+
+Report progress for long-running operations (simplified implementation):
+
+```csharp
+await server.NotifyProgressAsync("operation-123", 0.5, "Halfway complete");
+```
+
+### HTTP Transport
+
+Enable HTTP-based MCP servers for web integration (requires ModelContextProtocol.AspNetCore package):
+
+```csharp
+// Note: HTTP transport requires additional package installation
+builder.WithHttpTransport(options => {
+    options.BasePath = "/mcp";
+    options.RequireAuthentication = true;
+});
+```
 
 ## Developer Workflows
 
@@ -79,7 +145,11 @@ cd samples/AIKit.Mcp.Sample && dotnet run
     "Transport": "stdio",
     "AutoDiscoverTools": true,
     "AutoDiscoverResources": true,
-    "AutoDiscoverPrompts": true
+    "AutoDiscoverPrompts": true,
+    "EnableTasks": false,
+    "EnableElicitation": false,
+    "EnableProgress": false,
+    "EnableCompletion": false
   }
 }
 ```

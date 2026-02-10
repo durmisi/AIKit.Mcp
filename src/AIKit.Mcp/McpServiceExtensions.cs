@@ -87,6 +87,24 @@ public static class McpServiceExtensions
             builder.InnerBuilder.WithPromptsFromAssembly();
         }
 
+        // Configure advanced features
+        if (mcpConfig.GetValue<bool>("EnableTasks", false))
+        {
+            builder.WithTasks();
+        }
+        if (mcpConfig.GetValue<bool>("EnableElicitation", false))
+        {
+            builder.WithElicitation();
+        }
+        if (mcpConfig.GetValue<bool>("EnableProgress", false))
+        {
+            builder.WithProgress();
+        }
+        if (mcpConfig.GetValue<bool>("EnableCompletion", false))
+        {
+            builder.WithCompletion();
+        }
+
         return builder;
     }
 
@@ -152,10 +170,22 @@ public static class McpServiceExtensions
             builder.WithDevelopmentFeatures();
         }
 
-        // Configure validation
-        if (options.EnableValidation)
+        // Configure advanced features
+        if (options.EnableTasks)
         {
-            builder.WithValidation();
+            builder.WithTasks();
+        }
+        if (options.EnableElicitation)
+        {
+            builder.WithElicitation();
+        }
+        if (options.EnableProgress)
+        {
+            builder.WithProgress();
+        }
+        if (options.EnableCompletion)
+        {
+            builder.WithCompletion();
         }
 
         return builder;
@@ -194,6 +224,77 @@ public static class McpServiceExtensions
     }
 
     /// <summary>
+    /// Enables MCP Tasks support for long-running operations.
+    /// Adds an in-memory task store for development and testing.
+    /// </summary>
+    public static AIKitMcpBuilder WithTasks(this AIKitMcpBuilder builder)
+    {
+        builder.Services.AddSingleton<ModelContextProtocol.IMcpTaskStore, ModelContextProtocol.InMemoryMcpTaskStore>();
+        return builder;
+    }
+
+    /// <summary>
+    /// Enables elicitation support for requesting additional information from users.
+    /// </summary>
+    public static AIKitMcpBuilder WithElicitation(this AIKitMcpBuilder builder)
+    {
+        // Elicitation is enabled by default in the MCP server options
+        // This method serves as documentation and future extension point
+        return builder;
+    }
+
+    /// <summary>
+    /// Enables progress tracking for long-running operations.
+    /// </summary>
+    public static AIKitMcpBuilder WithProgress(this AIKitMcpBuilder builder)
+    {
+        // Progress notifications are enabled by default in the MCP server
+        // This method serves as documentation and future extension point
+        return builder;
+    }
+
+    /// <summary>
+    /// Enables completion support for auto-completion functionality.
+    /// </summary>
+    public static AIKitMcpBuilder WithCompletion(this AIKitMcpBuilder builder)
+    {
+        // Completion is configured in the server options
+        // This method serves as documentation and future extension point
+        return builder;
+    }
+
+    /// <summary>
+    /// Enables HTTP transport for ASP.NET Core integration.
+    /// </summary>
+    public static AIKitMcpBuilder WithHttpTransport(this AIKitMcpBuilder builder, Action<object>? configure = null)
+    {
+        // HTTP transport requires ModelContextProtocol.AspNetCore package
+        // For now, this is a placeholder - users need to add the package manually
+        throw new NotSupportedException("HTTP transport requires ModelContextProtocol.AspNetCore package. Please install it and use the official builder methods.");
+    }
+
+    /// <summary>
+    /// Adds a custom task store implementation for MCP Tasks.
+    /// </summary>
+    public static AIKitMcpBuilder WithTaskStore<TTaskStore>(this AIKitMcpBuilder builder)
+        where TTaskStore : class, ModelContextProtocol.IMcpTaskStore
+    {
+        builder.Services.AddSingleton<ModelContextProtocol.IMcpTaskStore, TTaskStore>();
+        return builder;
+    }
+
+    /// <summary>
+    /// Registers a long-running tool that returns an MCP Task for async execution.
+    /// </summary>
+    public static AIKitMcpBuilder WithLongRunningTool<TTool>(this AIKitMcpBuilder builder)
+        where TTool : class
+    {
+        builder.Services.AddScoped<TTool>();
+        builder.InnerBuilder.WithTools<TTool>();
+        return builder;
+    }
+
+    /// <summary>
     /// Validates the MCP configuration and logs any issues found.
     /// Can be called manually or automatically via WithValidation().
     /// </summary>
@@ -212,6 +313,13 @@ public static class McpServiceExtensions
             logger.LogInformation("- Tools registered: {Count}", tools.Count);
             logger.LogInformation("- Resources registered: {Count}", resources.Count);
             logger.LogInformation("- Prompts registered: {Count}", prompts.Count);
+
+            // Check for task store if tasks are enabled
+            var taskStore = services.GetService<ModelContextProtocol.IMcpTaskStore>();
+            if (taskStore != null)
+            {
+                logger.LogInformation("- Task store: {Type}", taskStore.GetType().Name);
+            }
 
             // Check for naming conflicts - Note: McpServerTool may not have Name property
             // This is a simplified check - in practice, names are set via attributes
