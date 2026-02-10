@@ -20,15 +20,4 @@ public static class AIKitMcpServiceCollectionExtensions
 
         return services;
     }
-
-    /// <summary>
-    /// Adds AIKit MCP services using a configuration section (e.g., appsettings.json).
-    /// </summary>
-    public static IServiceCollection AddAIKitMcp(
-        this IServiceCollection services, 
-        IConfiguration configuration)
-    {
-        return services.AddAIKitMcp(builder => 
-            builder.WithConfiguration(configuration));
-    }
 }

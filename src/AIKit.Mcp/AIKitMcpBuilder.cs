@@ -40,18 +40,6 @@ public sealed class AIKitMcpBuilder
         return this;
     }
 
-    /// <summary>
-    /// Binds configuration from IConfiguration (e.g., appsettings.json).
-    /// </summary>
-    public AIKitMcpBuilder WithConfiguration(IConfiguration config)
-    {
-        var section = config.GetSection("Mcp");
-        if (section.Exists())
-        {
-            section.Bind(Options);
-        }
-        return this;
-    }
 
     /// <summary>
     /// Sets up default logging to stderr.
