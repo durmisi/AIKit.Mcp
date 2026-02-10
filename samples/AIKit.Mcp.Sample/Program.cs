@@ -38,31 +38,30 @@ var mcpBuilder = builder.Services.AddAIKitMcp(mcp =>
     mcp.ServerVersion = "1.0.0";
 
     // Transport configuration
-    mcp.Transport = TransportType.Stdio; // Change to TransportType.Http for HTTP transport
+    mcp.WithStdioTransport(); // Use Stdio transport (default)
+    // For HTTP transport, use: mcp.WithHttpTransport(opts => { opts.HttpBasePath = "/mcp"; opts.RequireAuthentication = true; /* etc. */ });
 
-    // HTTP transport options (only used when Transport is "http")
+    // HTTP transport options (only used when WithHttpTransport is called)
     // Requires ModelContextProtocol.AspNetCore package and web host setup
-    mcp.HttpBasePath = "/mcp";
-    mcp.RequireAuthentication = false; // Set to true for production
-
-    // Authentication configuration (only used when Transport is "http")
-    mcp.AuthenticationScheme = "Bearer"; // JWT Bearer authentication
-
-    // OAuth 2.0 configuration for client-side authentication
-    mcp.OAuthClientId = "your-client-id";                    // OAuth 2.0 client ID
-    mcp.OAuthClientSecret = "your-client-secret";            // OAuth 2.0 client secret
-    mcp.OAuthAuthorizationServerUrl = new Uri("https://your-oauth-provider.com"); // OAuth 2.0 server URL
-    mcp.OAuthScopes = new List<string> { "api.read", "api.write" }; // OAuth 2.0 scopes
-
-    // JWT Bearer configuration (alternative to OAuth)
-    // mcp.JwtAuthority = "https://your-jwt-issuer.com";
-    // mcp.JwtAudience = "your-api-audience";
-
-    // Protected resource metadata for OAuth 2.0 resource server
-    mcp.ProtectedResource = new Uri("api://my-service/data");
-    mcp.ProtectedScopesSupported = new List<string> { "api.read", "api.write" };
-    mcp.ProtectedResourceName = "Sensitive Data API";
-    mcp.ProtectedAuthorizationServers = new List<Uri> { new Uri("https://your-oauth-provider.com") };
+    // mcp.WithHttpTransport(opts =>
+    // {
+    //     opts.HttpBasePath = "/mcp";
+    //     opts.RequireAuthentication = false; // Set to true for production
+    //     opts.AuthenticationScheme = "Bearer"; // JWT Bearer authentication
+    //     // OAuth 2.0 configuration for client-side authentication
+    //     opts.OAuthClientId = "your-client-id";                    // OAuth 2.0 client ID
+    //     opts.OAuthClientSecret = "your-client-secret";            // OAuth 2.0 client secret
+    //     opts.OAuthAuthorizationServerUrl = new Uri("https://your-oauth-provider.com"); // OAuth 2.0 server URL
+    //     opts.OAuthScopes = new List<string> { "api.read", "api.write" }; // OAuth 2.0 scopes
+    //     // JWT Bearer configuration (alternative to OAuth)
+    //     // opts.JwtAuthority = "https://your-jwt-issuer.com";
+    //     // opts.JwtAudience = "your-api-audience";
+    //     // Protected resource metadata for OAuth 2.0 resource server
+    //     opts.ProtectedResource = new Uri("api://my-service/data");
+    //     opts.ProtectedScopesSupported = new List<string> { "api.read", "api.write" };
+    //     opts.ProtectedResourceName = "Sensitive Data API";
+    //     opts.ProtectedAuthorizationServers = new List<Uri> { new Uri("https://your-oauth-provider.com") };
+    // });
 
     // Auto-discovery settings
     mcp.AutoDiscoverTools = true;

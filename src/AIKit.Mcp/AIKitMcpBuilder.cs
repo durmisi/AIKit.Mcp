@@ -9,19 +9,96 @@ using System.Reflection;
 namespace AIKit.Mcp;
 
 /// <summary>
-/// Supported transport types for MCP servers.
+/// Configuration options for HTTP transport.
 /// </summary>
-public enum TransportType
+public class HttpTransportOptions
 {
     /// <summary>
-    /// Standard input/output transport for command-line applications.
+    /// The base path for HTTP transport endpoints.
     /// </summary>
-    Stdio,
+    public string? HttpBasePath { get; set; }
 
     /// <summary>
-    /// HTTP transport for web-based MCP servers.
+    /// Whether authentication is required for HTTP transport.
     /// </summary>
-    Http
+    public bool RequireAuthentication { get; set; }
+
+    /// <summary>
+    /// The authentication scheme to use (e.g., "Bearer", "oauth", "jwt").
+    /// </summary>
+    public string? AuthenticationScheme { get; set; }
+
+    // OAuth options
+    /// <summary>
+    /// OAuth 2.0 client ID.
+    /// </summary>
+    public string? OAuthClientId { get; set; }
+    /// <summary>
+    /// OAuth 2.0 client secret.
+    /// </summary>
+    public string? OAuthClientSecret { get; set; }
+    /// <summary>
+    /// OAuth 2.0 redirect URI.
+    /// </summary>
+    public Uri? OAuthRedirectUri { get; set; }
+    /// <summary>
+    /// OAuth 2.0 authorization server URL.
+    /// </summary>
+    public Uri? OAuthAuthorizationServerUrl { get; set; }
+    /// <summary>
+    /// OAuth 2.0 scopes.
+    /// </summary>
+    public List<string> OAuthScopes { get; set; } = new();
+    /// <summary>
+    /// OAuth 2.0 authorization redirect delegate.
+    /// </summary>
+    public Func<Uri, Uri, CancellationToken, Task<string?>>? OAuthAuthorizationRedirectDelegate { get; set; }
+
+    // JWT options
+    /// <summary>
+    /// JWT issuer.
+    /// </summary>
+    public string? JwtIssuer { get; set; }
+    /// <summary>
+    /// JWT audience.
+    /// </summary>
+    public string? JwtAudience { get; set; }
+    /// <summary>
+    /// JWT authority.
+    /// </summary>
+    public string? JwtAuthority { get; set; }
+    /// <summary>
+    /// JWT validation parameters.
+    /// </summary>
+    public Dictionary<string, object> JwtValidationParameters { get; set; } = new();
+
+    // Protected resource metadata
+    /// <summary>
+    /// Protected resource URI.
+    /// </summary>
+    public Uri? ProtectedResource { get; set; }
+    /// <summary>
+    /// Protected authorization servers.
+    /// </summary>
+    public List<Uri> ProtectedAuthorizationServers { get; set; } = new();
+    /// <summary>
+    /// Protected scopes supported.
+    /// </summary>
+    public List<string> ProtectedScopesSupported { get; set; } = new();
+    /// <summary>
+    /// Protected resource name.
+    /// </summary>
+    public string? ProtectedResourceName { get; set; }
+    /// <summary>
+    /// Protected resource documentation.
+    /// </summary>
+    public Uri? ProtectedResourceDocumentation { get; set; }
+
+    // Custom
+    /// <summary>
+    /// Custom authentication handler.
+    /// </summary>
+    public Func<IServiceProvider, Task>? CustomAuthHandler { get; set; }
 }
 
 /// <summary>
@@ -52,9 +129,10 @@ public sealed class AIKitMcpBuilder
     public string? ServerName { get; set; }
     public string? ServerVersion { get; set; }
     
-    // Transport
-    public TransportType Transport { get; set; } = TransportType.Stdio;
-    public string? HttpBasePath { get; set; }
+    // Transport (private)
+    private bool _isHttpTransport = false;
+    private bool _transportConfigured = false;
+    private HttpTransportOptions? _httpOptions;
     
     // Discovery
     public bool AutoDiscoverTools { get; set; } = true;
@@ -69,39 +147,42 @@ public sealed class AIKitMcpBuilder
     public bool EnableCompletion { get; set; }
     public bool EnableSampling { get; set; }
     
-    // Authentication
-    public bool RequireAuthentication { get; set; }
-    public string? AuthenticationScheme { get; set; }
-    
-    // OAuth options
-    public string? OAuthClientId { get; set; }
-    public string? OAuthClientSecret { get; set; }
-    public Uri? OAuthRedirectUri { get; set; }
-    public Uri? OAuthAuthorizationServerUrl { get; set; }
-    public List<string> OAuthScopes { get; set; } = new();
-    public Func<Uri, Uri, CancellationToken, Task<string?>>? OAuthAuthorizationRedirectDelegate { get; set; }
-    
-    // JWT options
-    public string? JwtIssuer { get; set; }
-    public string? JwtAudience { get; set; }
-    public string? JwtAuthority { get; set; }
-    public Dictionary<string, object> JwtValidationParameters { get; set; } = new();
-    
-    // Protected resource metadata
-    public Uri? ProtectedResource { get; set; }
-    public List<Uri> ProtectedAuthorizationServers { get; set; } = new();
-    public List<string> ProtectedScopesSupported { get; set; } = new();
-    public string? ProtectedResourceName { get; set; }
-    public Uri? ProtectedResourceDocumentation { get; set; }
-    
     // Custom
-    public Func<IServiceProvider, Task>? CustomAuthHandler { get; set; }
     public Func<McpMessageFilter>? MessageFilter { get; set; }
 
     public AIKitMcpBuilder(IServiceCollection services)
     {
         Services = services ?? throw new ArgumentNullException(nameof(services));
         McpServerBuilder = services.AddMcpServer();
+    }
+
+    /// <summary>
+    /// Configures the server to use Stdio transport.
+    /// </summary>
+    public AIKitMcpBuilder WithStdioTransport()
+    {
+        if (_transportConfigured)
+            throw new InvalidOperationException("Transport has already been configured. Only one transport type can be set.");
+        
+        _isHttpTransport = false;
+        _transportConfigured = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures the server to use HTTP transport with the specified options.
+    /// </summary>
+    public AIKitMcpBuilder WithHttpTransport(Action<HttpTransportOptions> configure)
+    {
+        if (_transportConfigured)
+            throw new InvalidOperationException("Transport has already been configured. Only one transport type can be set.");
+        
+        var options = new HttpTransportOptions();
+        configure?.Invoke(options);
+        _httpOptions = options;
+        _isHttpTransport = true;
+        _transportConfigured = true;
+        return this;
     }
 
     /// <summary>
@@ -184,7 +265,7 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureTransport()
     {
-        if (this.Transport == TransportType.Http)
+        if (_isHttpTransport)
             McpServerBuilder.WithHttpTransport();
         else
             McpServerBuilder.WithStdioServerTransport();
@@ -240,32 +321,32 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureAuthentication()
     {
-        if (!this.RequireAuthentication && string.IsNullOrEmpty(this.AuthenticationScheme)) return;
+        if (!_isHttpTransport || _httpOptions == null || (!_httpOptions.RequireAuthentication && string.IsNullOrEmpty(_httpOptions.AuthenticationScheme))) return;
 
-        var scheme = this.AuthenticationScheme?.ToLowerInvariant() ?? "jwt";
+        var scheme = _httpOptions.AuthenticationScheme?.ToLowerInvariant() ?? "jwt";
 
         switch (scheme)
         {
             case "oauth":
-                if (string.IsNullOrEmpty(this.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
+                if (string.IsNullOrEmpty(_httpOptions.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
                 Services.AddAuthentication(a => {
                     a.DefaultChallengeScheme = "McpOAuth";
                     a.DefaultAuthenticateScheme = "Bearer";
-                }).AddJwtBearer("Bearer", j => ApplyJwt(j, this));
+                }).AddJwtBearer("Bearer", j => ApplyJwt(j, _httpOptions));
                 break;
 
             case "jwt":
-                Services.AddAuthentication("Bearer").AddJwtBearer(j => ApplyJwt(j, this));
+                Services.AddAuthentication("Bearer").AddJwtBearer(j => ApplyJwt(j, _httpOptions));
                 break;
 
             case "custom":
-                if (this.CustomAuthHandler == null) throw new InvalidOperationException("CustomAuthHandler missing.");
-                Services.AddSingleton(this.CustomAuthHandler);
+                if (_httpOptions.CustomAuthHandler == null) throw new InvalidOperationException("CustomAuthHandler missing.");
+                Services.AddSingleton(_httpOptions.CustomAuthHandler);
                 break;
         }
     }
 
-    private void ApplyJwt(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions target, AIKitMcpBuilder source)
+    private void ApplyJwt(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions target, HttpTransportOptions source)
     {
         target.Authority = source.JwtAuthority ?? target.Authority;
         target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;
