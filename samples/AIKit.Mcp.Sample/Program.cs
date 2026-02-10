@@ -31,71 +31,71 @@ builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // Configure AIKit MCP server using the new options pattern
-var mcpBuilder = builder.Services.AddAIKitMcp(mcp => {
-        // Server identification
-        mcp.ServerName = "AIKit.Sample.Server";
-        mcp.ServerVersion = "1.0.0";
+var mcpBuilder = builder.Services.AddAIKitMcp(mcp =>
+{
+    // Server identification
+    mcp.ServerName = "AIKit.Sample.Server";
+    mcp.ServerVersion = "1.0.0";
 
-        // Transport configuration
-        mcp.Transport = TransportType.Stdio; // Change to TransportType.Http for HTTP transport
+    // Transport configuration
+    mcp.Transport = TransportType.Stdio; // Change to TransportType.Http for HTTP transport
 
-        // HTTP transport options (only used when Transport is "http")
-        // Requires ModelContextProtocol.AspNetCore package and web host setup
-        mcp.HttpBasePath = "/mcp";
-        mcp.RequireAuthentication = false; // Set to true for production
+    // HTTP transport options (only used when Transport is "http")
+    // Requires ModelContextProtocol.AspNetCore package and web host setup
+    mcp.HttpBasePath = "/mcp";
+    mcp.RequireAuthentication = false; // Set to true for production
 
-        // Authentication configuration (only used when Transport is "http")
-        mcp.AuthenticationScheme = "Bearer"; // JWT Bearer authentication
+    // Authentication configuration (only used when Transport is "http")
+    mcp.AuthenticationScheme = "Bearer"; // JWT Bearer authentication
 
-        // OAuth 2.0 configuration for client-side authentication
-        mcp.OAuthClientId = "your-client-id";                    // OAuth 2.0 client ID
-        mcp.OAuthClientSecret = "your-client-secret";            // OAuth 2.0 client secret
-        mcp.OAuthAuthorizationServerUrl = new Uri("https://your-oauth-provider.com"); // OAuth 2.0 server URL
-        mcp.OAuthScopes = new List<string> { "api.read", "api.write" }; // OAuth 2.0 scopes
+    // OAuth 2.0 configuration for client-side authentication
+    mcp.OAuthClientId = "your-client-id";                    // OAuth 2.0 client ID
+    mcp.OAuthClientSecret = "your-client-secret";            // OAuth 2.0 client secret
+    mcp.OAuthAuthorizationServerUrl = new Uri("https://your-oauth-provider.com"); // OAuth 2.0 server URL
+    mcp.OAuthScopes = new List<string> { "api.read", "api.write" }; // OAuth 2.0 scopes
 
-        // JWT Bearer configuration (alternative to OAuth)
-        // mcp.JwtAuthority = "https://your-jwt-issuer.com";
-        // mcp.JwtAudience = "your-api-audience";
+    // JWT Bearer configuration (alternative to OAuth)
+    // mcp.JwtAuthority = "https://your-jwt-issuer.com";
+    // mcp.JwtAudience = "your-api-audience";
 
-        // Protected resource metadata for OAuth 2.0 resource server
-        mcp.ProtectedResource = new Uri("api://my-service/data");
-        mcp.ProtectedScopesSupported = new List<string> { "api.read", "api.write" };
-        mcp.ProtectedResourceName = "Sensitive Data API";
-        mcp.ProtectedAuthorizationServers = new List<Uri> { new Uri("https://your-oauth-provider.com") };
+    // Protected resource metadata for OAuth 2.0 resource server
+    mcp.ProtectedResource = new Uri("api://my-service/data");
+    mcp.ProtectedScopesSupported = new List<string> { "api.read", "api.write" };
+    mcp.ProtectedResourceName = "Sensitive Data API";
+    mcp.ProtectedAuthorizationServers = new List<Uri> { new Uri("https://your-oauth-provider.com") };
 
-        // Auto-discovery settings
-        mcp.AutoDiscoverTools = true;
-        mcp.AutoDiscoverResources = true;
-        mcp.AutoDiscoverPrompts = true;
+    // Auto-discovery settings
+    mcp.AutoDiscoverTools = true;
+    mcp.AutoDiscoverResources = true;
+    mcp.AutoDiscoverPrompts = true;
 
-        // Development features
-        mcp.EnableDevelopmentFeatures = true; // Enable message tracing
-        mcp.EnableValidation = true;          // Enable startup validation
+    // Development features
+    mcp.EnableDevelopmentFeatures = true; // Enable message tracing
+    mcp.EnableValidation = true;          // Enable startup validation
 
-        // Enable advanced MCP features
-        mcp.EnableProgress = true;        // Enable progress notifications
-        mcp.EnableCompletion = true;      // Enable auto-completion
-        mcp.EnableSampling = true;        // Enable LLM sampling
+    // Enable advanced MCP features
+    mcp.EnableProgress = true;        // Enable progress notifications
+    mcp.EnableCompletion = true;      // Enable auto-completion
+    mcp.EnableSampling = true;        // Enable LLM sampling
 
-        // Configure message-level filters for logging and monitoring
-        mcp.MessageFilter = () => next => async (context, cancellationToken) =>
-        {
-            // Simple message logging filter - logs to console
-            var method = context.JsonRpcMessage is ModelContextProtocol.Protocol.JsonRpcRequest request
-                ? request.Method
-                : "non-request";
-            Console.WriteLine($"📨 Incoming MCP message: {method}");
+    // Configure message-level filters for logging and monitoring
+    mcp.MessageFilter = () => next => async (context, cancellationToken) =>
+    {
+        // Simple message logging filter - logs to console
+        var method = context.JsonRpcMessage is ModelContextProtocol.Protocol.JsonRpcRequest request
+            ? request.Method
+            : "non-request";
+        Console.WriteLine($"📨 Incoming MCP message: {method}");
 
-            // Call the next handler in the pipeline
-            await next(context, cancellationToken);
+        // Call the next handler in the pipeline
+        await next(context, cancellationToken);
 
-            // Log completion
-            Console.WriteLine($"📤 Message processing completed for: {method}");
-        };
+        // Log completion
+        Console.WriteLine($"📤 Message processing completed for: {method}");
+    };
 
-        // Use the current assembly for component discovery
-        mcp.Assembly = typeof(Program).Assembly;
-    });
+    // Use the current assembly for component discovery
+    mcp.Assembly = typeof(Program).Assembly;
 });
 
 // Register business logic classes (services will be resolved via DI)
