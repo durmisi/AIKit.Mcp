@@ -31,8 +31,8 @@ builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // Configure AIKit MCP server using the new options pattern
-builder.Services.AddAIKitMcp()
-    .WithOptions(options =>
+var mcpBuilder = builder.Services.AddAIKitMcp(mcp => {
+        mcp.WithOptions(options =>
     {
         // Server identification
         options.ServerName = "AIKit.Sample.Server";
@@ -85,7 +85,6 @@ builder.Services.AddAIKitMcp()
 
         // Enable advanced MCP features
         options.EnableProgress = true;        // Enable progress notifications
-        options.EnableElicitation = true;     // Enable user input requests
         options.EnableCompletion = true;      // Enable auto-completion
         options.EnableSampling = true;        // Enable LLM sampling
 
@@ -107,6 +106,7 @@ builder.Services.AddAIKitMcp()
 
         // Use the current assembly for component discovery
         options.Assembly = typeof(Program).Assembly;
+    });
     });
 
 // Register business logic classes (services will be resolved via DI)

@@ -69,11 +69,7 @@ public class McpOptions
     /// </summary>
     public bool EnableValidation { get; set; }
 
-    /// <summary>
-    /// Whether to enable elicitation support for requesting user input.
-    /// </summary>
-    public bool EnableElicitation { get; set; }
-
+    
     /// <summary>
     /// Whether to enable progress tracking for long-running operations.
     /// </summary>
