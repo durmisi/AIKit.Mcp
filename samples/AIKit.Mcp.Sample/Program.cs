@@ -19,12 +19,10 @@
 //
 // See https://aka.ms/new-console-template for more information
 using AIKit.Mcp;
+using AIKit.Mcp.Sample;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol;
-using ModelContextProtocol.Server;
-using AIKit.Mcp.Sample;
 
 var builder = Host.CreateApplicationBuilder(args);
 

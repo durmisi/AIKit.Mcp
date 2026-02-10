@@ -1,6 +1,6 @@
-using System.Reflection;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
+using System.Reflection;
 
 namespace AIKit.Mcp;
 

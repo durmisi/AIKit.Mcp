@@ -1,8 +1,5 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Server;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace AIKit.Mcp;
 

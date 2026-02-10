@@ -1,11 +1,7 @@
-using AIKit.Mcp;
-using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol;
-using ModelContextProtocol.Server;
 using ModelContextProtocol.Protocol;
+using ModelContextProtocol.Server;
 using Moq;
-using System.Text.Json.Nodes;
-using Xunit;
 
 namespace AIKit.Mcp.Tests;
 

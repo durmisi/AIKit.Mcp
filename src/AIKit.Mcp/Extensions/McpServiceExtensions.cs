@@ -1,19 +1,17 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using ModelContextProtocol.AspNetCore;
 using ModelContextProtocol.Server;
 using System.Reflection;
 
 namespace AIKit.Mcp;
 
-public static class McpServiceExtensions 
+public static class McpServiceExtensions
 {
     /// <summary>
     /// Adds AIKit MCP server to the service collection and returns a builder for configuration.
     /// </summary>
-    public static AIKitMcpBuilder AddAIKitMcp(this IServiceCollection services, string serverName = "AIKit-Server") 
+    public static AIKitMcpBuilder AddAIKitMcp(this IServiceCollection services, string serverName = "AIKit-Server")
     {
         // Integration with Official SDK
         var builder = services.AddMcpServer();
@@ -34,7 +32,7 @@ public static class McpServiceExtensions
             .WithToolsFromAssembly()
             .WithResourcesFromAssembly()
             .WithPromptsFromAssembly();
-        
+
         return builder;
     }
 
@@ -47,8 +45,10 @@ public static class McpServiceExtensions
         var options = new LoggingOptions();
         configure?.Invoke(options);
 
-        builder.Services.AddLogging(logging => {
-            logging.AddConsole(c => {
+        builder.Services.AddLogging(logging =>
+        {
+            logging.AddConsole(c =>
+            {
                 if (options.RedirectToStderr)
                 {
                     c.LogToStandardErrorThreshold = options.MinLogLevel;
@@ -67,11 +67,11 @@ public static class McpServiceExtensions
     public static AIKitMcpBuilder WithConfiguration(this AIKitMcpBuilder builder, IConfiguration config)
     {
         var mcpConfig = config.GetSection("Mcp");
-        
+
         // Configure server info if provided
         var serverName = mcpConfig["ServerName"];
         var serverVersion = mcpConfig["ServerVersion"];
-        
+
         if (!string.IsNullOrEmpty(serverName) || !string.IsNullOrEmpty(serverVersion))
         {
             builder.Services.Configure<ModelContextProtocol.Server.McpServerOptions>(options =>
@@ -115,7 +115,7 @@ public static class McpServiceExtensions
 
         // Configure advanced features
         builder.WithTasks(); // Always enable tasks
-        
+
         if (mcpConfig.GetValue<bool>("EnableElicitation", false))
         {
             builder.WithElicitation();
@@ -142,12 +142,12 @@ public static class McpServiceExtensions
     public static AIKitMcpBuilder WithAllFromAssembly(this AIKitMcpBuilder builder, Assembly? assembly = null)
     {
         assembly ??= Assembly.GetCallingAssembly();
-        
+
         builder.InnerBuilder
             .WithToolsFromAssembly(assembly)
             .WithResourcesFromAssembly(assembly)
             .WithPromptsFromAssembly(assembly);
-        
+
         return builder;
     }
 
@@ -291,12 +291,15 @@ public static class McpServiceExtensions
                 case "oauth":
                     ConfigureOAuthAuthentication(builder, options);
                     break;
+
                 case "jwt":
                     ConfigureJwtAuthentication(builder, options);
                     break;
+
                 case "custom":
                     ConfigureCustomAuthentication(builder, options);
                     break;
+
                 default:
                     throw new ArgumentException($"Unsupported authentication scheme: {options.AuthenticationScheme}");
             }
@@ -401,8 +404,6 @@ public static class McpServiceExtensions
             // Configure resource metadata when SDK supports it
         });
     }
-
-   
 
     /// <summary>
     /// Adds configuration validation to check for common setup issues.

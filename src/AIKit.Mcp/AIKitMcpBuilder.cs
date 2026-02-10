@@ -35,17 +35,6 @@ public class AIKitMcpBuilder
     internal Func<McpMessageFilter>? MessageFilter => _messageFilter;
 
     /// <summary>
-    /// Adds a message filter to the MCP server for processing incoming JSON-RPC messages.
-    /// </summary>
-    /// <param name="filter">The filter function to apply to messages.</param>
-    /// <returns>The builder for chaining.</returns>
-    public AIKitMcpBuilder WithMessageFilter(Func<McpMessageFilter> filter)
-    {
-        _messageFilter = filter;
-        return this;
-    }
-
-    /// <summary>
     /// Builds and returns the configured IMcpServerBuilder.
     /// </summary>
     public IMcpServerBuilder Build() => _innerBuilder;

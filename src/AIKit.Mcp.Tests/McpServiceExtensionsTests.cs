@@ -1,12 +1,9 @@
-﻿using AIKit.Mcp;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
 using Moq;
-using System.Collections.Generic;
-using Xunit;
 
 namespace AIKit.Mcp.Tests;
 
