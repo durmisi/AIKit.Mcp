@@ -1,14 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol;
 using ModelContextProtocol.AspNetCore;
 using ModelContextProtocol.Server;
-using System.Linq;
 using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace AIKit.Mcp;
 
@@ -330,15 +325,6 @@ public static class McpServiceExtensions
             options.Capabilities ??= new();
             // Sampling capability will be enabled when client connects with sampling support
         });
-        return builder;
-    }
-
-    /// <summary>
-    /// Enables HTTP transport for ASP.NET Core integration.
-    /// </summary>
-    public static AIKitMcpBuilder WithHttpTransport(this AIKitMcpBuilder builder, Action<HttpServerTransportOptions>? configure = null)
-    {
-        builder.InnerBuilder.WithHttpTransport(configure);
         return builder;
     }
 

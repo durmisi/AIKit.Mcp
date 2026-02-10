@@ -229,21 +229,6 @@ public class McpServiceExtensionsTests
     }
 
     [Fact]
-    public void WithHttpTransport_ConfiguresHttpTransport()
-    {
-        // Arrange
-        var services = new ServiceCollection();
-        var builder = services.AddAIKitMcp();
-
-        // Act
-        var result = builder.WithHttpTransport();
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(builder, result);
-    }
-
-    [Fact]
     public void WithOptions_EnablesTasks_WhenConfigured()
     {
         // Arrange
