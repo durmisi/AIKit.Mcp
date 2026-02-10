@@ -9,6 +9,7 @@
 //   * JWT Bearer token validation
 //   * Header forwarding for service authentication
 //   * Protected resource metadata for fine-grained access control
+// - Logging and observability with OpenTelemetry and MCP logging protocol
 //
 // To enable HTTP transport with authentication:
 // 1. Change Transport to "http"
@@ -25,8 +26,7 @@ using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure logging
-builder.Logging.AddConsole();
+// Configure logging - basic setup, detailed config via AIKit.Mcp
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // Configure AIKit MCP server using the new options pattern
@@ -87,6 +87,19 @@ builder.Services.AddAIKitMcp(mcp =>
     mcp.EnableProgress = true;        // Enable progress notifications
     mcp.EnableCompletion = true;      // Enable auto-completion
     mcp.EnableSampling = true;        // Enable LLM sampling
+
+    // Logging and Observability
+    mcp.WithLogging(opts =>
+    {
+        opts.RedirectToStderr = true;
+        opts.MinLogLevel = LogLevel.Debug;
+    });
+    mcp.WithOpenTelemetry(opts =>
+    {
+        opts.ServiceName = "AIKit.Sample.Server";
+        opts.ServiceVersion = "1.0.0";
+        opts.OtlpEndpoint = "http://localhost:4317"; // Default OTLP gRPC endpoint
+    });
 
     // Configure message-level filters for logging and monitoring
     mcp.MessageFilter = () => next => async (context, cancellationToken) =>

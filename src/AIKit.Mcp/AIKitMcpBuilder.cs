@@ -5,6 +5,14 @@ using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using System.Reflection;
+using OpenTelemetry;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Instrumentation.Http;
+using OpenTelemetry.Exporter;
 
 namespace AIKit.Mcp;
 
@@ -156,6 +164,47 @@ public class LoggingOptions
     public LogLevel MinLogLevel { get; set; } = LogLevel.Trace;
 }
 
+/// <summary>
+/// OpenTelemetry configuration options for observability.
+/// </summary>
+public class OpenTelemetryOptions
+{
+    /// <summary>
+    /// Whether to enable OpenTelemetry tracing.
+    /// </summary>
+    public bool EnableTracing { get; set; } = true;
+
+    /// <summary>
+    /// Whether to enable OpenTelemetry metrics.
+    /// </summary>
+    public bool EnableMetrics { get; set; } = true;
+
+    /// <summary>
+    /// Whether to enable OpenTelemetry logging.
+    /// </summary>
+    public bool EnableLogging { get; set; } = true;
+
+    /// <summary>
+    /// OTLP exporter endpoint. If null, uses default.
+    /// </summary>
+    public string? OtlpEndpoint { get; set; }
+
+    /// <summary>
+    /// Custom configurator for OTLP exporter. If set, overrides default endpoint configuration.
+    /// </summary>
+    public Action<OpenTelemetry.Exporter.OtlpExporterOptions>? OtlpExporterConfigurator { get; set; }
+
+    /// <summary>
+    /// Service name for OpenTelemetry resource.
+    /// </summary>
+    public string ServiceName { get; set; } = "AIKit.Mcp.Server";
+
+    /// <summary>
+    /// Service version for OpenTelemetry resource.
+    /// </summary>
+    public string ServiceVersion { get; set; } = "1.0.0";
+}
+
 public sealed class AIKitMcpBuilder
 {
     private IServiceCollection _services { get; }
@@ -186,6 +235,10 @@ public sealed class AIKitMcpBuilder
     
     // Custom
     public Func<McpMessageFilter>? MessageFilter { get; set; }
+
+    // Logging and Observability
+    private LoggingOptions? _loggingOptions;
+    private OpenTelemetryOptions? _openTelemetryOptions;
 
     public AIKitMcpBuilder(IServiceCollection services)
     {
@@ -236,6 +289,7 @@ public sealed class AIKitMcpBuilder
         ConfigureDiscovery();
         ConfigureFeatures();
         ConfigureDiagnostics();
+        ConfigureLogging();
 
         return _mcpServerBuilder;
     }
@@ -248,17 +302,18 @@ public sealed class AIKitMcpBuilder
     {
         var logOptions = new LoggingOptions();
         configure?.Invoke(logOptions);
+        _loggingOptions = logOptions;
+        return this;
+    }
 
-        _services.AddLogging(logging =>
-        {
-            logging.AddConsole(c =>
-            {
-                if (logOptions.RedirectToStderr)
-                    c.LogToStandardErrorThreshold = logOptions.MinLogLevel;
-            });
-            logging.SetMinimumLevel(logOptions.MinLogLevel);
-        });
-
+    /// <summary>
+    /// Configures OpenTelemetry for tracing, metrics, and logging.
+    /// </summary>
+    public AIKitMcpBuilder WithOpenTelemetry(Action<OpenTelemetryOptions>? configure = null)
+    {
+        var otelOptions = new OpenTelemetryOptions();
+        configure?.Invoke(otelOptions);
+        _openTelemetryOptions = otelOptions;
         return this;
     }
 
@@ -359,6 +414,92 @@ public sealed class AIKitMcpBuilder
             Console.Error.WriteLine($"[DEBUG] OUT: {msg}");
             return msg;
         });
+    }
+
+    private void ConfigureLogging()
+    {
+        if (_loggingOptions != null)
+        {
+            _services.AddLogging(logging =>
+            {
+                logging.AddConsole(c =>
+                {
+                    if (_loggingOptions.RedirectToStderr)
+                        c.LogToStandardErrorThreshold = _loggingOptions.MinLogLevel;
+                });
+                logging.SetMinimumLevel(_loggingOptions.MinLogLevel);
+            });
+        }
+
+        if (_openTelemetryOptions != null)
+        {
+            var resourceBuilder = ResourceBuilder.CreateDefault()
+                .AddService(_openTelemetryOptions.ServiceName, serviceVersion: _openTelemetryOptions.ServiceVersion);
+
+            _services.AddOpenTelemetry()
+                .ConfigureResource(r => r.AddService(_openTelemetryOptions.ServiceName, serviceVersion: _openTelemetryOptions.ServiceVersion))
+                .WithTracing(b =>
+                {
+                    if (_openTelemetryOptions.EnableTracing)
+                    {
+                        b.AddSource("*")
+                         .AddAspNetCoreInstrumentation()
+                         .AddHttpClientInstrumentation();
+                        if (_openTelemetryOptions.OtlpExporterConfigurator != null)
+                        {
+                            b.AddOtlpExporter(_openTelemetryOptions.OtlpExporterConfigurator);
+                        }
+                        else if (!string.IsNullOrEmpty(_openTelemetryOptions.OtlpEndpoint))
+                        {
+                            b.AddOtlpExporter(o => o.Endpoint = new Uri(_openTelemetryOptions.OtlpEndpoint));
+                        }
+                        else
+                        {
+                            b.AddOtlpExporter();
+                        }
+                    }
+                })
+                .WithMetrics(b =>
+                {
+                    if (_openTelemetryOptions.EnableMetrics)
+                    {
+                        b.AddMeter("*")
+                         .AddAspNetCoreInstrumentation()
+                         .AddHttpClientInstrumentation();
+                        if (_openTelemetryOptions.OtlpExporterConfigurator != null)
+                        {
+                            b.AddOtlpExporter(_openTelemetryOptions.OtlpExporterConfigurator);
+                        }
+                        else if (!string.IsNullOrEmpty(_openTelemetryOptions.OtlpEndpoint))
+                        {
+                            b.AddOtlpExporter(o => o.Endpoint = new Uri(_openTelemetryOptions.OtlpEndpoint));
+                        }
+                        else
+                        {
+                            b.AddOtlpExporter();
+                        }
+                    }
+                })
+                .WithLogging(b =>
+                {
+                    if (_openTelemetryOptions.EnableLogging)
+                    {
+                        b.SetResourceBuilder(resourceBuilder);
+                        if (_openTelemetryOptions.OtlpExporterConfigurator != null)
+                        {
+                            b.AddOtlpExporter(_openTelemetryOptions.OtlpExporterConfigurator);
+                        }
+                        else if (!string.IsNullOrEmpty(_openTelemetryOptions.OtlpEndpoint))
+                        {
+                            b.AddOtlpExporter(o => o.Endpoint = new Uri(_openTelemetryOptions.OtlpEndpoint));
+                        }
+                        else
+                        {
+                            b.AddOtlpExporter();
+                        }
+                    }
+                });
+        }
     }
 
     private void ConfigureAuthentication()
