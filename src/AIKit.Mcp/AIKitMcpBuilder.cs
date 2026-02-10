@@ -121,9 +121,9 @@ public class LoggingOptions
 
 public sealed class AIKitMcpBuilder
 {
-    public IServiceCollection Services { get; }
+    private IServiceCollection _services { get; }
     
-    public IMcpServerBuilder McpServerBuilder { get; }
+    private IMcpServerBuilder _mcpServerBuilder { get; }
     
     // Server metadata
     public string? ServerName { get; set; }
@@ -152,8 +152,8 @@ public sealed class AIKitMcpBuilder
 
     public AIKitMcpBuilder(IServiceCollection services)
     {
-        Services = services ?? throw new ArgumentNullException(nameof(services));
-        McpServerBuilder = services.AddMcpServer();
+        _services = services ?? throw new ArgumentNullException(nameof(services));
+        _mcpServerBuilder = services.AddMcpServer();
     }
 
     /// <summary>
@@ -179,19 +179,28 @@ public sealed class AIKitMcpBuilder
         
         var options = new HttpTransportOptions();
         configure?.Invoke(options);
+
         _httpOptions = options;
         _isHttpTransport = true;
         _transportConfigured = true;
+
         return this;
     }
 
     /// <summary>
     /// Finalizes the configuration and returns the SDK builder.
+    /// Orchestrates the transition from AIKit Options to the underlying MCP SDK.
     /// </summary>
     public IMcpServerBuilder Build()
     {
-        ApplyOptionsToSdk();
-        return McpServerBuilder;
+        ConfigureMetadata();
+        ConfigureTransport();
+        ConfigureAuthentication();
+        ConfigureDiscovery();
+        ConfigureFeatures();
+        ConfigureDiagnostics();
+
+        return _mcpServerBuilder;
     }
 
 
@@ -203,7 +212,7 @@ public sealed class AIKitMcpBuilder
         var logOptions = new LoggingOptions();
         configure?.Invoke(logOptions);
 
-        Services.AddLogging(logging =>
+        _services.AddLogging(logging =>
         {
             logging.AddConsole(c =>
             {
@@ -222,7 +231,7 @@ public sealed class AIKitMcpBuilder
     public AIKitMcpBuilder WithTaskStore<TTaskStore>() where TTaskStore : class, 
         IMcpTaskStore
     {
-        Services.AddSingleton<IMcpTaskStore, TTaskStore>();
+        _services.AddSingleton<IMcpTaskStore, TTaskStore>();
         return this;
     }
 
@@ -232,30 +241,17 @@ public sealed class AIKitMcpBuilder
     public AIKitMcpBuilder WithAllFromAssembly(Assembly? assembly = null)
     {
         var target = assembly ?? Assembly.GetCallingAssembly();
-        McpServerBuilder.WithToolsFromAssembly(target)
+        _mcpServerBuilder.WithToolsFromAssembly(target)
                         .WithResourcesFromAssembly(target)
                         .WithPromptsFromAssembly(target);
         return this;
-    }
-
-    /// <summary>
-    /// Orchestrates the transition from AIKit Options to the underlying MCP SDK.
-    /// </summary>
-    private void ApplyOptionsToSdk()
-    {
-        ConfigureMetadata();
-        ConfigureTransport();
-        ConfigureAuthentication();
-        ConfigureDiscovery();
-        ConfigureFeatures();
-        ConfigureDiagnostics();
     }
 
     private void ConfigureMetadata()
     {
         if (string.IsNullOrEmpty(this.ServerName) && string.IsNullOrEmpty(this.ServerVersion)) return;
 
-        Services.Configure<McpServerOptions>(opt =>
+        _services.Configure<McpServerOptions>(opt =>
         {
             if (opt.ServerInfo == null) return;
             if (!string.IsNullOrEmpty(this.ServerName)) opt.ServerInfo.Name = this.ServerName;
@@ -266,26 +262,26 @@ public sealed class AIKitMcpBuilder
     private void ConfigureTransport()
     {
         if (_isHttpTransport)
-            McpServerBuilder.WithHttpTransport();
+            _mcpServerBuilder.WithHttpTransport();
         else
-            McpServerBuilder.WithStdioServerTransport();
+            _mcpServerBuilder.WithStdioServerTransport();
     }
 
     private void ConfigureDiscovery()
     {
         var assembly = this.Assembly ?? Assembly.GetCallingAssembly();
-        if (this.AutoDiscoverTools) McpServerBuilder.WithToolsFromAssembly(assembly);
-        if (this.AutoDiscoverResources) McpServerBuilder.WithResourcesFromAssembly(assembly);
-        if (this.AutoDiscoverPrompts) McpServerBuilder.WithPromptsFromAssembly(assembly);
+        if (this.AutoDiscoverTools) _mcpServerBuilder.WithToolsFromAssembly(assembly);
+        if (this.AutoDiscoverResources) _mcpServerBuilder.WithResourcesFromAssembly(assembly);
+        if (this.AutoDiscoverPrompts) _mcpServerBuilder.WithPromptsFromAssembly(assembly);
     }
 
     private void ConfigureFeatures()
     {
         // Core Task Support
-        Services.AddSingleton<IMcpTaskStore, InMemoryMcpTaskStore>();
+        _services.AddSingleton<IMcpTaskStore, InMemoryMcpTaskStore>();
 
         // Map Booleans to SDK Capabilities and Handlers
-        Services.Configure<McpServerOptions>(opt =>
+        _services.Configure<McpServerOptions>(opt =>
         {
             opt.Capabilities ??= new();
             
@@ -295,7 +291,7 @@ public sealed class AIKitMcpBuilder
 
         if (this.EnableCompletion)
         {
-            McpServerBuilder.WithCompleteHandler(async (req, ct) => new CompleteResult
+            _mcpServerBuilder.WithCompleteHandler(async (req, ct) => new CompleteResult
             {
                 Completion = new Completion { Values = [], HasMore = false, Total = 0 }
             });
@@ -308,12 +304,12 @@ public sealed class AIKitMcpBuilder
     {
         if (!this.EnableDevelopmentFeatures) return;
 
-        McpServerBuilder.AddIncomingMessageFilter(msg => {
+        _mcpServerBuilder.AddIncomingMessageFilter(msg => {
             Console.Error.WriteLine($"[DEBUG] IN: {msg}");
             return msg;
         });
 
-        McpServerBuilder.AddOutgoingMessageFilter(msg => {
+        _mcpServerBuilder.AddOutgoingMessageFilter(msg => {
             Console.Error.WriteLine($"[DEBUG] OUT: {msg}");
             return msg;
         });
@@ -329,19 +325,19 @@ public sealed class AIKitMcpBuilder
         {
             case "oauth":
                 if (string.IsNullOrEmpty(_httpOptions.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
-                Services.AddAuthentication(a => {
+                _services.AddAuthentication(a => {
                     a.DefaultChallengeScheme = "McpOAuth";
                     a.DefaultAuthenticateScheme = "Bearer";
                 }).AddJwtBearer("Bearer", j => ApplyJwt(j, _httpOptions));
                 break;
 
             case "jwt":
-                Services.AddAuthentication("Bearer").AddJwtBearer(j => ApplyJwt(j, _httpOptions));
+                _services.AddAuthentication("Bearer").AddJwtBearer(j => ApplyJwt(j, _httpOptions));
                 break;
 
             case "custom":
                 if (_httpOptions.CustomAuthHandler == null) throw new InvalidOperationException("CustomAuthHandler missing.");
-                Services.AddSingleton(_httpOptions.CustomAuthHandler);
+                _services.AddSingleton(_httpOptions.CustomAuthHandler);
                 break;
         }
     }
