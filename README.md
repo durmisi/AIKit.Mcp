@@ -14,6 +14,37 @@ A .NET wrapper library for the Model Context Protocol (MCP) SDK that simplifies 
 - **Multi-Framework**: Supports .NET 6.0, 8.0, 9.0, and 10.0
 - **Logging**: Configurable logging with stderr redirection for clean stdio
 
+## Architecture
+
+AIKit.Mcp provides a clean abstraction over the MCP SDK, allowing you to focus on business logic while the framework handles protocol complexities.
+
+```mermaid
+graph TB
+    A[Developer] --> B[AIKit.Mcp Builder]
+    B --> C[MCP Server]
+
+    C --> D[Transport Layer]
+    D --> D1[Stdio]
+    D --> D2[HTTP]
+
+    C --> E[Authentication]
+    E --> E1[OAuth 2.0]
+    E --> E2[JWT Bearer]
+    E --> E3[Custom]
+
+    C --> F[Auto-Discovery]
+    F --> F1[Tools<br/>[McpServerTool]]
+    F --> F2[Resources<br/>[McpServerResource]]
+    F --> F3[Prompts<br/>[McpServerPrompt]]
+
+    C --> G[Advanced Features]
+    G --> G1[Progress]
+    G --> G2[Tasks]
+    G --> G3[Sampling]
+
+    B --> H[Business Logic<br/>Your Tools & Resources]
+```
+
 ## Installation
 
 Install via NuGet:
