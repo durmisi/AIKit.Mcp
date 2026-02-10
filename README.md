@@ -20,7 +20,7 @@ AIKit.Mcp provides a clean abstraction over the MCP SDK, allowing you to focus o
 
 ```mermaid
 graph TB
-    A[Developer] --> B[AIKit.Mcp Builder]
+    A[Developer] --> B[AIKit Mcp Builder]
     B --> C[MCP Server]
 
     C --> D[Transport Layer]
@@ -42,7 +42,7 @@ graph TB
     G --> G2[Tasks]
     G --> G3[Sampling]
 
-    B --> H[Business Logic<br/>Your Tools & Resources]
+    B --> H[Business Logic, Your Tools, Resources]
 ```
 
 ## Installation
