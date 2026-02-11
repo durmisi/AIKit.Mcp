@@ -85,6 +85,11 @@ public sealed class AIKitMcpBuilder
     /// </summary>
     public bool EnableSampling { get; set; }
 
+    /// <summary>
+    /// Gets or sets the type of task store to use. Default is InMemory.
+    /// </summary>
+    public TaskStoreType TaskStoreType { get; set; } = TaskStoreType.InMemory;
+
     // Custom
     /// <summary>
     /// Gets or sets the message filter function.
@@ -265,7 +270,8 @@ public sealed class AIKitMcpBuilder
         var options = new FileBasedTaskStoreOptions();
         configure?.Invoke(options);
         _services.AddSingleton(options);
-        _services.AddSingleton<IMcpTaskStore, FileBasedMcpTaskStore>();
+        TaskStoreType = TaskStoreType.FileBased;
+      
         return this;
     }
 
@@ -333,7 +339,15 @@ public sealed class AIKitMcpBuilder
     private void ConfigureFeatures()
     {
         // Core Task Support
-        _services.AddSingleton<IMcpTaskStore, InMemoryMcpTaskStore>();
+        switch (TaskStoreType)
+        {
+            case TaskStoreType.FileBased:
+                _services.AddSingleton<IMcpTaskStore, FileBasedMcpTaskStore>();
+                break;
+            default:
+                _services.AddSingleton<IMcpTaskStore, InMemoryMcpTaskStore>();
+                break;
+        }
 
         // Map Booleans to SDK Capabilities and Handlers
         _services.Configure<McpServerOptions>(opt =>

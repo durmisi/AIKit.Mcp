@@ -11,6 +11,22 @@ using ModelContextProtocol.Server;
 namespace AIKit.Mcp;
 
 /// <summary>
+/// Specifies the type of task store to use.
+/// </summary>
+public enum TaskStoreType
+{
+    /// <summary>
+    /// Uses an in-memory task store (default).
+    /// </summary>
+    InMemory = 0,
+
+    /// <summary>
+    /// Uses a file-based task store.
+    /// </summary>
+    FileBased = 1
+}
+
+/// <summary>
 /// Configuration options for HTTP transport.
 /// </summary>
 public class HttpTransportOptions
