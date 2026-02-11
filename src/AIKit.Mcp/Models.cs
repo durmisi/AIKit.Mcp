@@ -162,6 +162,11 @@ public class JwtAuth : AuthenticationOptions
     public string? JwtAuthority { get; set; }
 
     /// <summary>
+    /// JWT signing key (for symmetric key validation, when not using authority).
+    /// </summary>
+    public string? SigningKey { get; set; }
+
+    /// <summary>
     /// JWT validation parameters.
     /// </summary>
     public Dictionary<string, object> JwtValidationParameters { get; set; } = new();

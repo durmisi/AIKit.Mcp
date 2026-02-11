@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -536,6 +537,11 @@ public sealed class AIKitMcpBuilder
         target.Authority = source.JwtAuthority ?? target.Authority;
         target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;
         target.TokenValidationParameters.ValidIssuer = source.JwtIssuer ?? target.TokenValidationParameters.ValidIssuer;
+        target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
+        if (!string.IsNullOrEmpty(source.SigningKey))
+        {
+            target.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(source.SigningKey));
+        }
         // Note: ValidationParameters not used here, perhaps extend if needed
     }
 }
