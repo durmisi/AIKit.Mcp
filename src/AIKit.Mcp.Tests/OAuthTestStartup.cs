@@ -51,6 +51,11 @@ public class OAuthTestStartup
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapMcp("/mcp");
+            endpoints.MapGet("/.well-known/oauth-protected-resource", () => new
+            {
+                authorization_servers = new[] { "https://localhost:7029" },
+                scopes_supported = new[] { "mcp:tools" }
+            });
         });
     }
 }

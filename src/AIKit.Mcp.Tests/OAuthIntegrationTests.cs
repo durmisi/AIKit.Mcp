@@ -1,6 +1,8 @@
 using AIKit.Mcp.Tests.TestOAuthServer;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Logging.Abstractions;
+using ModelContextProtocol.Client;
+using ModelContextProtocol.Protocol;
 using System.Net;
 using System.Net.Http.Headers;
 using Xunit.Abstractions;
@@ -115,6 +117,73 @@ public class OAuthIntegrationTests : WebApplicationFactory<OAuthTestStartup>, IA
         // Assert
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
         _output.WriteLine("Server rejected expired token.");
+    }
+
+    [Fact]
+    public async Task OAuth_Client_Can_Authenticate_And_Call_Tools()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+        });
+
+        var transport = new HttpClientTransport(new()
+        {
+            Endpoint = new Uri("http://localhost:5000/mcp"),
+            Name = "Test OAuth Client",
+            OAuth = new()
+            {
+                RedirectUri = new Uri("http://localhost:1179/callback"),
+                AuthorizationRedirectDelegate = HandleAuthorizationUrlAsync,
+                DynamicClientRegistration = new()
+                {
+                    ClientName = "TestOAuthClient",
+                },
+            }
+        }, httpClient, NullLoggerFactory.Instance);
+
+        // Act
+        await using var mcpClient = await McpClient.CreateAsync(transport);
+
+        var tools = await mcpClient.ListToolsAsync();
+
+        // Assert
+        Assert.NotEmpty(tools);
+        var addTool = tools.FirstOrDefault(t => t.Name == "add-numbers");
+        Assert.NotNull(addTool);
+
+        var result = await mcpClient.CallToolAsync("add-numbers", new Dictionary<string, object?> { { "a", 5 }, { "b", 10 } });
+
+        Assert.NotNull(result);
+        Assert.Null(result.IsError);
+        Assert.NotNull(result.Content);
+        var textContent = Assert.Single(result.Content);
+        Assert.Equal("15", Assert.IsType<TextContentBlock>(textContent).Text);
+
+        _output.WriteLine("Client successfully authenticated and called tools.");
+    }
+
+    private async Task<string?> HandleAuthorizationUrlAsync(Uri authorizationUrl, Uri redirectUri, CancellationToken cancellationToken)
+    {
+        // For testing, simulate the authorization flow programmatically
+        using var httpClient = new HttpClient(new HttpClientHandler
+        {
+            AllowAutoRedirect = false,
+            ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
+        });
+
+        var response = await httpClient.GetAsync(authorizationUrl, cancellationToken);
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+
+        var location = response.Headers.Location;
+        Assert.NotNull(location);
+
+        var query = System.Web.HttpUtility.ParseQueryString(location.Query);
+        var code = query["code"];
+        Assert.NotNull(code);
+
+        return code;
     }
 
     private async Task<string> GetValidTokenAsync()
