@@ -14,10 +14,24 @@ using AIKit.Mcp.Services;
 
 namespace AIKit.Mcp;
 
+/// <summary>
+/// Represents the type of transport used for MCP communication.
+/// </summary>
 public enum TransportType
 {
+    /// <summary>
+    /// Standard input/output transport.
+    /// </summary>
     Stdio,
+
+    /// <summary>
+    /// HTTP-based transport.
+    /// </summary>
     Http,
+
+    /// <summary>
+    /// Stream-based transport.
+    /// </summary>
     Stream
 }
 
