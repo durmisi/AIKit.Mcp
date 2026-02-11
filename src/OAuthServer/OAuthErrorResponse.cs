@@ -1,11 +1,11 @@
 using System.Text.Json.Serialization;
 
-namespace AIKit.Mcp.Tests.TestOAuthServer;
+namespace OAuthServer;
 
 /// <summary>
 /// Represents an OAuth error response.
 /// </summary>
-internal sealed class OAuthErrorResponse
+public sealed class OAuthErrorResponse
 {
     /// <summary>
     /// Gets or sets the error code.

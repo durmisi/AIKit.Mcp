@@ -1,11 +1,11 @@
 using System.Text.Json.Serialization;
 
-namespace AIKit.Mcp.Tests.TestOAuthServer;
+namespace OAuthServer;
 
 /// <summary>
 /// Represents the token response for OAuth flow.
 /// </summary>
-internal sealed class TokenResponse
+public sealed class TokenResponse
 {
     /// <summary>
     /// Gets or sets the access token.

@@ -6,8 +6,9 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using TestOAuthServer;
 
-namespace AIKit.Mcp.Tests.TestOAuthServer;
+namespace OAuthServer;
 
 public sealed class TestOAuthServer
 {
@@ -626,12 +627,12 @@ internal record AuthorizationCodeInfo(string ClientId, string RedirectUri, strin
 
 internal record TokenInfo(string ClientId, List<string> Scopes, DateTimeOffset IssuedAt, DateTimeOffset ExpiresAt, Uri? Resource, string JwtId);
 
-internal record JsonWebKeySet(List<JsonWebKey> Keys);
+public record JsonWebKeySet(List<JsonWebKey> Keys);
 
-internal record JsonWebKey(string KeyType, string Use, string KeyId, string Algorithm, string Exponent, string Modulus);
+public record JsonWebKey(string KeyType, string Use, string KeyId, string Algorithm, string Exponent, string Modulus);
 
-internal record TokenIntrospectionResponse(bool Active, string? ClientId = null, string? Scope = null, long? ExpirationTime = null, string? Audience = null);
+public record TokenIntrospectionResponse(bool Active, string? ClientId = null, string? Scope = null, long? ExpirationTime = null, string? Audience = null);
 
-internal record ClientRegistrationRequest(List<string> RedirectUris);
+public record ClientRegistrationRequest(List<string> RedirectUris);
 
-internal record ClientRegistrationResponse(string ClientId, string ClientSecret, long ClientIdIssuedAt, List<string> RedirectUris, List<string> GrantTypes, List<string> ResponseTypes, string TokenEndpointAuthMethod);
+public record ClientRegistrationResponse(string ClientId, string ClientSecret, long ClientIdIssuedAt, List<string> RedirectUris, List<string> GrantTypes, List<string> ResponseTypes, string TokenEndpointAuthMethod);

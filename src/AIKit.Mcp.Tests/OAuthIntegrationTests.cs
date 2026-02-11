@@ -1,4 +1,3 @@
-using AIKit.Mcp.Tests.TestOAuthServer;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Logging.Abstractions;
 using ModelContextProtocol.Client;
@@ -6,6 +5,7 @@ using ModelContextProtocol.Protocol;
 using System.Net;
 using System.Net.Http.Headers;
 using Xunit.Abstractions;
+using OAuthServer;
 
 namespace AIKit.Mcp.Tests;
 
@@ -15,7 +15,7 @@ namespace AIKit.Mcp.Tests;
 public class OAuthIntegrationTests : WebApplicationFactory<OAuthTestStartup>, IAsyncLifetime
 {
     private readonly ITestOutputHelper _output;
-    private TestOAuthServer.TestOAuthServer? _oauthServer;
+    private OAuthServer.TestOAuthServer? _oauthServer;
     private CancellationTokenSource _cts = new();
 
     public OAuthIntegrationTests(ITestOutputHelper output)
@@ -26,7 +26,7 @@ public class OAuthIntegrationTests : WebApplicationFactory<OAuthTestStartup>, IA
     public async Task InitializeAsync()
     {
         var loggerProvider = NullLoggerProvider.Instance;
-        _oauthServer = new TestOAuthServer.TestOAuthServer(loggerProvider);
+        _oauthServer = new OAuthServer.TestOAuthServer(loggerProvider);
         await _oauthServer.RunServerAsync(cancellationToken: _cts.Token);
         _output.WriteLine("TestOAuthServer started.");
     }
