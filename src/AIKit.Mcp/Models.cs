@@ -4,6 +4,9 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Trace;
 using System.Collections.Generic;
 using System;
+using Microsoft.AspNetCore.Http;
+using System.Threading;
+using ModelContextProtocol.Server;
 
 namespace AIKit.Mcp;
 
@@ -21,6 +24,11 @@ public class HttpTransportOptions
     /// Authentication configuration.
     /// </summary>
     public AuthenticationOptions? Authentication { get; set; }
+
+    /// <summary>
+    /// Callback to configure session options per MCP session.
+    /// </summary>
+    public Func<HttpContext, McpServerOptions, CancellationToken, Task>? ConfigureSessionOptions { get; set; }
 }
 
 /// <summary>
@@ -210,4 +218,20 @@ public class OpenTelemetryOptions
     /// Service version for OpenTelemetry resource.
     /// </summary>
     public string ServiceVersion { get; set; } = "1.0.0";
+}
+
+/// <summary>
+/// Configuration for tool categories used in per-session filtering.
+/// </summary>
+public class ToolCategoryConfig
+{
+    /// <summary>
+    /// The category name (e.g., "math", "time").
+    /// </summary>
+    public string Category { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The tool types to include in this category.
+    /// </summary>
+    public Type[] ToolTypes { get; set; } = Array.Empty<Type>();
 }

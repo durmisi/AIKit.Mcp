@@ -8,9 +8,13 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System.Reflection;
+using Microsoft.AspNetCore.Http;
 
 namespace AIKit.Mcp;
 
+/// <summary>
+/// Fluent builder for configuring AIKit MCP server options.
+/// </summary>
 public sealed class AIKitMcpBuilder
 {
     private IServiceCollection _services { get; }
@@ -18,8 +22,14 @@ public sealed class AIKitMcpBuilder
     private IMcpServerBuilder _mcpServerBuilder { get; }
 
     // Server metadata
+    /// <summary>
+    /// Gets or sets the name of the MCP server.
+    /// </summary>
     public string? ServerName { get; set; }
 
+    /// <summary>
+    /// Gets or sets the version of the MCP server.
+    /// </summary>
     public string? ServerVersion { get; set; }
 
     // Transport (private)
@@ -29,28 +39,68 @@ public sealed class AIKitMcpBuilder
     private HttpTransportOptions? _httpOptions;
 
     // Discovery
+    /// <summary>
+    /// Gets or sets a value indicating whether to automatically discover tools from the assembly.
+    /// </summary>
     public bool AutoDiscoverTools { get; set; } = true;
 
+    /// <summary>
+    /// Gets or sets a value indicating whether to automatically discover resources from the assembly.
+    /// </summary>
     public bool AutoDiscoverResources { get; set; } = true;
+    /// <summary>
+    /// Gets or sets a value indicating whether to automatically discover prompts from the assembly.
+    /// </summary>
     public bool AutoDiscoverPrompts { get; set; } = true;
+    /// <summary>
+    /// Gets or sets the assembly to scan for tools, resources, and prompts.
+    /// </summary>
     public Assembly? Assembly { get; set; }
 
     // Features
+    /// <summary>
+    /// Gets or sets a value indicating whether to enable development features.
+    /// </summary>
     public bool EnableDevelopmentFeatures { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether to enable validation.
+    /// </summary>
     public bool EnableValidation { get; set; }
+    /// <summary>
+    /// Gets or sets a value indicating whether to enable progress reporting.
+    /// </summary>
     public bool EnableProgress { get; set; }
+    /// <summary>
+    /// Gets or sets a value indicating whether to enable completion.
+    /// </summary>
     public bool EnableCompletion { get; set; }
+    /// <summary>
+    /// Gets or sets a value indicating whether to enable sampling.
+    /// </summary>
     public bool EnableSampling { get; set; }
 
     // Custom
+    /// <summary>
+    /// Gets or sets the message filter function.
+    /// </summary>
     public Func<McpMessageFilter>? MessageFilter { get; set; }
+
+    // Per-session configuration
+    /// <summary>
+    /// Gets or sets the function to configure session options per request.
+    /// </summary>
+    public Func<HttpContext, McpServerOptions, CancellationToken, Task>? ConfigureSessionOptions { get; set; }
 
     // Logging and Observability
     private LoggingOptions? _loggingOptions;
 
     private OpenTelemetryOptions? _openTelemetryOptions;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AIKitMcpBuilder"/> class.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
     public AIKitMcpBuilder(IServiceCollection services)
     {
         _services = services ?? throw new ArgumentNullException(nameof(services));
@@ -85,6 +135,42 @@ public sealed class AIKitMcpBuilder
         _isHttpTransport = true;
         _transportConfigured = true;
 
+        return this;
+    }
+
+    /// <summary>
+    /// Configures the session options callback for per-session filtering.
+    /// </summary>
+    public AIKitMcpBuilder WithSessionOptions(Func<HttpContext, McpServerOptions, CancellationToken, Task> configure)
+    {
+        this.ConfigureSessionOptions = configure;
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a tool type with the MCP server.
+    /// </summary>
+    public AIKitMcpBuilder WithTools<T>() where T : class
+    {
+        _mcpServerBuilder.WithTools<T>();
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a resource type with the MCP server.
+    /// </summary>
+    public AIKitMcpBuilder WithResources<T>() where T : class
+    {
+        _mcpServerBuilder.WithResources<T>();
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a prompt type with the MCP server.
+    /// </summary>
+    public AIKitMcpBuilder WithPrompts<T>() where T : class
+    {
+        _mcpServerBuilder.WithPrompts<T>();
         return this;
     }
 
@@ -164,7 +250,15 @@ public sealed class AIKitMcpBuilder
     private void ConfigureTransport()
     {
         if (_isHttpTransport)
-            _mcpServerBuilder.WithHttpTransport();
+        {
+            _mcpServerBuilder.WithHttpTransport(options =>
+            {
+                // Set ConfigureSessionOptions from builder or httpOptions
+                var sessionOptionsCallback = this.ConfigureSessionOptions ?? _httpOptions?.ConfigureSessionOptions;
+                if (sessionOptionsCallback != null)
+                    options.ConfigureSessionOptions = sessionOptionsCallback;
+            });
+        }
         else
             _mcpServerBuilder.WithStdioServerTransport();
     }

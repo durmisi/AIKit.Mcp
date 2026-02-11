@@ -2,6 +2,7 @@ using ModelContextProtocol.Server;
 
 namespace AIKit.Mcp.Tests;
 
+[McpServerToolType]
 [McpServerResourceType]
 public class TestResources
 {
@@ -9,5 +10,11 @@ public class TestResources
     public string GetTestData()
     {
         return "Test data content";
+    }
+
+    [McpServerTool(Name = "get-resource-info")]
+    public string GetResourceInfo()
+    {
+        return "Resource info";
     }
 }
