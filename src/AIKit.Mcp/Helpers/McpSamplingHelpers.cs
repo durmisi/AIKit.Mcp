@@ -1,4 +1,3 @@
-// 
 using Microsoft.Extensions.AI;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
@@ -8,7 +7,7 @@ using System.Text.Json.Nodes;
 namespace AIKit.Mcp.Helpers;
 
 /// <summary>
-/// Provides simplified methods for handling sampling requests in MCP servers. 
+/// Provides simplified methods for handling sampling requests in MCP servers.
 /// </summary>
 public static class McpSamplingHelpers
 {

@@ -1,4 +1,3 @@
-// 
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
@@ -7,7 +6,7 @@ using System.Text.Json;
 namespace AIKit.Mcp.Helpers;
 
 /// <summary>
-/// Helper methods for working with MCP Tasks in AIKit.Mcp. 
+/// Helper methods for working with MCP Tasks in AIKit.Mcp.
 /// </summary>
 public static class McpTaskHelpers
 {

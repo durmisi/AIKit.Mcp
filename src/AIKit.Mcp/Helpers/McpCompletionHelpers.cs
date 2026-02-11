@@ -1,11 +1,10 @@
-// 
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 
 namespace AIKit.Mcp.Helpers;
 
 /// <summary>
-/// Provides simplified methods for handling completion requests in MCP servers. 
+/// Provides simplified methods for handling completion requests in MCP servers.
 /// </summary>
 public static class McpCompletionHelpers
 {

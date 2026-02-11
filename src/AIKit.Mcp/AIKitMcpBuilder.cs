@@ -1,3 +1,5 @@
+using AIKit.Mcp.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -10,8 +12,6 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using System.IO.Pipelines;
 using System.Reflection;
-using Microsoft.AspNetCore.Http;
-using AIKit.Mcp.Services;
 
 namespace AIKit.Mcp;
 
@@ -74,10 +74,12 @@ public sealed class AIKitMcpBuilder
     /// Gets or sets a value indicating whether to automatically discover resources from the assembly.
     /// </summary>
     public bool AutoDiscoverResources { get; set; } = true;
+
     /// <summary>
     /// Gets or sets a value indicating whether to automatically discover prompts from the assembly.
     /// </summary>
     public bool AutoDiscoverPrompts { get; set; } = true;
+
     /// <summary>
     /// Gets or sets the assembly to scan for tools, resources, and prompts.
     /// </summary>
@@ -93,14 +95,17 @@ public sealed class AIKitMcpBuilder
     /// Gets or sets a value indicating whether to enable validation.
     /// </summary>
     public bool EnableValidation { get; set; }
+
     /// <summary>
     /// Gets or sets a value indicating whether to enable progress reporting.
     /// </summary>
     public bool EnableProgress { get; set; }
+
     /// <summary>
     /// Gets or sets a value indicating whether to enable completion.
     /// </summary>
     public bool EnableCompletion { get; set; }
+
     /// <summary>
     /// Gets or sets a value indicating whether to enable sampling.
     /// </summary>
@@ -365,6 +370,7 @@ public sealed class AIKitMcpBuilder
             case TaskStoreType.FileBased:
                 _services.AddSingleton<IMcpTaskStore, FileBasedMcpTaskStore>();
                 break;
+
             default:
                 _services.AddSingleton<IMcpTaskStore, InMemoryMcpTaskStore>();
                 break;

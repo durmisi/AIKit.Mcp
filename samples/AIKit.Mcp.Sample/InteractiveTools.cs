@@ -1,4 +1,3 @@
-// 
 using AIKit.Mcp.Helpers;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;

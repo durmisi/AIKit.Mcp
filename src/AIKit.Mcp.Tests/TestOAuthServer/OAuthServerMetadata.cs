@@ -12,21 +12,21 @@ internal sealed class OAuthServerMetadata
     /// REQUIRED. The authorization server's issuer identifier, which is a URL that uses the "https" scheme and has no query or fragment components.
     /// </summary>
     [JsonPropertyName("issuer")]
-    public required string Issuer { get; init; }
+    public string Issuer { get; init; }
 
     /// <summary>
     /// Gets or sets the authorization endpoint URL.
     /// URL of the authorization server's authorization endpoint. This is REQUIRED unless no grant types are supported that use the authorization endpoint.
     /// </summary>
     [JsonPropertyName("authorization_endpoint")]
-    public required string AuthorizationEndpoint { get; init; }
+    public string AuthorizationEndpoint { get; init; }
 
     /// <summary>
     /// Gets or sets the token endpoint URL.
     /// URL of the authorization server's token endpoint. This is REQUIRED unless only the implicit grant type is supported.
     /// </summary>
     [JsonPropertyName("token_endpoint")]
-    public required string TokenEndpoint { get; init; }
+    public string TokenEndpoint { get; init; }
 
     /// <summary>
     /// Gets or sets the JWKS URI.
@@ -57,7 +57,7 @@ internal sealed class OAuthServerMetadata
     /// RECOMMENDED. JSON array containing a list of the OAuth 2.0 "response_type" values that this server supports.
     /// </summary>
     [JsonPropertyName("response_types_supported")]
-    public required List<string> ResponseTypesSupported { get; init; }
+    public List<string> ResponseTypesSupported { get; init; }
 
     /// <summary>
     /// Gets or sets the response modes supported by this server.
@@ -179,4 +179,3 @@ internal sealed class OAuthServerMetadata
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? ClientIdMetadataDocumentSupported { get; init; }
 }
-

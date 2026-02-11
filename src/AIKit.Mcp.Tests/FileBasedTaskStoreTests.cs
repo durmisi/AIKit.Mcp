@@ -1,8 +1,6 @@
 using AIKit.Mcp.Services;
-using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Protocol;
 using System.Text.Json;
-using Xunit;
 using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;
@@ -25,7 +23,7 @@ public class FileBasedTaskStoreTests : IDisposable
             EnableSessionIsolation = true
         };
         _logger = new LoggerFactory().CreateLogger<FileBasedMcpTaskStore>();
-        
+
         _output.WriteLine($"Test directory: {_testDirectory}");
         _output.WriteLine($"Storage path: {_options.StoragePath}");
         _output.WriteLine($"Default TTL: {_options.DefaultTtl}");
@@ -36,7 +34,7 @@ public class FileBasedTaskStoreTests : IDisposable
     public async Task CreateTaskAsync_CreatesTaskWithCorrectProperties()
     {
         _output.WriteLine("Starting CreateTaskAsync_CreatesTaskWithCorrectProperties test");
-        
+
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
         var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
@@ -46,7 +44,7 @@ public class FileBasedTaskStoreTests : IDisposable
             Method = "test.method",
             Params = JsonSerializer.SerializeToNode(new { param = "value" })
         };
-        
+
         _output.WriteLine($"Created store with options: TTL={metadata.TimeToLive}, RequestId={request.Id}, Method={request.Method}");
 
         // Act
@@ -56,16 +54,16 @@ public class FileBasedTaskStoreTests : IDisposable
         // Assert
         Assert.NotNull(task);
         _output.WriteLine("Task is not null ✓");
-        
+
         Assert.NotNull(task.TaskId);
         _output.WriteLine($"TaskId is not null: {task.TaskId} ✓");
-        
+
         Assert.Equal(McpTaskStatus.Working, task.Status);
         _output.WriteLine($"Task status is Working: {task.Status} ✓");
-        
+
         Assert.True(task.CreatedAt > DateTimeOffset.UtcNow.AddMinutes(-1));
         _output.WriteLine($"Task created recently: {task.CreatedAt} ✓");
-        
+
         _output.WriteLine("CreateTaskAsync_CreatesTaskWithCorrectProperties test completed successfully");
     }
 
@@ -73,7 +71,7 @@ public class FileBasedTaskStoreTests : IDisposable
     public async Task GetTaskAsync_ReturnsTask_WhenExists()
     {
         _output.WriteLine("Starting GetTaskAsync_ReturnsTask_WhenExists test");
-        
+
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
         var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
@@ -92,13 +90,13 @@ public class FileBasedTaskStoreTests : IDisposable
         // Assert
         Assert.NotNull(retrievedTask);
         _output.WriteLine("Retrieved task is not null ✓");
-        
+
         Assert.Equal(createdTask.TaskId, retrievedTask.TaskId);
         _output.WriteLine($"Task IDs match: {createdTask.TaskId} ✓");
-        
+
         Assert.Equal(createdTask.Status, retrievedTask.Status);
         _output.WriteLine($"Task statuses match: {createdTask.Status} ✓");
-        
+
         _output.WriteLine("GetTaskAsync_ReturnsTask_WhenExists test completed successfully");
     }
 
@@ -106,7 +104,7 @@ public class FileBasedTaskStoreTests : IDisposable
     public async Task GetTaskAsync_ReturnsNull_WhenSessionMismatch()
     {
         _output.WriteLine("Starting GetTaskAsync_ReturnsNull_WhenSessionMismatch test");
-        
+
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
         var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
@@ -125,7 +123,7 @@ public class FileBasedTaskStoreTests : IDisposable
         // Assert
         Assert.Null(retrievedTask);
         _output.WriteLine("Task correctly not accessible from different session ✓");
-        
+
         _output.WriteLine("GetTaskAsync_ReturnsNull_WhenSessionMismatch test completed successfully");
     }
 
@@ -133,7 +131,7 @@ public class FileBasedTaskStoreTests : IDisposable
     public async Task StoreTaskResultAsync_UpdatesTaskStatusAndResult()
     {
         _output.WriteLine("Starting StoreTaskResultAsync_UpdatesTaskStatusAndResult test");
-        
+
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
         var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
@@ -154,16 +152,16 @@ public class FileBasedTaskStoreTests : IDisposable
         // Assert
         Assert.Equal(McpTaskStatus.Completed, updatedTask.Status);
         _output.WriteLine("Task status correctly updated to Completed ✓");
-        
+
         var retrievedResult = await store.GetTaskResultAsync(task.TaskId, "session1");
         _output.WriteLine($"Retrieved result from storage");
-        
+
         Assert.True(retrievedResult.TryGetProperty("output", out var outputProp));
         _output.WriteLine("Result has 'output' property ✓");
-        
+
         Assert.Equal("success", outputProp.GetString());
         _output.WriteLine("Result 'output' property has correct value: success ✓");
-        
+
         _output.WriteLine("StoreTaskResultAsync_UpdatesTaskStatusAndResult test completed successfully");
     }
 
@@ -171,7 +169,7 @@ public class FileBasedTaskStoreTests : IDisposable
     public async Task ListTasksAsync_ReturnsTasksForSession()
     {
         _output.WriteLine("Starting ListTasksAsync_ReturnsTasksForSession test");
-        
+
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
         var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
@@ -180,7 +178,7 @@ public class FileBasedTaskStoreTests : IDisposable
 
         await store.CreateTaskAsync(metadata, request1.Id, request1, "session1");
         _output.WriteLine("Created task in session1");
-        
+
         await store.CreateTaskAsync(metadata, request2.Id, request2, "session2");
         _output.WriteLine("Created task in session2");
 
@@ -191,7 +189,7 @@ public class FileBasedTaskStoreTests : IDisposable
         // Assert
         Assert.Single(result.Tasks);
         _output.WriteLine("Correctly returned exactly 1 task for session1 ✓");
-        
+
         _output.WriteLine("ListTasksAsync_ReturnsTasksForSession test completed successfully");
     }
 
@@ -199,7 +197,7 @@ public class FileBasedTaskStoreTests : IDisposable
     public async Task CancelTaskAsync_CancelsWorkingTask()
     {
         _output.WriteLine("Starting CancelTaskAsync_CancelsWorkingTask test");
-        
+
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
         var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
@@ -214,7 +212,7 @@ public class FileBasedTaskStoreTests : IDisposable
         // Assert
         Assert.Equal(McpTaskStatus.Cancelled, cancelledTask.Status);
         _output.WriteLine("Task status correctly changed to Cancelled ✓");
-        
+
         _output.WriteLine("CancelTaskAsync_CancelsWorkingTask test completed successfully");
     }
 
@@ -222,7 +220,7 @@ public class FileBasedTaskStoreTests : IDisposable
     public async Task GetTaskAsync_ReturnsNull_WhenExpired()
     {
         _output.WriteLine("Starting GetTaskAsync_ReturnsNull_WhenExpired test");
-        
+
         // Arrange
         var options = new FileBasedTaskStoreOptions
         {
@@ -247,7 +245,7 @@ public class FileBasedTaskStoreTests : IDisposable
         // Assert
         Assert.Null(retrievedTask);
         _output.WriteLine("Task correctly returned null after expiration ✓");
-        
+
         _output.WriteLine("GetTaskAsync_ReturnsNull_WhenExpired test completed successfully");
     }
 

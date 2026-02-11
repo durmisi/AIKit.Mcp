@@ -1,4 +1,3 @@
-// 
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using System.Text.Json;
@@ -6,7 +5,7 @@ using System.Text.Json;
 namespace AIKit.Mcp.Helpers;
 
 /// <summary>
-/// Provides simplified methods for handling elicitation requests in MCP servers. 
+/// Provides simplified methods for handling elicitation requests in MCP servers.
 /// </summary>
 public static class McpElicitationHelpers
 {

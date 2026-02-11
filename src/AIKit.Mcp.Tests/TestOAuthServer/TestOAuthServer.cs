@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Security.Cryptography;
@@ -638,4 +635,3 @@ internal record TokenIntrospectionResponse(bool Active, string? ClientId = null,
 internal record ClientRegistrationRequest(List<string> RedirectUris);
 
 internal record ClientRegistrationResponse(string ClientId, string ClientSecret, long ClientIdIssuedAt, List<string> RedirectUris, List<string> GrantTypes, List<string> ResponseTypes, string TokenEndpointAuthMethod);
-

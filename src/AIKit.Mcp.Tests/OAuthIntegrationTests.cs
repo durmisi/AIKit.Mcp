@@ -1,10 +1,8 @@
-using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using AIKit.Mcp.Tests.TestOAuthServer;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Logging.Abstractions;
-using Xunit;
+using System.Net;
+using System.Net.Http.Headers;
 using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;

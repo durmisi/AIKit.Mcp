@@ -11,12 +11,11 @@ internal sealed class OAuthErrorResponse
     /// Gets or sets the error code.
     /// </summary>
     [JsonPropertyName("error")]
-    public required string Error { get; init; }
+    public string Error { get; init; }
 
     /// <summary>
     /// Gets or sets the error description.
     /// </summary>
     [JsonPropertyName("error_description")]
-    public required string ErrorDescription { get; init; }
+    public string ErrorDescription { get; init; }
 }
-

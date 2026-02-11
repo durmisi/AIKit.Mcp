@@ -1,19 +1,9 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using ModelContextProtocol.Client;
-using ModelContextProtocol.Protocol;
-using ModelContextProtocol.Server;
-using System.IO.Pipelines;
-using System.Net;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using Xunit.Abstractions;
 using Microsoft.AspNetCore.Authentication;
-using System.Security.Claims;
 using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.WebUtilities;
+using System.Net;
+using System.Security.Claims;
 using System.Text.Encodings.Web;
+using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;
 

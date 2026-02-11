@@ -15,4 +15,3 @@ namespace AIKit.Mcp.Tests.TestOAuthServer;
 internal sealed partial class OAuthJsonContext : JsonSerializerContext
 {
 }
-

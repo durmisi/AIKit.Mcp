@@ -11,19 +11,19 @@ internal sealed class TokenResponse
     /// Gets or sets the access token.
     /// </summary>
     [JsonPropertyName("access_token")]
-    public required string AccessToken { get; init; }
+    public string AccessToken { get; init; }
 
     /// <summary>
     /// Gets or sets the token type.
     /// </summary>
     [JsonPropertyName("token_type")]
-    public required string TokenType { get; init; }
+    public string TokenType { get; init; }
 
     /// <summary>
     /// Gets or sets the token expiration time in seconds.
     /// </summary>
     [JsonPropertyName("expires_in")]
-    public required int ExpiresIn { get; init; }
+    public int ExpiresIn { get; init; }
 
     /// <summary>
     /// Gets or sets the refresh token.
@@ -37,4 +37,3 @@ internal sealed class TokenResponse
     [JsonPropertyName("scope")]
     public string? Scope { get; init; }
 }
-

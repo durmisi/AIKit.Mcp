@@ -1,13 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using OpenTelemetry.Exporter;
-using OpenTelemetry.Trace;
-using System.Collections.Generic;
-using System;
 using Microsoft.AspNetCore.Http;
-using System.Threading;
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Server;
-using Microsoft.AspNetCore.Authentication;
 
 namespace AIKit.Mcp;
 

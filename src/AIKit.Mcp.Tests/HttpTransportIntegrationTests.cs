@@ -1,19 +1,8 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using System.IO.Pipelines;
-using System.Net;
-using System.Net.Http.Json;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using Xunit.Abstractions;
-using Microsoft.AspNetCore.Authentication;
-using System.Security.Claims;
-using Microsoft.Extensions.Options;
-using Microsoft.AspNetCore.WebUtilities;
-using System.Text.Encodings.Web;
 
 namespace AIKit.Mcp.Tests;
 
@@ -136,7 +125,7 @@ public class HttpTransportIntegrationTests
                 _output.WriteLine($"Allowed tool names: {string.Join(", ", allowedToolNames)}");
                 var allTools = mcpOptions.ToolCollection.ToList();
                 _output.WriteLine($"All tools count: {allTools.Count}");
-                var filteredTools = allTools.Where(t => 
+                var filteredTools = allTools.Where(t =>
                 {
                     var protocolToolProperty = t.GetType().GetProperty("ProtocolTool");
                     if (protocolToolProperty != null)
@@ -264,7 +253,7 @@ public class HttpTransportIntegrationTests
                 _output.WriteLine($"Allowed tool names: {string.Join(", ", allowedToolNames)}");
                 var allTools = mcpOptions.ToolCollection.ToList();
                 _output.WriteLine($"All tools count: {allTools.Count}");
-                var filteredTools = allTools.Where(t => 
+                var filteredTools = allTools.Where(t =>
                 {
                     var protocolToolProperty = t.GetType().GetProperty("ProtocolTool");
                     if (protocolToolProperty != null)
@@ -391,7 +380,7 @@ public class HttpTransportIntegrationTests
                 _output.WriteLine($"Allowed tool names: {string.Join(", ", allowedToolNames)}");
                 var allTools = mcpOptions.ToolCollection.ToList();
                 _output.WriteLine($"All tools count: {allTools.Count}");
-                var filteredTools = allTools.Where(t => 
+                var filteredTools = allTools.Where(t =>
                 {
                     var protocolToolProperty = t.GetType().GetProperty("ProtocolTool");
                     if (protocolToolProperty != null)
@@ -508,5 +497,4 @@ public class HttpTransportIntegrationTests
             _output.WriteLine("Echo tool not found");
         }
     }
-
 }

@@ -1,7 +1,6 @@
+using Microsoft.Extensions.Logging;
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
-using ModelContextProtocol.Server;
-using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
@@ -165,7 +164,7 @@ public sealed partial class FileBasedMcpTaskStore : IMcpTaskStore
         CancellationToken cancellationToken = default)
     {
         var tasks = new List<McpTask>();
-        foreach (var file in Directory.EnumerateFiles(_options.StoragePath, $"*{ _options.FileExtension}"))
+        foreach (var file in Directory.EnumerateFiles(_options.StoragePath, $"*{_options.FileExtension}"))
         {
             try
             {
