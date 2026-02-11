@@ -235,3 +235,33 @@ public class ToolCategoryConfig
     /// </summary>
     public Type[] ToolTypes { get; set; } = Array.Empty<Type>();
 }
+
+/// <summary>
+/// Configuration options for file-based task store.
+/// </summary>
+public class FileBasedTaskStoreOptions
+{
+    /// <summary>
+    /// The directory path where task files are stored.
+    /// Defaults to a subdirectory named "tasks" in the current working directory.
+    /// </summary>
+    public string StoragePath { get; set; } = Path.Combine(Directory.GetCurrentDirectory(), "tasks");
+
+    /// <summary>
+    /// The default time-to-live for tasks.
+    /// Defaults to 1 hour.
+    /// </summary>
+    public TimeSpan DefaultTtl { get; set; } = TimeSpan.FromHours(1);
+
+    /// <summary>
+    /// Whether to isolate tasks by session.
+    /// Defaults to true.
+    /// </summary>
+    public bool EnableSessionIsolation { get; set; } = true;
+
+    /// <summary>
+    /// The file extension for task files.
+    /// Defaults to ".json".
+    /// </summary>
+    public string FileExtension { get; set; } = ".json";
+}

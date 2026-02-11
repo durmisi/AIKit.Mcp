@@ -2,6 +2,7 @@
 using ModelContextProtocol;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
+using System.Text.Json;
 
 namespace AIKit.Mcp.Helpers;
 
@@ -46,6 +47,93 @@ public static class McpTaskHelpers
         ProgressNotificationValue progress)
     {
         return server.NotifyProgressAsync(progressToken, progress);
+    }
+
+    /// <summary>
+    /// Creates a task with custom metadata and executes a work function asynchronously.
+    /// </summary>
+    /// <typeparam name="T">The type of the result.</typeparam>
+    /// <param name="taskStore">The task store instance.</param>
+    /// <param name="work">The asynchronous work function to execute.</param>
+    /// <param name="taskMetadata">Optional metadata for the task.</param>
+    /// <param name="sessionId">Optional session ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The created MCP task.</returns>
+    public static async Task<McpTask> CreateTaskAsync<T>(
+        IMcpTaskStore taskStore,
+        Func<Task<T>> work,
+        McpTaskMetadata? taskMetadata = null,
+        string? sessionId = null,
+        CancellationToken cancellationToken = default)
+    {
+        taskMetadata ??= new McpTaskMetadata { TimeToLive = TimeSpan.FromMinutes(5) };
+
+        // Create a dummy request for the task
+        var request = new JsonRpcRequest
+        {
+            Id = new RequestId(Guid.NewGuid().ToString()),
+            Method = "task.create",
+            Params = null
+        };
+
+        var task = await taskStore.CreateTaskAsync(taskMetadata, request.Id, request, sessionId, cancellationToken);
+
+        // Execute work in background
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var result = await work();
+                await taskStore.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Completed, JsonSerializer.SerializeToElement(result), sessionId, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                await taskStore.StoreTaskResultAsync(task.TaskId, McpTaskStatus.Failed, JsonSerializer.SerializeToElement(ex.Message), sessionId, cancellationToken);
+            }
+        }, cancellationToken);
+
+        return task;
+    }
+
+    /// <summary>
+    /// Polls a task until completion with optional progress callback.
+    /// </summary>
+    /// <param name="taskStore">The task store instance.</param>
+    /// <param name="taskId">The task ID to poll.</param>
+    /// <param name="progressCallback">Optional callback for progress updates.</param>
+    /// <param name="pollInterval">Interval between polls.</param>
+    /// <param name="sessionId">Optional session ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The completed task.</returns>
+    public static async Task<McpTask> PollTaskUntilCompleteAsync(
+        IMcpTaskStore taskStore,
+        string taskId,
+        Action<McpTask>? progressCallback = null,
+        TimeSpan? pollInterval = null,
+        string? sessionId = null,
+        CancellationToken cancellationToken = default)
+    {
+        pollInterval ??= TimeSpan.FromSeconds(1);
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var task = await taskStore.GetTaskAsync(taskId, sessionId, cancellationToken);
+            if (task == null)
+            {
+                throw new InvalidOperationException($"Task {taskId} not found");
+            }
+
+            progressCallback?.Invoke(task);
+
+            if (task.Status is McpTaskStatus.Completed or McpTaskStatus.Failed or McpTaskStatus.Cancelled)
+            {
+                return task;
+            }
+
+            await Task.Delay(pollInterval.Value, cancellationToken);
+        }
+
+        throw new OperationCanceledException();
     }
 }
 

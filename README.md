@@ -181,7 +181,93 @@ public class MathTools
 - `EnableSampling`: LLM sampling
 - `EnableDevelopmentFeatures`: Debug logging
 
+### Task Management
+
+AIKit.Mcp supports both in-memory and file-based task stores for long-running operations:
+
+- **In-Memory Store** (default): Tasks exist only during server runtime
+- **File-Based Store**: Persistent task storage with configurable TTL and session isolation
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    // Enable file-based task store with custom options
+    mcp.WithFileBasedTaskStore(opts =>
+    {
+        opts.StoragePath = Path.Combine(AppContext.BaseDirectory, "tasks");
+        opts.DefaultTtl = TimeSpan.FromHours(24);
+        opts.EnableSessionIsolation = true;
+        opts.FileExtension = ".task";
+    });
+});
+```
+
+Task store options:
+
+- `StoragePath`: Directory for task files (default: `./tasks`)
+- `DefaultTtl`: Default time-to-live for tasks (default: 1 hour)
+- `EnableSessionIsolation`: Isolate tasks by session ID (default: true)
+- `FileExtension`: File extension for task files (default: `.json`)
+
 ## Advanced Usage
+
+### Task Management
+
+Use the task helpers for background operations and polling:
+
+```csharp
+using AIKit.Mcp;
+
+public class TaskTools
+{
+    private readonly IMcpTaskStore _taskStore;
+
+    public TaskTools(IMcpTaskStore taskStore)
+    {
+        _taskStore = taskStore;
+    }
+
+    [McpServerTool(Name = "submit_job")]
+    public async Task<string> SubmitJob(string jobType)
+    {
+        // Create a background task
+        var task = await McpTaskHelpers.CreateTaskAsync(
+            _taskStore,
+            new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) },
+            new RequestId(Guid.NewGuid().ToString()),
+            new JsonRpcRequest { Method = "background_job" },
+            "session-id",
+            async (progressToken, cancellationToken) =>
+            {
+                // Simulate long-running work
+                for (int i = 0; i < 10; i++)
+                {
+                    await Task.Delay(1000, cancellationToken);
+                    await McpTaskHelpers.ReportProgressAsync(
+                        _taskStore, progressToken, i * 10, 100, $"Processing step {i}");
+                }
+                return JsonSerializer.SerializeToElement(new { result = "Job completed" });
+            });
+
+        return $"Job submitted with task ID: {task.TaskId}";
+    }
+
+    [McpServerTool(Name = "poll_task")]
+    public async Task<string> PollTask(string taskId)
+    {
+        var task = await _taskStore.GetTaskAsync(taskId, "session-id");
+        if (task == null) return "Task not found";
+
+        return task.Status switch
+        {
+            McpTaskStatus.Working => $"Task is running (progress: {task.Progress?.Percentage ?? 0}%)",
+            McpTaskStatus.Completed => $"Task completed: {await _taskStore.GetTaskResultAsync(taskId, "session-id")}",
+            McpTaskStatus.Cancelled => "Task was cancelled",
+            _ => "Task status unknown"
+        };
+    }
+}
+```
 
 ### Progress Reporting
 

@@ -10,6 +10,7 @@ using OpenTelemetry.Trace;
 using System.IO.Pipelines;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
+using AIKit.Mcp.Services;
 
 namespace AIKit.Mcp;
 
@@ -251,6 +252,20 @@ public sealed class AIKitMcpBuilder
         IMcpTaskStore
     {
         _services.AddSingleton<IMcpTaskStore, TTaskStore>();
+        return this;
+    }
+
+    /// <summary>
+    /// Configures and registers a file-based task store with optional custom options.
+    /// </summary>
+    /// <param name="configure">Optional action to configure the file-based task store options.</param>
+    /// <returns>The builder instance for chaining.</returns>
+    public AIKitMcpBuilder WithFileBasedTaskStore(Action<FileBasedTaskStoreOptions>? configure = null)
+    {
+        var options = new FileBasedTaskStoreOptions();
+        configure?.Invoke(options);
+        _services.AddSingleton(options);
+        _services.AddSingleton<IMcpTaskStore, FileBasedMcpTaskStore>();
         return this;
     }
 
