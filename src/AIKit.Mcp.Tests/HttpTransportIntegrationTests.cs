@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
+using ModelContextProtocol.Server;
+using System.IO.Pipelines;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -439,5 +441,67 @@ public class HttpTransportIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Server_With_Stream_Transport_Works_In_Memory()
+    {
+        _output.WriteLine("=== Starting MCP Server Stream Transport Test ===");
+
+        // Create pipes for in-memory communication
+        var clientToServerPipe = new Pipe();
+        var serverToClientPipe = new Pipe();
+
+        // Server streams
+        var serverInput = clientToServerPipe.Reader.AsStream();
+        var serverOutput = serverToClientPipe.Writer.AsStream();
+
+        // Client streams
+        var clientInput = serverToClientPipe.Reader.AsStream();
+        var clientOutput = clientToServerPipe.Writer.AsStream();
+
+        // Create server manually with stream transport
+        var server = McpServer.Create(
+            new StreamServerTransport(serverInput, serverOutput),
+            new McpServerOptions()
+            {
+                ServerInfo = new() { Name = "TestServer", Version = "1.0" },
+                ToolCollection = [McpServerTool.Create((string arg) => $"Echo: {arg}", new() { Name = "Echo" })]
+            });
+
+        // Start the server
+        _ = server.RunAsync();
+
+        // Create client with the other end of the pipe
+        var transport = new StreamClientTransport(clientOutput, clientInput);
+
+        await using var mcpClient = await McpClient.CreateAsync(transport, new McpClientOptions
+        {
+            ClientInfo = new Implementation
+            {
+                Name = "TestClient",
+                Version = "1.0.0"
+            }
+        });
+
+        _output.WriteLine("MCP client connected successfully");
+
+        // Test tools
+        var tools = await mcpClient.ListToolsAsync();
+        _output.WriteLine($"Tools: {string.Join(", ", tools.Select(t => t.Name))}");
+
+        Assert.NotEmpty(tools);
+
+        // Test invoking a tool
+        var echoTool = tools.FirstOrDefault(t => t.Name == "Echo");
+        if (echoTool != null)
+        {
+            _output.WriteLine("Invoking Echo tool with argument 'Hello World'...");
+            var result = await echoTool.InvokeAsync(new() { ["arg"] = "Hello World" });
+            _output.WriteLine($"Tool result: {result}");
+        }
+        else
+        {
+            _output.WriteLine("Echo tool not found");
+        }
+    }
 
 }

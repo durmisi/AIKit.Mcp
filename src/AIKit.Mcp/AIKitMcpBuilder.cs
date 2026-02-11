@@ -7,6 +7,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System.IO.Pipelines;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 
@@ -34,9 +35,12 @@ public sealed class AIKitMcpBuilder
 
     // Transport (private)
     private bool _isHttpTransport = false;
+    private bool _isStreamTransport = false;
 
     private bool _transportConfigured = false;
     private HttpTransportOptions? _httpOptions;
+    private Stream? _streamInput;
+    private Stream? _streamOutput;
 
     // Discovery
     /// <summary>
@@ -136,6 +140,33 @@ public sealed class AIKitMcpBuilder
         _transportConfigured = true;
 
         return this;
+    }
+
+    /// <summary>
+    /// Configures the server to use stream transport with the specified input and output streams.
+    /// </summary>
+    public AIKitMcpBuilder WithStreamTransport(Stream input, Stream output)
+    {
+        if (_transportConfigured)
+            throw new InvalidOperationException("Transport has already been configured. Only one transport type can be set.");
+
+        _streamInput = input ?? throw new ArgumentNullException(nameof(input));
+        _streamOutput = output ?? throw new ArgumentNullException(nameof(output));
+        _isStreamTransport = true;
+        _transportConfigured = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Creates a pair of streams for in-memory communication between client and server.
+    /// Returns (clientInput, clientOutput) for the client side.
+    /// Use the returned streams with WithStreamTransport on the server.
+    /// </summary>
+    public static (Stream ClientInput, Stream ClientOutput) CreateInMemoryPipePair()
+    {
+        var clientToServerPipe = new Pipe();
+        var serverToClientPipe = new Pipe();
+        return (serverToClientPipe.Reader.AsStream(), clientToServerPipe.Writer.AsStream());
     }
 
     /// <summary>
@@ -258,6 +289,10 @@ public sealed class AIKitMcpBuilder
                 if (sessionOptionsCallback != null)
                     options.ConfigureSessionOptions = sessionOptionsCallback;
             });
+        }
+        else if (_isStreamTransport)
+        {
+            _mcpServerBuilder.WithStreamServerTransport(_streamInput!, _streamOutput!);
         }
         else
             _mcpServerBuilder.WithStdioServerTransport();

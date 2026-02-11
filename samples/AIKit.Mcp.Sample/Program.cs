@@ -37,7 +37,8 @@ builder.Services.AddAIKitMcp(mcp =>
 
     // Transport configuration
     // mcp.WithStdioTransport(); // Use Stdio transport (default)
-    // For HTTP transport, use: mcp.WithHttpTransport(opts => { opts.HttpBasePath = "/mcp"; opts.Authentication = new OAuthAuth { /* ... */ }; /* etc. */ });
+    // mcp.WithHttpTransport(opts => { ... }); // Use HTTP transport
+    // mcp.WithStreamTransport(inputStream, outputStream); // Use stream transport for in-memory communication
 
     // HTTP transport options (only used when WithHttpTransport is called)
     // Requires ModelContextProtocol.AspNetCore package and web host setup
