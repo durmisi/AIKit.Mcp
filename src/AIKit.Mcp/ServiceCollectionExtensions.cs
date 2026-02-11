@@ -2,6 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AIKit.Mcp;
 
+/// <summary>
+/// Extension methods for IServiceCollection to add AIKit MCP services.
+/// </summary>
 public static class AIKitMcpServiceCollectionExtensions
 {
     /// <summary>
