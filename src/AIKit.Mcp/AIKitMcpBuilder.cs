@@ -14,6 +14,13 @@ using AIKit.Mcp.Services;
 
 namespace AIKit.Mcp;
 
+public enum TransportType
+{
+    Stdio,
+    Http,
+    Stream
+}
+
 /// <summary>
 /// Fluent builder for configuring AIKit MCP server options.
 /// </summary>
@@ -35,8 +42,7 @@ public sealed class AIKitMcpBuilder
     public string? ServerVersion { get; set; }
 
     // Transport (private)
-    private bool _isHttpTransport = false;
-    private bool _isStreamTransport = false;
+    private TransportType _transportType = TransportType.Stdio;
 
     private bool _transportConfigured = false;
     private HttpTransportOptions? _httpOptions;
@@ -125,7 +131,7 @@ public sealed class AIKitMcpBuilder
         if (_transportConfigured)
             throw new InvalidOperationException("Transport has already been configured. Only one transport type can be set.");
 
-        _isHttpTransport = false;
+        _transportType = TransportType.Stdio;
         _transportConfigured = true;
         return this;
     }
@@ -142,7 +148,7 @@ public sealed class AIKitMcpBuilder
         configure?.Invoke(options);
 
         _httpOptions = options;
-        _isHttpTransport = true;
+        _transportType = TransportType.Http;
         _transportConfigured = true;
 
         return this;
@@ -158,7 +164,7 @@ public sealed class AIKitMcpBuilder
 
         _streamInput = input ?? throw new ArgumentNullException(nameof(input));
         _streamOutput = output ?? throw new ArgumentNullException(nameof(output));
-        _isStreamTransport = true;
+        _transportType = TransportType.Stream;
         _transportConfigured = true;
         return this;
     }
@@ -301,7 +307,7 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureTransport()
     {
-        if (_isHttpTransport)
+        if (_transportType == TransportType.Http)
         {
             _mcpServerBuilder.WithHttpTransport(options =>
             {
@@ -311,7 +317,7 @@ public sealed class AIKitMcpBuilder
                     options.ConfigureSessionOptions = sessionOptionsCallback;
             });
         }
-        else if (_isStreamTransport)
+        else if (_transportType == TransportType.Stream)
         {
             _mcpServerBuilder.WithStreamServerTransport(_streamInput!, _streamOutput!);
         }
@@ -474,7 +480,7 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureAuthentication()
     {
-        if (!_isHttpTransport || _httpOptions == null || _httpOptions.Authentication == null) return;
+        if (_transportType != TransportType.Http || _httpOptions == null || _httpOptions.Authentication == null) return;
 
         var auth = _httpOptions.Authentication;
 
