@@ -151,6 +151,30 @@ Error Handling
 
 ---
 
+Testing Rules
+
+Use xUnit for unit and integration tests. Follow Arrange-Act-Assert. Include `ITestOutputHelper _output` for logging test progress, setup, and debugging (e.g., '\_output.WriteLine("Server started...")') to maintain visibility. Ensure tests are self-checking via assertions; logging should not replace verification.
+
+---
+
+Architectural Rules
+
+Adopt clean architecture: Enforce Dependency Rule: inner layers don't reference outer. Use DIP for boundaries. Prefer composition over inheritance; avoid service locator.
+
+---
+
+Security and Maintainability Rules
+
+Avoid logging secrets/tokens/personal data. Use async methods for I/O. Validate inputs; bubble exceptions without swallowing. Ensure immutability and strong typing.
+
+---
+
+Protocol-Specific Rules
+
+Ensure strong typing and auto-discovery without excessive reflection. Support extensibility via builders and services.
+
+---
+
 Boundaries & Safety Rules
 
 NEVER
