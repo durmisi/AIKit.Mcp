@@ -273,12 +273,15 @@ public class HttpTransportIntegrationTests
             mcp.WithSessionOptions(async (httpContext, mcpOptions, cancellationToken) =>
             {
                 var category = AIKit.Mcp.Helpers.ToolFilteringHelpers.GetToolCategoryFromRoute(httpContext);
+                _output.WriteLine($"Session category: {category}");
                 var allowedToolNames = category switch
                 {
                     "math" => AIKit.Mcp.Helpers.ToolFilteringHelpers.GetToolNamesForTypes(typeof(TestTools)),
                     _ => AIKit.Mcp.Helpers.ToolFilteringHelpers.GetToolNamesForTypes(typeof(TestTools), typeof(TestResources))
                 };
+                _output.WriteLine($"Allowed tool names: {string.Join(", ", allowedToolNames)}");
                 var allTools = mcpOptions.ToolCollection.ToList();
+                _output.WriteLine($"All tools count: {allTools.Count}");
                 var filteredTools = allTools.Where(t => 
                 {
                     var protocolToolProperty = t.GetType().GetProperty("ProtocolTool");
@@ -292,11 +295,15 @@ public class HttpTransportIntegrationTests
                     }
                     return false;
                 }).ToList();
+                _output.WriteLine($"Filtered tools count: {filteredTools.Count}");
+                var filteredNames = filteredTools.Select(t => (t.GetType().GetProperty("ProtocolTool")?.GetValue(t) as ModelContextProtocol.Protocol.Tool)?.Name).Where(n => n != null);
+                _output.WriteLine($"Filtered tool names: {string.Join(", ", filteredNames)}");
                 ((dynamic)mcpOptions.ToolCollection).Clear();
                 foreach (var tool in filteredTools)
                 {
                     ((dynamic)mcpOptions.ToolCollection).Add(tool);
                 }
+                _output.WriteLine($"ToolCollection after filtering: {((dynamic)mcpOptions.ToolCollection).Count}");
             });
         });
 
@@ -315,6 +322,7 @@ public class HttpTransportIntegrationTests
 
             // Test default route includes all
             var allTools = await ListToolsAsync(client, "/mcp");
+            _output.WriteLine($"All tools returned: {string.Join(", ", allTools.Select(t => t.Name))}");
             Assert.True(allTools.Length >= 2); // At least from both types
         }
         finally
