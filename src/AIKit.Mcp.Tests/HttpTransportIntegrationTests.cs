@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using System.Net;
 using System.Net.Http.Json;
@@ -61,66 +62,26 @@ public class HttpTransportIntegrationTests
             var url = app.Urls.First();
             _output.WriteLine($"Server started on URL: {url}");
 
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(url);
-            client.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2024-11-05");
-            client.DefaultRequestHeaders.Add("Accept", "application/json, text/event-stream");
-
-            _output.WriteLine("Creating initialize request...");
-
-            var request = new JsonRpcRequest
+            var transport = new HttpClientTransport(new()
             {
-                Id = new RequestId(1),
-                Method = "initialize",
-                Params = JsonSerializer.SerializeToNode(new InitializeRequestParams
+                Endpoint = new Uri($"{url}/mcp"),
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+
+            _output.WriteLine("Creating MCP client and connecting...");
+
+            await using var mcpClient = await McpClient.CreateAsync(transport, new McpClientOptions
+            {
+                ClientInfo = new Implementation
                 {
-                    ProtocolVersion = "2024-11-05",
-                    Capabilities = new ClientCapabilities(),
-                    ClientInfo = new Implementation
-                    {
-                        Name = "TestClient",
-                        Version = "1.0.0"
-                    }
-                })
-            };
+                    Name = "TestClient",
+                    Version = "1.0.0"
+                }
+            });
 
-            _output.WriteLine($"Request JSON: {JsonSerializer.Serialize(request, new JsonSerializerOptions { WriteIndented = true })}");
+            _output.WriteLine("MCP client connected successfully - initialize handshake completed");
 
-            _output.WriteLine("Sending initialize request to /mcp endpoint...");
-            var response = await client.PostAsJsonAsync("/mcp", request);
-
-            _output.WriteLine($"Response Status Code: {response.StatusCode}");
-            _output.WriteLine($"Response Content-Type: {response.Content.Headers.ContentType}");
-
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.Equal("text/event-stream", response.Content.Headers.ContentType?.MediaType);
-
-            // Read the SSE response
-            var responseText = await response.Content.ReadAsStringAsync();
-            _output.WriteLine($"Raw SSE Response:\n{responseText}");
-
-            Assert.Contains("data:", responseText); // SSE format should contain data: lines
-
-            // Parse the SSE response to extract the JSON-RPC response
-            var lines = responseText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            var dataLine = lines.FirstOrDefault(line => line.StartsWith("data: "));
-            Assert.NotNull(dataLine);
-
-            var jsonData = dataLine.Substring("data: ".Length);
-            _output.WriteLine($"Extracted JSON-RPC data: {jsonData}");
-
-            var jsonNode = JsonNode.Parse(jsonData);
-            Assert.NotNull(jsonNode);
-
-            _output.WriteLine($"Parsed JSON-RPC Response: {jsonNode.ToJsonString(new JsonSerializerOptions { WriteIndented = true })}");
-
-            // Check the JSON-RPC response structure
-            var responseId = jsonNode["id"]?.GetValue<int>();
-            _output.WriteLine($"Response ID: {responseId}");
-
-            Assert.Equal(1, responseId);
-            Assert.NotNull(jsonNode["result"]);
-            Assert.Null(jsonNode["error"]);
+            // Connection successful, no need to list tools as none are configured in this test
 
             _output.WriteLine("=== Test completed successfully ===");
         }
@@ -206,26 +167,49 @@ public class HttpTransportIntegrationTests
         try
         {
             var url = app.Urls.First();
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(url);
-            client.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2024-11-05");
-            client.DefaultRequestHeaders.Add("Accept", "application/json, text/event-stream");
 
             // Test /mcp/math route
-            var mathTools = await ListToolsAsync(client, "/mcp/math");
+            var mathTransport = new HttpClientTransport(new()
+            {
+                Endpoint = new Uri($"{url}/mcp/math"),
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+            await using var mathClient = await McpClient.CreateAsync(mathTransport, new McpClientOptions
+            {
+                ClientInfo = new Implementation { Name = "TestClient", Version = "1.0.0" }
+            });
+            var mathTools = await mathClient.ListToolsAsync();
             _output.WriteLine($"Math tools returned: {string.Join(", ", mathTools.Select(t => t.Name))}");
             Assert.Contains(mathTools, t => t.Name == "add-numbers");
             Assert.Contains(mathTools, t => t.Name == "get-current-time");
             Assert.DoesNotContain(mathTools, t => t.Name == "get-resource-info");
 
             // Test /mcp/interactive route
-            var interactiveTools = await ListToolsAsync(client, "/mcp/interactive");
+            var interactiveTransport = new HttpClientTransport(new()
+            {
+                Endpoint = new Uri($"{url}/mcp/interactive"),
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+            await using var interactiveClient = await McpClient.CreateAsync(interactiveTransport, new McpClientOptions
+            {
+                ClientInfo = new Implementation { Name = "TestClient", Version = "1.0.0" }
+            });
+            var interactiveTools = await interactiveClient.ListToolsAsync();
             _output.WriteLine($"Interactive tools returned: {string.Join(", ", interactiveTools.Select(t => t.Name))}");
             Assert.Contains(interactiveTools, t => t.Name == "get-resource-info");
             Assert.DoesNotContain(interactiveTools, t => t.Name == "add-numbers");
 
             // Test default route
-            var allTools = await ListToolsAsync(client, "/mcp");
+            var allTransport = new HttpClientTransport(new()
+            {
+                Endpoint = new Uri($"{url}/mcp"),
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+            await using var allClient = await McpClient.CreateAsync(allTransport, new McpClientOptions
+            {
+                ClientInfo = new Implementation { Name = "TestClient", Version = "1.0.0" }
+            });
+            var allTools = await allClient.ListToolsAsync();
             _output.WriteLine($"All tools returned: {string.Join(", ", allTools.Select(t => t.Name))}");
             Assert.Contains(allTools, t => t.Name == "add-numbers");
             Assert.Contains(allTools, t => t.Name == "get-current-time");
@@ -313,23 +297,36 @@ public class HttpTransportIntegrationTests
             var url = app.Urls.First();
 
             // Test isolation by making requests to different routes with separate clients
-            var mathClient = new HttpClient();
-            mathClient.BaseAddress = new Uri(url);
-            mathClient.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2024-11-05");
-            mathClient.DefaultRequestHeaders.Add("Accept", "application/json, text/event-stream");
-
-            var interactiveClient = new HttpClient();
-            interactiveClient.BaseAddress = new Uri(url);
-            interactiveClient.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2024-11-05");
-            interactiveClient.DefaultRequestHeaders.Add("Accept", "application/json, text/event-stream");
+            var mathTransport = new HttpClientTransport(new()
+            {
+                Endpoint = new Uri($"{url}/mcp/math"),
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+            var interactiveTransport = new HttpClientTransport(new()
+            {
+                Endpoint = new Uri($"{url}/mcp/interactive"),
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
 
             // Concurrent requests to test isolation
-            var mathTask = ListToolsAsync(mathClient, "/mcp/math");
-            var interactiveTask = ListToolsAsync(interactiveClient, "/mcp/interactive");
+            var mathTask = McpClient.CreateAsync(mathTransport, new McpClientOptions
+            {
+                ClientInfo = new Implementation { Name = "TestClient", Version = "1.0.0" }
+            });
+            var interactiveTask = McpClient.CreateAsync(interactiveTransport, new McpClientOptions
+            {
+                ClientInfo = new Implementation { Name = "TestClient", Version = "1.0.0" }
+            });
 
-            var results = await Task.WhenAll(mathTask, interactiveTask);
-            var mathTools = results[0];
-            var interactiveTools = results[1];
+            var clients = await Task.WhenAll(mathTask, interactiveTask);
+            await using var mathClient = clients[0];
+            await using var interactiveClient = clients[1];
+
+            var mathToolsTask = mathClient.ListToolsAsync();
+            var interactiveToolsTask = interactiveClient.ListToolsAsync();
+
+            var mathTools = await mathToolsTask;
+            var interactiveTools = await interactiveToolsTask;
 
             _output.WriteLine($"Math tools: {string.Join(", ", mathTools.Select(t => t.Name))}");
             _output.WriteLine($"Interactive tools: {string.Join(", ", interactiveTools.Select(t => t.Name))}");
@@ -420,15 +417,21 @@ public class HttpTransportIntegrationTests
         try
         {
             var url = app.Urls.First();
-            var client = new HttpClient();
-            client.BaseAddress = new Uri(url);
-            client.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2024-11-05");
-            client.DefaultRequestHeaders.Add("Accept", "application/json, text/event-stream");
+            var transport = new HttpClientTransport(new()
+            {
+                Endpoint = new Uri($"{url}/mcp"),
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+
+            await using var mcpClient = await McpClient.CreateAsync(transport, new McpClientOptions
+            {
+                ClientInfo = new Implementation { Name = "TestClient", Version = "1.0.0" }
+            });
 
             // Test default route includes all
-            var allTools = await ListToolsAsync(client, "/mcp");
+            var allTools = await mcpClient.ListToolsAsync();
             _output.WriteLine($"All tools returned: {string.Join(", ", allTools.Select(t => t.Name))}");
-            Assert.True(allTools.Length >= 2); // At least from both types
+            Assert.True(allTools.Count >= 2); // At least from both types
         }
         finally
         {
@@ -436,43 +439,5 @@ public class HttpTransportIntegrationTests
         }
     }
 
-    private async Task<ModelContextProtocol.Protocol.Tool[]> ListToolsAsync(HttpClient client, string endpoint)
-    {
-        // First initialize
-        var initRequest = new JsonRpcRequest
-        {
-            Id = new RequestId(1),
-            Method = "initialize",
-            Params = JsonSerializer.SerializeToNode(new InitializeRequestParams
-            {
-                ProtocolVersion = "2024-11-05",
-                Capabilities = new ClientCapabilities(),
-                ClientInfo = new Implementation { Name = "TestClient", Version = "1.0.0" }
-            })
-        };
 
-        var initResponse = await client.PostAsJsonAsync(endpoint, initRequest);
-        Assert.Equal(HttpStatusCode.OK, initResponse.StatusCode);
-
-        // Then list tools
-        var listRequest = new JsonRpcRequest
-        {
-            Id = new RequestId(2),
-            Method = "tools/list",
-            Params = JsonSerializer.SerializeToNode(new ListToolsRequestParams())
-        };
-
-        var listResponse = await client.PostAsJsonAsync(endpoint, listRequest);
-        Assert.Equal(HttpStatusCode.OK, listResponse.StatusCode);
-
-        var listResponseText = await listResponse.Content.ReadAsStringAsync();
-        var lines = listResponseText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        var dataLine = lines.FirstOrDefault(line => line.StartsWith("data: "));
-        var jsonData = dataLine?.Substring("data: ".Length);
-        var jsonNode = JsonNode.Parse(jsonData!);
-        var tools = jsonNode["result"]?["tools"]?.Deserialize<ModelContextProtocol.Protocol.Tool[]>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? Array.Empty<ModelContextProtocol.Protocol.Tool>();
-
-        // Note: This method doesn't have access to _output, so logging is done in the caller
-        return tools ?? Array.Empty<ModelContextProtocol.Protocol.Tool>();
-    }
 }
