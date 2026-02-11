@@ -7,6 +7,7 @@ using System;
 using Microsoft.AspNetCore.Http;
 using System.Threading;
 using ModelContextProtocol.Server;
+using Microsoft.AspNetCore.Authentication;
 
 namespace AIKit.Mcp;
 
@@ -172,9 +173,15 @@ public class JwtAuth : AuthenticationOptions
 public class CustomAuth : AuthenticationOptions
 {
     /// <summary>
-    /// Custom authentication handler.
+    /// The name of the authentication scheme. Defaults to "Custom".
     /// </summary>
-    public Func<IServiceProvider, Task>? CustomAuthHandler { get; set; }
+    public string SchemeName { get; set; } = "Custom";
+
+    /// <summary>
+    /// Action to register the custom authentication scheme with the authentication builder.
+    /// The consumer should use this to call AddScheme with the appropriate generic types.
+    /// </summary>
+    public Action<Microsoft.AspNetCore.Authentication.AuthenticationBuilder>? RegisterScheme { get; set; }
 }
 
 /// <summary>

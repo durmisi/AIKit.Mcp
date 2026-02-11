@@ -291,7 +291,7 @@ public sealed class AIKitMcpBuilder
         configure?.Invoke(options);
         _services.AddSingleton(options);
         TaskStoreType = TaskStoreType.FileBased;
-      
+
         return this;
     }
 
@@ -514,8 +514,8 @@ public sealed class AIKitMcpBuilder
                 break;
 
             case CustomAuth custom:
-                if (custom.CustomAuthHandler == null) throw new InvalidOperationException("CustomAuthHandler missing.");
-                _services.AddSingleton(custom.CustomAuthHandler);
+                var builder = _services.AddAuthentication(a => a.DefaultAuthenticateScheme = custom.SchemeName);
+                if (custom.RegisterScheme != null) custom.RegisterScheme(builder);
                 break;
 
             default:
