@@ -240,9 +240,114 @@ public class HttpTransportIntegrationTests
     [Fact]
     public async Task PerSessionToolFiltering_SessionsAreIsolated()
     {
-        // Similar setup, but test that concurrent requests to different routes don't interfere
-        // This would require multiple HttpClient instances or careful sequencing
-        Assert.True(true); // Placeholder - implement full isolation test
+        _output.WriteLine("=== Starting Sessions Isolation Test ===");
+        var builder = WebApplication.CreateBuilder();
+        builder.Services.AddHttpContextAccessor();
+
+        builder.Services.AddScoped<TestTools>();
+        builder.Services.AddScoped<TestResources>();
+
+        builder.Services.AddAIKitMcp(mcp =>
+        {
+            mcp.ServerName = "AIKit.Test.Server";
+            mcp.ServerVersion = "1.0.0-test";
+            mcp.Assembly = typeof(TestTools).Assembly;
+            mcp.AutoDiscoverTools = true;
+            mcp.AutoDiscoverResources = true;
+
+            mcp.WithHttpTransport(opts =>
+            {
+                opts.HttpBasePath = "/mcp";
+            });
+
+            mcp.WithSessionOptions(async (httpContext, mcpOptions, cancellationToken) =>
+            {
+                var category = AIKit.Mcp.Helpers.ToolFilteringHelpers.GetToolCategoryFromRoute(httpContext);
+                _output.WriteLine($"Session category: {category}");
+                var allowedToolNames = category switch
+                {
+                    "math" => AIKit.Mcp.Helpers.ToolFilteringHelpers.GetToolNamesForTypes(typeof(TestTools)),
+                    "interactive" => AIKit.Mcp.Helpers.ToolFilteringHelpers.GetToolNamesForTypes(typeof(TestResources)),
+                    _ => AIKit.Mcp.Helpers.ToolFilteringHelpers.GetToolNamesForTypes(typeof(TestTools), typeof(TestResources))
+                };
+                _output.WriteLine($"Allowed tool names: {string.Join(", ", allowedToolNames)}");
+                var allTools = mcpOptions.ToolCollection.ToList();
+                _output.WriteLine($"All tools count: {allTools.Count}");
+                var filteredTools = allTools.Where(t => 
+                {
+                    var protocolToolProperty = t.GetType().GetProperty("ProtocolTool");
+                    if (protocolToolProperty != null)
+                    {
+                        var protocolTool = protocolToolProperty.GetValue(t) as ModelContextProtocol.Protocol.Tool;
+                        if (protocolTool != null)
+                        {
+                            return allowedToolNames.Contains(protocolTool.Name);
+                        }
+                    }
+                    return false;
+                }).ToList();
+                _output.WriteLine($"Filtered tools count: {filteredTools.Count}");
+                var filteredNames = filteredTools.Select(t => (t.GetType().GetProperty("ProtocolTool")?.GetValue(t) as ModelContextProtocol.Protocol.Tool)?.Name).Where(n => n != null);
+                _output.WriteLine($"Filtered tool names: {string.Join(", ", filteredNames)}");
+                ((dynamic)mcpOptions.ToolCollection).Clear();
+                foreach (var tool in filteredTools)
+                {
+                    ((dynamic)mcpOptions.ToolCollection).Add(tool);
+                }
+                _output.WriteLine($"ToolCollection after filtering: {((dynamic)mcpOptions.ToolCollection).Count}");
+            });
+
+            mcp.AutoDiscoverPrompts = false;
+            mcp.EnableProgress = true;
+
+            mcp.WithAllFromAssembly(typeof(TestTools).Assembly);
+        });
+
+        var app = builder.Build();
+        app.MapMcp("/mcp/{toolCategory?}");
+
+        await app.StartAsync();
+
+        try
+        {
+            var url = app.Urls.First();
+
+            // Test isolation by making requests to different routes with separate clients
+            var mathClient = new HttpClient();
+            mathClient.BaseAddress = new Uri(url);
+            mathClient.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2024-11-05");
+            mathClient.DefaultRequestHeaders.Add("Accept", "application/json, text/event-stream");
+
+            var interactiveClient = new HttpClient();
+            interactiveClient.BaseAddress = new Uri(url);
+            interactiveClient.DefaultRequestHeaders.Add("MCP-Protocol-Version", "2024-11-05");
+            interactiveClient.DefaultRequestHeaders.Add("Accept", "application/json, text/event-stream");
+
+            // Concurrent requests to test isolation
+            var mathTask = ListToolsAsync(mathClient, "/mcp/math");
+            var interactiveTask = ListToolsAsync(interactiveClient, "/mcp/interactive");
+
+            var results = await Task.WhenAll(mathTask, interactiveTask);
+            var mathTools = results[0];
+            var interactiveTools = results[1];
+
+            _output.WriteLine($"Math tools: {string.Join(", ", mathTools.Select(t => t.Name))}");
+            _output.WriteLine($"Interactive tools: {string.Join(", ", interactiveTools.Select(t => t.Name))}");
+
+            // Assert isolation: math route should have only math tools
+            Assert.Contains(mathTools, t => t.Name == "add-numbers");
+            Assert.Contains(mathTools, t => t.Name == "get-current-time");
+            Assert.DoesNotContain(mathTools, t => t.Name == "get-resource-info");
+
+            // Interactive route should have only interactive tools
+            Assert.Contains(interactiveTools, t => t.Name == "get-resource-info");
+            Assert.DoesNotContain(interactiveTools, t => t.Name == "add-numbers");
+            Assert.DoesNotContain(interactiveTools, t => t.Name == "get-current-time");
+        }
+        finally
+        {
+            await app.StopAsync();
+        }
     }
 
     [Fact]
