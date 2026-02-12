@@ -1,9 +1,5 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net;
-using System.Security.Claims;
-using System.Text;
 using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;
@@ -15,114 +11,6 @@ public class JwtAuthIntegrationTests
     public JwtAuthIntegrationTests(ITestOutputHelper output)
     {
         _output = output;
-    }
-
-    private static class JwtTestHelper
-    {
-        private const string Issuer = "test-issuer";
-        private const string Audience = "test-audience";
-        private static readonly SymmetricSecurityKey SecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("super-secret-key-for-jwt-testing-123456789"));
-
-        public static string GenerateValidToken()
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, "test-user"),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: Issuer,
-                audience: Audience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: new SigningCredentials(SecurityKey, SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public static string GenerateTokenWithWrongIssuer()
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, "test-user"),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: "wrong-issuer",
-                audience: Audience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: new SigningCredentials(SecurityKey, SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public static string GenerateTokenWithWrongAudience()
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, "test-user"),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: Issuer,
-                audience: "wrong-audience",
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: new SigningCredentials(SecurityKey, SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public static string GenerateTokenWithWrongKey()
-        {
-            var wrongKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("wrong-secret-key-for-jwt-testing-123456789"));
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, "test-user"),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: Issuer,
-                audience: Audience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: new SigningCredentials(wrongKey, SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public static string GenerateMalformedToken()
-        {
-            return "malformed.jwt.token";
-        }
-
-        public static string GenerateExpiredToken()
-        {
-            var claims = new[]
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, "test-user"),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
-
-            var token = new JwtSecurityToken(
-                issuer: Issuer,
-                audience: Audience,
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(-1),
-                signingCredentials: new SigningCredentials(SecurityKey, SecurityAlgorithms.HmacSha256)
-            );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
     }
 
     [Fact]

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using ModelContextProtocol;
 
 namespace AIKit.Mcp;
 
@@ -19,7 +18,7 @@ public static class WebApplicationExtensions
     public static IEndpointConventionBuilder UseAIKitMcp(this WebApplication app, string? path = null)
     {
         app.UseRouting();
-        
+
         string pattern = path ?? "/mcp";
         var hasAuth = app.Services.GetService<IAuthenticationHandlerProvider>() != null;
         if (hasAuth)

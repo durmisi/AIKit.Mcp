@@ -1,12 +1,5 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using AIKit.Mcp;
 using ModelContextProtocol.TestOAuthServer;
-using System.Net;
 using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;
@@ -68,7 +61,8 @@ public abstract class OAuthTestBase : IAsyncLifetime
         builder.Services.AddAIKitMcp(mcp =>
         {
             mcp.ServerName = "TestOAuthServer";
-            mcp.WithHttpTransport(opts => {
+            mcp.WithHttpTransport(opts =>
+            {
                 opts.Authentication = new OAuthAuth()
                 {
                     OAuthClientId = "test-client",

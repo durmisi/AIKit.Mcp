@@ -133,7 +133,6 @@ public class OAuthAuth : AuthenticationOptions
     /// Optional token validation parameters for JWT validation.
     /// </summary>
     public TokenValidationParameters? TokenValidationParameters { get; set; }
-
 }
 
 /// <summary>

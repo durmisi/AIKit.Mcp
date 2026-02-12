@@ -567,7 +567,7 @@ public sealed class AIKitMcpBuilder
         {
             target.TokenValidationParameters.ValidIssuer = source.JwtIssuer;
         }
-        
+
         target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
     }
 
@@ -589,7 +589,7 @@ public sealed class AIKitMcpBuilder
         {
             target.TokenValidationParameters.ValidIssuer = source.JwtIssuer;
         }
-        
+
         target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
 
         if (!string.IsNullOrEmpty(source.SigningKey))

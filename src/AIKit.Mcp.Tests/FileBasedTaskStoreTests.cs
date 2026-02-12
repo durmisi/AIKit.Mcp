@@ -37,13 +37,8 @@ public class FileBasedTaskStoreTests : IDisposable
 
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
-        var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
-        var request = new JsonRpcRequest
-        {
-            Id = new RequestId("test-id"),
-            Method = "test.method",
-            Params = JsonSerializer.SerializeToNode(new { param = "value" })
-        };
+        var metadata = TaskStoreTestHelper.CreateDefaultMetadata();
+        var request = TaskStoreTestHelper.CreateTestRequest("test-id", "test.method", new { param = "value" });
 
         _output.WriteLine($"Created store with options: TTL={metadata.TimeToLive}, RequestId={request.Id}, Method={request.Method}");
 
@@ -107,12 +102,8 @@ public class FileBasedTaskStoreTests : IDisposable
 
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
-        var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
-        var request = new JsonRpcRequest
-        {
-            Id = new RequestId("test-id"),
-            Method = "test.method"
-        };
+        var metadata = TaskStoreTestHelper.CreateDefaultMetadata();
+        var request = TaskStoreTestHelper.CreateTestRequest("test-id", "test.method");
         var createdTask = await store.CreateTaskAsync(metadata, request.Id, request, "session1");
         _output.WriteLine($"Created task in session1: Id={createdTask.TaskId}");
 
@@ -134,12 +125,8 @@ public class FileBasedTaskStoreTests : IDisposable
 
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
-        var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
-        var request = new JsonRpcRequest
-        {
-            Id = new RequestId("test-id"),
-            Method = "test.method"
-        };
+        var metadata = TaskStoreTestHelper.CreateDefaultMetadata();
+        var request = TaskStoreTestHelper.CreateTestRequest("test-id", "test.method");
         var task = await store.CreateTaskAsync(metadata, request.Id, request, "session1");
         var result = JsonSerializer.SerializeToElement(new { output = "success" });
         _output.WriteLine($"Created task: Id={task.TaskId}, Status={task.Status}");
@@ -172,9 +159,9 @@ public class FileBasedTaskStoreTests : IDisposable
 
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
-        var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
-        var request1 = new JsonRpcRequest { Id = new RequestId("id1"), Method = "method1" };
-        var request2 = new JsonRpcRequest { Id = new RequestId("id2"), Method = "method2" };
+        var metadata = TaskStoreTestHelper.CreateDefaultMetadata();
+        var request1 = TaskStoreTestHelper.CreateTestRequest("id1", "method1");
+        var request2 = TaskStoreTestHelper.CreateTestRequest("id2", "method2");
 
         await store.CreateTaskAsync(metadata, request1.Id, request1, "session1");
         _output.WriteLine("Created task in session1");
@@ -200,8 +187,8 @@ public class FileBasedTaskStoreTests : IDisposable
 
         // Arrange
         var store = new FileBasedMcpTaskStore(_options, _logger);
-        var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromHours(1) };
-        var request = new JsonRpcRequest { Id = new RequestId("test-id"), Method = "test.method" };
+        var metadata = TaskStoreTestHelper.CreateDefaultMetadata();
+        var request = TaskStoreTestHelper.CreateTestRequest("test-id", "test.method");
         var task = await store.CreateTaskAsync(metadata, request.Id, request, "session1");
         _output.WriteLine($"Created task: Id={task.TaskId}, Status={task.Status}");
 
@@ -229,8 +216,8 @@ public class FileBasedTaskStoreTests : IDisposable
             EnableSessionIsolation = true
         };
         var store = new FileBasedMcpTaskStore(options, _logger);
-        var metadata = new McpTaskMetadata { TimeToLive = TimeSpan.FromMilliseconds(1) };
-        var request = new JsonRpcRequest { Id = new RequestId("test-id"), Method = "test.method" };
+        var metadata = TaskStoreTestHelper.CreateDefaultMetadata(TimeSpan.FromMilliseconds(1));
+        var request = TaskStoreTestHelper.CreateTestRequest("test-id", "test.method");
         var task = await store.CreateTaskAsync(metadata, request.Id, request, "session1");
         _output.WriteLine($"Created task with TTL: Id={task.TaskId}, TTL={metadata.TimeToLive?.TotalMilliseconds ?? 0}ms");
 
