@@ -93,6 +93,37 @@ public class OAuthIntegrationTests : OAuthTestBase, IAsyncLifetime
         _output.WriteLine($"Total test time: {(DateTime.UtcNow - startTime).TotalSeconds:F2}s");
     }
 
+    [Fact]
+    public async Task OAuth_ServerRejectsInvalidToken()
+    {
+        _output.WriteLine("=== Starting OAuth Server Invalid Token Test ===");
+        Console.WriteLine("Test method started");
+        var startTime = DateTime.UtcNow;
+        _output.WriteLine($"Test started at {startTime}");
+
+        // Make request with invalid token
+        _output.WriteLine("Making request with invalid token to MCP server...");
+        var requestStart = DateTime.UtcNow;
+        _mcpClient!.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "invalid.oauth.token");
+        _mcpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        _mcpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
+
+        var response = await _mcpClient.PostAsJsonAsync("", new
+        {
+            jsonrpc = "2.0",
+            id = 1,
+            method = "tools/list",
+            @params = new { }
+        });
+        _output.WriteLine($"Request completed in {(DateTime.UtcNow - requestStart).TotalSeconds:F2}s");
+
+        // Assert
+        _output.WriteLine($"Response status: {response.StatusCode}");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        _output.WriteLine("Server rejected invalid OAuth token.");
+        _output.WriteLine($"Total test time: {(DateTime.UtcNow - startTime).TotalSeconds:F2}s");
+    }
+
     private async Task<string> GetValidTokenAsync(HttpClient oauthClient, string oauthUrl)
     {
         // Generate PKCE
