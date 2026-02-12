@@ -28,6 +28,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\AIKit.Mcp\AIKit.Mcp.csproj" />
+		<ProjectReference Include="..\TestOAuthServer\TestOAuthServer.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
