@@ -1,4 +1,5 @@
 using AIKit.Mcp.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -505,15 +506,18 @@ public sealed class AIKitMcpBuilder
 
         var auth = _httpOptions.Authentication;
 
+        _services.AddAuthorization();
+
         switch (auth)
         {
             case OAuthAuth oauth:
                 if (string.IsNullOrEmpty(oauth.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
                 _services.AddAuthentication(a =>
                 {
-                    a.DefaultChallengeScheme = "McpOAuth";
-                    a.DefaultAuthenticateScheme = "Bearer";
-                }).AddJwtBearer("Bearer", j => ApplyJwt(j, oauth));
+                    a.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    a.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, j => ApplyJwt(j, oauth));
+                _services.AddAuthorization();
                 break;
 
             case JwtAuth jwt:
@@ -535,6 +539,8 @@ public sealed class AIKitMcpBuilder
         target.Authority = source.JwtAuthority ?? target.Authority;
         target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;
         target.TokenValidationParameters.ValidIssuer = source.JwtIssuer ?? target.TokenValidationParameters.ValidIssuer;
+        target.TokenValidationParameters.NameClaimType = source.NameClaimType ?? target.TokenValidationParameters.NameClaimType;
+        target.TokenValidationParameters.RoleClaimType = source.RoleClaimType ?? target.TokenValidationParameters.RoleClaimType;
         // Note: ValidationParameters not used here, perhaps extend if needed
     }
 

@@ -129,9 +129,15 @@ public class OAuthAuth : AuthenticationOptions
     public string? JwtAuthority { get; set; }
 
     /// <summary>
-    /// JWT validation parameters.
+    /// Name claim type for JWT validation.
     /// </summary>
-    public Dictionary<string, object> JwtValidationParameters { get; set; } = new();
+    public string? NameClaimType { get; set; }
+
+    /// <summary>
+    /// Role claim type for JWT validation.
+    /// </summary>
+    public string? RoleClaimType { get; set; }
+
 }
 
 /// <summary>

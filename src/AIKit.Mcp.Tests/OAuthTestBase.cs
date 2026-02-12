@@ -64,31 +64,27 @@ public abstract class OAuthTestBase : IAsyncLifetime
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls("http://localhost:5000");
-        builder.Services.AddAuthentication(options =>
-        {
-            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-        })
-        .AddJwtBearer(options =>
-        {
-            options.Authority = OAuthServerUrl;
-            options.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidAudience = McpServerUrl + path,
-                ValidIssuer = OAuthServerUrl,
-                NameClaimType = "name",
-                RoleClaimType = "roles"
-            };
-        });
 
-        builder.Services.AddAuthorization();
         builder.Services.AddAIKitMcp(mcp =>
         {
             mcp.ServerName = "TestOAuthServer";
-            mcp.WithHttpTransport(opts => { });
+            mcp.WithHttpTransport(opts => {
+                //TODO: We should be able to use the same JWT bearer options for the MCP server authentication, but for now we will just set up a placeholder OAuthAuth configuration.
+                opts.Authentication = new OAuthAuth()
+                {
+                    OAuthClientId = "test-client",
+                    JwtAuthority = OAuthServerUrl,
+                    JwtAudience = McpServerUrl + path,
+                    JwtIssuer = OAuthServerUrl,
+                    NameClaimType = "name",
+                    RoleClaimType = "roles"
+                };
+            });
         });
 
         var app = builder.Build();
+        app.UseAuthentication();
+        app.UseAuthorization();
         app.MapMcp(path).RequireAuthorization();
         await app.StartAsync(TestCts.Token);
         return app;
