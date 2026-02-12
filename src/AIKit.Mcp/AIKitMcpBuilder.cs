@@ -547,23 +547,50 @@ public sealed class AIKitMcpBuilder
 
     private void ApplyJwt(JwtBearerOptions target, OAuthAuth source)
     {
-        target.Authority = source.JwtAuthority ?? target.Authority;
-        target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;
-        target.TokenValidationParameters.ValidIssuer = source.JwtIssuer ?? target.TokenValidationParameters.ValidIssuer;
-        target.TokenValidationParameters.NameClaimType = source.NameClaimType ?? target.TokenValidationParameters.NameClaimType;
-        target.TokenValidationParameters.RoleClaimType = source.RoleClaimType ?? target.TokenValidationParameters.RoleClaimType;
+        if (source.TokenValidationParameters != null)
+        {
+            target.TokenValidationParameters = source.TokenValidationParameters;
+        }
+        else
+        {
+            target.TokenValidationParameters = new TokenValidationParameters();
+        }
+
+        target.Authority = source.Authority ?? target.Authority;
+
+        if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidAudience))
+        {
+            target.TokenValidationParameters.ValidAudience = source.JwtAudience;
+        }
+
+        if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidIssuer))
+        {
+            target.TokenValidationParameters.ValidIssuer = source.JwtIssuer;
+        }
+        
         target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
     }
 
     private void ApplyJwt(JwtBearerOptions target, JwtAuth source)
     {
-        target.Authority = source.JwtAuthority ?? target.Authority;
-        target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;
-        target.TokenValidationParameters.ValidIssuer = source.JwtIssuer ?? target.TokenValidationParameters.ValidIssuer;
-        target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
+        if (source.TokenValidationParameters != null)
+        {
+            target.TokenValidationParameters = source.TokenValidationParameters;
+        }
 
-        target.TokenValidationParameters.NameClaimType = source.NameClaimType ?? target.TokenValidationParameters.NameClaimType;
-        target.TokenValidationParameters.RoleClaimType = source.RoleClaimType ?? target.TokenValidationParameters.RoleClaimType;
+        target.Authority = source.Authority ?? target.Authority;
+
+        if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidAudience))
+        {
+            target.TokenValidationParameters.ValidAudience = source.JwtAudience;
+        }
+
+        if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidIssuer))
+        {
+            target.TokenValidationParameters.ValidIssuer = source.JwtIssuer;
+        }
+        
+        target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
 
         if (!string.IsNullOrEmpty(source.SigningKey))
         {

@@ -73,11 +73,14 @@ public abstract class OAuthTestBase : IAsyncLifetime
                 opts.Authentication = new OAuthAuth()
                 {
                     OAuthClientId = "test-client",
-                    JwtAuthority = OAuthServerUrl,
+                    Authority = OAuthServerUrl,
                     JwtAudience = McpServerUrl + path,
                     JwtIssuer = OAuthServerUrl,
-                    NameClaimType = "name",
-                    RoleClaimType = "roles"
+                    TokenValidationParameters = new TokenValidationParameters
+                    {
+                        NameClaimType = "name",
+                        RoleClaimType = "roles"
+                    }
                 };
             });
         });

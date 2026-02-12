@@ -125,19 +125,14 @@ public class OAuthAuth : AuthenticationOptions
     public string? JwtAudience { get; set; }
 
     /// <summary>
-    /// JWT authority.
+    /// Authority.
     /// </summary>
-    public string? JwtAuthority { get; set; }
+    public string? Authority { get; set; }
 
     /// <summary>
-    /// Name claim type for JWT validation.
+    /// Optional token validation parameters for JWT validation.
     /// </summary>
-    public string? NameClaimType { get; set; }
-
-    /// <summary>
-    /// Role claim type for JWT validation.
-    /// </summary>
-    public string? RoleClaimType { get; set; }
+    public TokenValidationParameters? TokenValidationParameters { get; set; }
 
 }
 
@@ -157,9 +152,9 @@ public class JwtAuth : AuthenticationOptions
     public string? JwtAudience { get; set; }
 
     /// <summary>
-    /// JWT authority.
+    /// Authority.
     /// </summary>
-    public string? JwtAuthority { get; set; }
+    public string? Authority { get; set; }
 
     /// <summary>
     /// JWT signing key (for symmetric key validation, when not using authority).
@@ -167,14 +162,9 @@ public class JwtAuth : AuthenticationOptions
     public string? SigningKey { get; set; }
 
     /// <summary>
-    /// Name claim type for JWT validation.
+    /// Optional token validation parameters for JWT validation.
     /// </summary>
-    public string? NameClaimType { get; set; }
-
-    /// <summary>
-    /// Role claim type for JWT validation.
-    /// </summary>
-    public string? RoleClaimType { get; set; }
+    public TokenValidationParameters? TokenValidationParameters { get; set; }
 }
 
 /// <summary>
