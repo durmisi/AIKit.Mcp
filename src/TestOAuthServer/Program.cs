@@ -6,11 +6,10 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using TestOAuthServer;
 
-namespace AIKit.Mcp.Tests.OAuthServer;
+namespace ModelContextProtocol.TestOAuthServer;
 
-public sealed class TestOAuthServer
+public sealed class Program
 {
     private const int _port = 7029;
     private static readonly string _url = $"https://localhost:{_port}";
@@ -26,6 +25,7 @@ public sealed class TestOAuthServer
     private readonly ConcurrentDictionary<string, AuthorizationCodeInfo> _authCodes = new();
     private readonly ConcurrentDictionary<string, TokenInfo> _tokens = new();
     private readonly ConcurrentDictionary<string, ClientInfo> _clients = new();
+
     private readonly ConcurrentQueue<string> _metadataRequests = new();
 
     private readonly RSA _rsa;
@@ -36,11 +36,11 @@ public sealed class TestOAuthServer
     private readonly TaskCompletionSource _serverStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="TestOAuthServer"/> class with logging and transport parameters.
+    /// Initializes a new instance of the <see cref="Program"/> class with logging and transport parameters.
     /// </summary>
     /// <param name="loggerProvider">Optional logger provider for logging.</param>
     /// <param name="kestrelTransport">Optional Kestrel transport for in-memory connections.</param>
-    public TestOAuthServer(ILoggerProvider? loggerProvider = null, IConnectionListenerFactory? kestrelTransport = null)
+    public Program(ILoggerProvider? loggerProvider = null, IConnectionListenerFactory? kestrelTransport = null)
     {
         _rsa = RSA.Create(2048);
         _keyId = Guid.NewGuid().ToString();
@@ -74,7 +74,7 @@ public sealed class TestOAuthServer
     /// </summary>
     /// <param name="args">Command line arguments.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    public static Task Main(string[] args) => new TestOAuthServer().RunServerAsync(args);
+    public static Task Main(string[] args) => new Program().RunServerAsync(args);
 
     /// <summary>
     /// Runs the OAuth server with the specified parameters.
@@ -124,9 +124,27 @@ public sealed class TestOAuthServer
         var clientId = "demo-client";
         var clientSecret = "demo-secret";
 
-        _clients[clientId] = new ClientInfo(clientId, clientSecret, true, ["http://localhost:1179/callback"]);
+        _clients[clientId] = new ClientInfo
+        {
+            ClientId = clientId,
+            ClientSecret = clientSecret,
 
-        _clients[_clientMetadataDocumentUrl] = new ClientInfo(_clientMetadataDocumentUrl, null, false, ["http://localhost:1179/callback"]);
+            RequiresClientSecret = true,
+            RedirectUris = ["http://localhost:1179/callback"],
+        };
+
+        // This client is pre-registered to support testing Client ID Metadata Documents (CIMD).
+        // A non-test OAuth server implementation would fetch the metadata document from the client-specified
+        // URL during authorization, but we just register the client here to keep the test implementation simple.
+        // We also set 'RequiresClientSecret' to 'false' here because client secrets are disallowed when using CIMD.
+        // See https://datatracker.ietf.org/doc/html/draft-ietf-oauth-client-id-metadata-document-00#section-4.1
+        _clients[_clientMetadataDocumentUrl] = new ClientInfo
+        {
+            ClientId = _clientMetadataDocumentUrl,
+
+            RequiresClientSecret = false,
+            RedirectUris = ["http://localhost:1179/callback"],
+        };
 
         // The MCP spec tells the client to use /.well-known/oauth-authorization-server but AddJwtBearer looks for
         // /.well-known/openid-configuration by default.
@@ -194,9 +212,20 @@ public sealed class TestOAuthServer
             var e = WebEncoders.Base64UrlEncode(parameters.Exponent ?? Array.Empty<byte>());
             var n = WebEncoders.Base64UrlEncode(parameters.Modulus ?? Array.Empty<byte>());
 
-            var jwks = new JsonWebKeySet([
-                new JsonWebKey("RSA", "sig", _keyId, "RS256", e, n)
-            ]);
+            var jwks = new JsonWebKeySet
+            {
+                Keys = [
+                    new JsonWebKey
+                    {
+                        KeyType = "RSA",
+                        Use = "sig",
+                        KeyId = _keyId,
+                        Algorithm = "RS256",
+                        Exponent = e,
+                        Modulus = n
+                    }
+                ]
+            };
 
             return Results.Ok(jwks);
         });
@@ -270,7 +299,14 @@ public sealed class TestOAuthServer
             var requestedScopes = scope?.Split(' ').ToList() ?? [];
 
             // Store code information for later verification
-            _authCodes[code] = new AuthorizationCodeInfo(client_id, redirect_uri, code_challenge, requestedScopes, !string.IsNullOrEmpty(resource) ? new Uri(resource) : null);
+            _authCodes[code] = new AuthorizationCodeInfo
+            {
+                ClientId = client_id,
+                RedirectUri = redirect_uri,
+                CodeChallenge = code_challenge,
+                Scope = requestedScopes,
+                Resource = !string.IsNullOrEmpty(resource) ? new Uri(resource) : null
+            };
 
             // Redirect back to client with the code
             var redirectUrl = $"{redirect_uri}?code={code}";
@@ -417,13 +453,20 @@ public sealed class TestOAuthServer
             {
                 if (tokenInfo.ExpiresAt < DateTimeOffset.UtcNow)
                 {
-                    return Results.Ok(new TokenIntrospectionResponse(false));
+                    return Results.Ok(new TokenIntrospectionResponse { Active = false });
                 }
 
-                return Results.Ok(new TokenIntrospectionResponse(true, tokenInfo.ClientId, string.Join(" ", tokenInfo.Scopes), tokenInfo.ExpiresAt.ToUnixTimeSeconds(), tokenInfo.Resource?.ToString()));
+                return Results.Ok(new TokenIntrospectionResponse
+                {
+                    Active = true,
+                    ClientId = tokenInfo.ClientId,
+                    Scope = string.Join(" ", tokenInfo.Scopes),
+                    ExpirationTime = tokenInfo.ExpiresAt.ToUnixTimeSeconds(),
+                    Audience = tokenInfo.Resource?.ToString()
+                });
             }
 
-            return Results.Ok(new TokenIntrospectionResponse(false));
+            return Results.Ok(new TokenIntrospectionResponse { Active = false });
         });
 
         // Dynamic Client Registration endpoint (RFC 7591)
@@ -474,9 +517,24 @@ public sealed class TestOAuthServer
             var issuedAt = DateTimeOffset.UtcNow;
 
             // Store the registered client
-            _clients[clientId] = new ClientInfo(clientId, clientSecret, true, registrationRequest.RedirectUris);
+            _clients[clientId] = new ClientInfo
+            {
+                ClientId = clientId,
+                RequiresClientSecret = true,
+                ClientSecret = clientSecret,
+                RedirectUris = registrationRequest.RedirectUris,
+            };
 
-            var registrationResponse = new ClientRegistrationResponse(clientId, clientSecret, issuedAt.ToUnixTimeSeconds(), registrationRequest.RedirectUris, ["authorization_code", "refresh_token"], ["code"], "client_secret_post");
+            var registrationResponse = new ClientRegistrationResponse
+            {
+                ClientId = clientId,
+                ClientSecret = clientSecret,
+                ClientIdIssuedAt = issuedAt.ToUnixTimeSeconds(),
+                RedirectUris = registrationRequest.RedirectUris,
+                GrantTypes = ["authorization_code", "refresh_token"],
+                ResponseTypes = ["code"],
+                TokenEndpointAuthMethod = "client_secret_post",
+            };
 
             return Results.Ok(registrationResponse);
         });
@@ -550,6 +608,7 @@ public sealed class TestOAuthServer
             { "typ", "JWT" },
             { "kid", _keyId },
         };
+
         var payload = new Dictionary<string, string>
         {
             { "iss", _url },
@@ -580,7 +639,15 @@ public sealed class TestOAuthServer
         var refreshToken = GenerateRandomToken();
 
         // Store token info (for refresh token and introspection)
-        var tokenInfo = new TokenInfo(clientId, scopes, issuedAt, expiresAt, resource, jwtId);
+        var tokenInfo = new TokenInfo
+        {
+            ClientId = clientId,
+            Scopes = scopes,
+            IssuedAt = issuedAt,
+            ExpiresAt = expiresAt,
+            Resource = resource,
+            JwtId = jwtId
+        };
 
         _tokens[refreshToken] = tokenInfo;
 
@@ -620,19 +687,3 @@ public sealed class TestOAuthServer
         return computedChallenge == codeChallenge;
     }
 }
-
-internal record ClientInfo(string ClientId, string? ClientSecret, bool RequiresClientSecret, List<string> RedirectUris);
-
-internal record AuthorizationCodeInfo(string ClientId, string RedirectUri, string CodeChallenge, List<string> Scope, Uri? Resource);
-
-internal record TokenInfo(string ClientId, List<string> Scopes, DateTimeOffset IssuedAt, DateTimeOffset ExpiresAt, Uri? Resource, string JwtId);
-
-public record JsonWebKeySet(List<JsonWebKey> Keys);
-
-public record JsonWebKey(string KeyType, string Use, string KeyId, string Algorithm, string Exponent, string Modulus);
-
-public record TokenIntrospectionResponse(bool Active, string? ClientId = null, string? Scope = null, long? ExpirationTime = null, string? Audience = null);
-
-public record ClientRegistrationRequest(List<string> RedirectUris);
-
-public record ClientRegistrationResponse(string ClientId, string ClientSecret, long ClientIdIssuedAt, List<string> RedirectUris, List<string> GrantTypes, List<string> ResponseTypes, string TokenEndpointAuthMethod);

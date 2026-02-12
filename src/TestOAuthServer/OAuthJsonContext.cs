@@ -1,7 +1,6 @@
-using AIKit.Mcp.Tests.OAuthServer;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace TestOAuthServer;
+namespace ModelContextProtocol.TestOAuthServer;
 
 [JsonSerializable(typeof(OAuthServerMetadata))]
 [JsonSerializable(typeof(AuthorizationServerMetadata))]
@@ -13,6 +12,4 @@ namespace TestOAuthServer;
 [JsonSerializable(typeof(ClientRegistrationRequest))]
 [JsonSerializable(typeof(ClientRegistrationResponse))]
 [JsonSerializable(typeof(Dictionary<string, string>))]
-public sealed partial class OAuthJsonContext : JsonSerializerContext
-{
-}
+internal sealed partial class OAuthJsonContext : JsonSerializerContext;

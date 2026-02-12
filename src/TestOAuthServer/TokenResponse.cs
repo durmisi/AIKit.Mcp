@@ -1,29 +1,29 @@
 using System.Text.Json.Serialization;
 
-namespace AIKit.Mcp.Tests.OAuthServer;
+namespace ModelContextProtocol.TestOAuthServer;
 
 /// <summary>
 /// Represents the token response for OAuth flow.
 /// </summary>
-public sealed class TokenResponse
+internal sealed class TokenResponse
 {
     /// <summary>
     /// Gets or sets the access token.
     /// </summary>
     [JsonPropertyName("access_token")]
-    public string AccessToken { get; init; }
+    public required string AccessToken { get; init; }
 
     /// <summary>
     /// Gets or sets the token type.
     /// </summary>
     [JsonPropertyName("token_type")]
-    public string TokenType { get; init; }
+    public required string TokenType { get; init; }
 
     /// <summary>
     /// Gets or sets the token expiration time in seconds.
     /// </summary>
     [JsonPropertyName("expires_in")]
-    public int ExpiresIn { get; init; }
+    public required int ExpiresIn { get; init; }
 
     /// <summary>
     /// Gets or sets the refresh token.
