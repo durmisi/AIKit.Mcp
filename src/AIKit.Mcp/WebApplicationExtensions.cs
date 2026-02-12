@@ -18,6 +18,8 @@ public static class WebApplicationExtensions
     /// <returns>An IEndpointConventionBuilder for further configuration.</returns>
     public static IEndpointConventionBuilder UseAIKitMcp(this WebApplication app, string? path = null)
     {
+        app.UseRouting();
+        
         string pattern = path ?? "/mcp";
         var hasAuth = app.Services.GetService<IAuthenticationHandlerProvider>() != null;
         if (hasAuth)

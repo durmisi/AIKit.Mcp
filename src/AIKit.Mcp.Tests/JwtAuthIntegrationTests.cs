@@ -166,8 +166,6 @@ public class JwtAuthIntegrationTests
 
         var app = builder.Build();
 
-        app.UseRouting();
-
         app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
@@ -243,8 +241,6 @@ public class JwtAuthIntegrationTests
         builder.Services.AddAuthorization();
 
         var app = builder.Build();
-
-        app.UseRouting();
 
         app.UseAIKitMcp("/mcp");
 
@@ -322,8 +318,6 @@ public class JwtAuthIntegrationTests
 
         var app = builder.Build();
 
-        app.UseRouting();
-
         app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
@@ -400,8 +394,6 @@ public class JwtAuthIntegrationTests
 
         var app = builder.Build();
 
-        app.UseRouting();
-
         app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
@@ -475,8 +467,6 @@ public class JwtAuthIntegrationTests
         builder.Services.AddAuthorization();
 
         var app = builder.Build();
-
-        app.UseRouting();
 
         app.UseAIKitMcp("/mcp");
 
@@ -554,8 +544,6 @@ public class JwtAuthIntegrationTests
 
         var app = builder.Build();
 
-        app.UseRouting();
-
         app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
@@ -631,8 +619,6 @@ public class JwtAuthIntegrationTests
         builder.Services.AddAuthorization();
 
         var app = builder.Build();
-
-        app.UseRouting();
 
         app.UseAIKitMcp("/mcp");
 

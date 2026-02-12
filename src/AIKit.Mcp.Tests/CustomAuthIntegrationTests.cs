@@ -81,8 +81,6 @@ public class CustomAuthIntegrationTests
 
         var app = builder.Build();
 
-        app.UseRouting();
-
         app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
@@ -154,8 +152,6 @@ public class CustomAuthIntegrationTests
         builder.Services.AddAuthorization();
 
         var app = builder.Build();
-
-        app.UseRouting();
 
         app.UseAIKitMcp("/mcp");
 
