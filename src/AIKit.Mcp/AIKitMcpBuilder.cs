@@ -512,21 +512,32 @@ public sealed class AIKitMcpBuilder
         {
             case OAuthAuth oauth:
                 if (string.IsNullOrEmpty(oauth.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
-                _services.AddAuthentication(a =>
-                {
-                    a.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                    a.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                }).AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, j => ApplyJwt(j, oauth));
-                _services.AddAuthorization();
+                _services
+                    .AddAuthentication(a =>
+                    {
+                        a.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                        a.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    })
+                    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, j => ApplyJwt(j, oauth));
                 break;
 
             case JwtAuth jwt:
-                _services.AddAuthentication("Bearer").AddJwtBearer(j => ApplyJwt(j, jwt));
+                _services
+                    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                    .AddJwtBearer(j => ApplyJwt(j, jwt));
                 break;
 
             case CustomAuth custom:
-                var builder = _services.AddAuthentication(a => a.DefaultAuthenticateScheme = custom.SchemeName);
-                if (custom.RegisterScheme != null) custom.RegisterScheme(builder);
+                var builder = _services
+                    .AddAuthentication(a => a.DefaultAuthenticateScheme = custom.SchemeName);
+                if (custom.RegisterScheme != null)
+                {
+                    custom.RegisterScheme(builder);
+                }
+                else
+                {
+                    throw new InvalidOperationException("CustomAuth requires a RegisterScheme action to configure the authentication scheme.");
+                }
                 break;
 
             default:
@@ -534,26 +545,29 @@ public sealed class AIKitMcpBuilder
         }
     }
 
-    private void ApplyJwt(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions target, OAuthAuth source)
+    private void ApplyJwt(JwtBearerOptions target, OAuthAuth source)
     {
         target.Authority = source.JwtAuthority ?? target.Authority;
         target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;
         target.TokenValidationParameters.ValidIssuer = source.JwtIssuer ?? target.TokenValidationParameters.ValidIssuer;
         target.TokenValidationParameters.NameClaimType = source.NameClaimType ?? target.TokenValidationParameters.NameClaimType;
         target.TokenValidationParameters.RoleClaimType = source.RoleClaimType ?? target.TokenValidationParameters.RoleClaimType;
-        // Note: ValidationParameters not used here, perhaps extend if needed
+        target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
     }
 
-    private void ApplyJwt(Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerOptions target, JwtAuth source)
+    private void ApplyJwt(JwtBearerOptions target, JwtAuth source)
     {
         target.Authority = source.JwtAuthority ?? target.Authority;
         target.TokenValidationParameters.ValidAudience = source.JwtAudience ?? target.TokenValidationParameters.ValidAudience;
         target.TokenValidationParameters.ValidIssuer = source.JwtIssuer ?? target.TokenValidationParameters.ValidIssuer;
         target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
+
+        target.TokenValidationParameters.NameClaimType = source.NameClaimType ?? target.TokenValidationParameters.NameClaimType;
+        target.TokenValidationParameters.RoleClaimType = source.RoleClaimType ?? target.TokenValidationParameters.RoleClaimType;
+
         if (!string.IsNullOrEmpty(source.SigningKey))
         {
             target.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(source.SigningKey));
         }
-        // Note: ValidationParameters not used here, perhaps extend if needed
     }
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using ModelContextProtocol.Server;
 
 namespace AIKit.Mcp;
@@ -166,9 +167,14 @@ public class JwtAuth : AuthenticationOptions
     public string? SigningKey { get; set; }
 
     /// <summary>
-    /// JWT validation parameters.
+    /// Name claim type for JWT validation.
     /// </summary>
-    public Dictionary<string, object> JwtValidationParameters { get; set; } = new();
+    public string? NameClaimType { get; set; }
+
+    /// <summary>
+    /// Role claim type for JWT validation.
+    /// </summary>
+    public string? RoleClaimType { get; set; }
 }
 
 /// <summary>
