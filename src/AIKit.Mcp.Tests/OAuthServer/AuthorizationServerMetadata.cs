@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace OAuthServer;
+namespace AIKit.Mcp.Tests.OAuthServer;
 
 /// <summary>
 /// Represents the authorization server metadata for OAuth discovery.

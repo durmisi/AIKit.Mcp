@@ -8,7 +8,7 @@ using System.Text;
 using System.Text.Json;
 using TestOAuthServer;
 
-namespace OAuthServer;
+namespace AIKit.Mcp.Tests.OAuthServer;
 
 public sealed class TestOAuthServer
 {

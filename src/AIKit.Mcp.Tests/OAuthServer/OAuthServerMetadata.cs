@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace OAuthServer;
+namespace AIKit.Mcp.Tests.OAuthServer;
 
 /// <summary>
 /// Represents the OAuth 2.0 Authorization Server Metadata as defined in RFC 8414.

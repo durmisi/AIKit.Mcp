@@ -1,5 +1,4 @@
 <Solution>
   <Project Path="AIKit.Mcp/AIKit.Mcp.csproj" />
   <Project Path="AIKit.Mcp.Tests/AIKit.Mcp.Tests.csproj" />
-  <Project Path="OAuthServer/OAuthServer.csproj" />
 </Solution>

@@ -5,7 +5,7 @@ using ModelContextProtocol.Protocol;
 using System.Net;
 using System.Net.Http.Headers;
 using Xunit.Abstractions;
-using OAuthServer;
+using AIKit.Mcp.Tests.OAuthServer;
 
 namespace AIKit.Mcp.Tests;
 

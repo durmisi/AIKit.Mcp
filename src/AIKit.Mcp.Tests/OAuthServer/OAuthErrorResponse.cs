@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace OAuthServer;
+namespace AIKit.Mcp.Tests.OAuthServer;
 
 /// <summary>
 /// Represents an OAuth error response.

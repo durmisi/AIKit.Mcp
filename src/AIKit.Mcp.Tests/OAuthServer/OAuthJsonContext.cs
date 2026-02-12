@@ -1,4 +1,4 @@
-using OAuthServer;
+using AIKit.Mcp.Tests.OAuthServer;
 using System.Text.Json.Serialization;
 
 namespace TestOAuthServer;
