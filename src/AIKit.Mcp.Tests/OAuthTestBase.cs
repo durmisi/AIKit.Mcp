@@ -69,7 +69,6 @@ public abstract class OAuthTestBase : IAsyncLifetime
         {
             mcp.ServerName = "TestOAuthServer";
             mcp.WithHttpTransport(opts => {
-                //TODO: We should be able to use the same JWT bearer options for the MCP server authentication, but for now we will just set up a placeholder OAuthAuth configuration.
                 opts.Authentication = new OAuthAuth()
                 {
                     OAuthClientId = "test-client",
