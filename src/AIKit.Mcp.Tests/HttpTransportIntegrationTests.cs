@@ -56,7 +56,7 @@ public class HttpTransportIntegrationTests
         var app = builder.Build();
 
         _output.WriteLine("Mapping MCP endpoint...");
-        app.MapMcp("/mcp");
+        app.UseAIKitMcp("/mcp");
 
         _output.WriteLine("Starting MCP server...");
         await app.StartAsync();
@@ -171,7 +171,7 @@ public class HttpTransportIntegrationTests
         });
 
         var app = builder.Build();
-        app.MapMcp("/mcp/{toolCategory?}");
+        app.UseAIKitMcp("/mcp/{toolCategory?}");
 
         await app.StartAsync();
 
@@ -306,7 +306,7 @@ public class HttpTransportIntegrationTests
         });
 
         var app = builder.Build();
-        app.MapMcp("/mcp/{toolCategory?}");
+        app.UseAIKitMcp("/mcp/{toolCategory?}");
 
         await app.StartAsync();
 
@@ -435,7 +435,7 @@ public class HttpTransportIntegrationTests
         });
 
         var app = builder.Build();
-        app.MapMcp("/mcp/{toolCategory?}");
+        app.UseAIKitMcp("/mcp/{toolCategory?}");
 
         await app.StartAsync();
 

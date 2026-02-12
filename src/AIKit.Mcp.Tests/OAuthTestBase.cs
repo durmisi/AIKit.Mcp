@@ -60,7 +60,7 @@ public abstract class OAuthTestBase : IAsyncLifetime
     /// <summary>
     /// Starts the MCP server with OAuth protection.
     /// </summary>
-    protected async Task<WebApplication> StartMcpServerAsync(string path = "")
+    protected async Task<WebApplication> StartMcpServerAsync(string path = "/mcp")
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls("http://localhost:5000");
@@ -83,9 +83,7 @@ public abstract class OAuthTestBase : IAsyncLifetime
         });
 
         var app = builder.Build();
-        app.UseAuthentication();
-        app.UseAuthorization();
-        app.MapMcp(path).RequireAuthorization();
+        app.UseAIKitMcp(path);
         await app.StartAsync(TestCts.Token);
         return app;
     }

@@ -83,11 +83,7 @@ public class CustomAuthIntegrationTests
 
         app.UseRouting();
 
-        app.UseAuthentication();
-
-        app.UseAuthorization();
-
-        app.MapMcp("/mcp").RequireAuthorization();
+        app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
 
@@ -161,11 +157,7 @@ public class CustomAuthIntegrationTests
 
         app.UseRouting();
 
-        app.UseAuthentication();
-
-        app.UseAuthorization();
-
-        app.MapMcp("/mcp").RequireAuthorization();
+        app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
 

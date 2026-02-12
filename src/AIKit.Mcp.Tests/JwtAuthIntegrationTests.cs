@@ -124,11 +124,7 @@ public class JwtAuthIntegrationTests
 
         app.UseRouting();
 
-        app.UseAuthentication();
-
-        app.UseAuthorization();
-
-        app.MapMcp("/mcp").RequireAuthorization();
+        app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
 
@@ -206,11 +202,7 @@ public class JwtAuthIntegrationTests
 
         app.UseRouting();
 
-        app.UseAuthentication();
-
-        app.UseAuthorization();
-
-        app.MapMcp("/mcp").RequireAuthorization();
+        app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
 
@@ -288,11 +280,7 @@ public class JwtAuthIntegrationTests
 
         app.UseRouting();
 
-        app.UseAuthentication();
-
-        app.UseAuthorization();
-
-        app.MapMcp("/mcp").RequireAuthorization();
+        app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
 
@@ -370,11 +358,7 @@ public class JwtAuthIntegrationTests
 
         app.UseRouting();
 
-        app.UseAuthentication();
-
-        app.UseAuthorization();
-
-        app.MapMcp("/mcp").RequireAuthorization();
+        app.UseAIKitMcp("/mcp");
 
         await app.StartAsync();
 
