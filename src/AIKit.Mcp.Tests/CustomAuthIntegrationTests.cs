@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Security.Claims;
@@ -47,6 +48,12 @@ public class CustomAuthIntegrationTests
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
 
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
+
         builder.Services.AddAIKitMcp(mcp =>
         {
             mcp.ServerName = "AIKit.Test.Server";
@@ -86,8 +93,10 @@ public class CustomAuthIntegrationTests
 
         try
         {
+            var url = app.Urls.First();
+            _output.WriteLine($"Server started on URL: {url}");
             using var client = new HttpClient();
-            client.BaseAddress = new Uri("http://localhost:5000");
+            client.BaseAddress = new Uri(url);
             client.DefaultRequestHeaders.Add("X-API-Key", "valid-key");
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
@@ -106,6 +115,7 @@ public class CustomAuthIntegrationTests
         finally
         {
             await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 
@@ -115,6 +125,12 @@ public class CustomAuthIntegrationTests
         _output.WriteLine("=== Starting MCP Server Custom Auth Rejection Test ===");
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
+
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
 
         builder.Services.AddAIKitMcp(mcp =>
         {
@@ -155,8 +171,10 @@ public class CustomAuthIntegrationTests
 
         try
         {
+            var url = app.Urls.First();
+            _output.WriteLine($"Server started on URL: {url}");
             using var client = new HttpClient();
-            client.BaseAddress = new Uri("http://localhost:5000");
+            client.BaseAddress = new Uri(url);
             client.DefaultRequestHeaders.Add("X-API-Key", "invalid-key");
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
@@ -175,6 +193,7 @@ public class CustomAuthIntegrationTests
         finally
         {
             await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 }

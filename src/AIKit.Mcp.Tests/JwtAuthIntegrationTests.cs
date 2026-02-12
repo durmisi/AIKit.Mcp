@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
@@ -87,6 +88,12 @@ public class JwtAuthIntegrationTests
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
 
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
+
         builder.Services.AddAIKitMcp(mcp =>
         {
             mcp.ServerName = "AIKit.Test.Server";
@@ -127,8 +134,10 @@ public class JwtAuthIntegrationTests
 
         try
         {
+            var url = app.Urls.First();
+            _output.WriteLine($"Server started on URL: {url}");
             using var client = new HttpClient();
-            client.BaseAddress = new Uri("http://localhost:5000");
+            client.BaseAddress = new Uri(url);
             var token = JwtTestHelper.GenerateValidToken();
             _output.WriteLine($"Generated valid JWT token for testing");
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -150,6 +159,7 @@ public class JwtAuthIntegrationTests
         finally
         {
             await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 
@@ -159,6 +169,12 @@ public class JwtAuthIntegrationTests
         _output.WriteLine("=== Starting MCP Server JWT Auth Invalid Issuer Test ===");
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
+
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
 
         builder.Services.AddAIKitMcp(mcp =>
         {
@@ -200,8 +216,10 @@ public class JwtAuthIntegrationTests
 
         try
         {
+            var url = app.Urls.First();
+            _output.WriteLine($"Server started on URL: {url}");
             using var client = new HttpClient();
-            client.BaseAddress = new Uri("http://localhost:5000");
+            client.BaseAddress = new Uri(url);
             var token = JwtTestHelper.GenerateTokenWithWrongIssuer();
             _output.WriteLine($"Generated JWT token with wrong issuer for testing");
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -223,6 +241,7 @@ public class JwtAuthIntegrationTests
         finally
         {
             await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 
@@ -232,6 +251,12 @@ public class JwtAuthIntegrationTests
         _output.WriteLine("=== Starting MCP Server JWT Auth Expired Token Test ===");
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
+
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
 
         builder.Services.AddAIKitMcp(mcp =>
         {
@@ -273,8 +298,10 @@ public class JwtAuthIntegrationTests
 
         try
         {
+            var url = app.Urls.First();
+            _output.WriteLine($"Server started on URL: {url}");
             using var client = new HttpClient();
-            client.BaseAddress = new Uri("http://localhost:5000");
+            client.BaseAddress = new Uri(url);
             var token = JwtTestHelper.GenerateExpiredToken();
             _output.WriteLine($"Generated expired JWT token for testing");
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
@@ -296,6 +323,7 @@ public class JwtAuthIntegrationTests
         finally
         {
             await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 
@@ -305,6 +333,12 @@ public class JwtAuthIntegrationTests
         _output.WriteLine("=== Starting MCP Server JWT Auth Missing Token Test ===");
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
+
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
 
         builder.Services.AddAIKitMcp(mcp =>
         {
@@ -346,8 +380,10 @@ public class JwtAuthIntegrationTests
 
         try
         {
+            var url = app.Urls.First();
+            _output.WriteLine($"Server started on URL: {url}");
             using var client = new HttpClient();
-            client.BaseAddress = new Uri("http://localhost:5000");
+            client.BaseAddress = new Uri(url);
             // No Authorization header
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("text/event-stream"));
@@ -367,6 +403,7 @@ public class JwtAuthIntegrationTests
         finally
         {
             await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 }

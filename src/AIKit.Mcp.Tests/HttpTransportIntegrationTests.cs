@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using ModelContextProtocol.Client;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using System.IO.Pipelines;
+using System.Net;
 using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;
@@ -21,6 +23,12 @@ public class HttpTransportIntegrationTests
         _output.WriteLine("=== Starting MCP Server Initialization Test ===");
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
+
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
 
         _output.WriteLine("Configuring MCP server services...");
 
@@ -85,6 +93,7 @@ public class HttpTransportIntegrationTests
         {
             _output.WriteLine("Stopping MCP server...");
             await app.StopAsync();
+            await app.DisposeAsync();
             _output.WriteLine("Server stopped.");
         }
     }
@@ -95,6 +104,12 @@ public class HttpTransportIntegrationTests
         _output.WriteLine("=== Starting Per-Session Tool Filtering Test ===");
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
+
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
 
         builder.Services.AddScoped<TestTools>();
         builder.Services.AddScoped<TestResources>();
@@ -214,6 +229,7 @@ public class HttpTransportIntegrationTests
         finally
         {
             await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 
@@ -223,6 +239,12 @@ public class HttpTransportIntegrationTests
         _output.WriteLine("=== Starting Sessions Isolation Test ===");
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
+
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
 
         builder.Services.AddScoped<TestTools>();
         builder.Services.AddScoped<TestResources>();
@@ -340,6 +362,7 @@ public class HttpTransportIntegrationTests
         finally
         {
             await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 
@@ -349,6 +372,12 @@ public class HttpTransportIntegrationTests
         _output.WriteLine("=== Starting Default Route Test ===");
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddHttpContextAccessor();
+
+        // Use random port to avoid conflicts in parallel tests
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
 
         builder.Services.AddScoped<TestTools>();
         builder.Services.AddScoped<TestResources>();
@@ -432,6 +461,7 @@ public class HttpTransportIntegrationTests
         finally
         {
             await app.StopAsync();
+            await app.DisposeAsync();
         }
     }
 
