@@ -66,6 +66,9 @@ public sealed class AIKitMcpBuilder
     private Stream? _streamInput;
     private Stream? _streamOutput;
 
+    // Per-session tools
+    private PerSessionToolRegistry _toolRegistry = new();
+
     // Discovery
     private bool _autoDiscovery = false;
 
@@ -115,6 +118,7 @@ public sealed class AIKitMcpBuilder
     {
         _services = services ?? throw new ArgumentNullException(nameof(services));
         _mcpServerBuilder = services.AddMcpServer();
+        _services.AddSingleton(_toolRegistry);
     }
 
     /// <summary>
@@ -199,6 +203,23 @@ public sealed class AIKitMcpBuilder
     public AIKitMcpBuilder WithTools<T>() where T : class
     {
         _mcpServerBuilder.WithTools<T>();
+        return this;
+    }
+
+    /// <summary>
+    /// Registers a tool type for per-session filtering under the specified category.
+    /// </summary>
+    /// <typeparam name="T">The tool type to register.</typeparam>
+    /// <param name="category">The category under which to register the tool.</param>
+    /// <returns>The builder instance for chaining.</returns>
+    public AIKitMcpBuilder WithTools<T>(string category) where T : class
+    {
+        if (string.IsNullOrEmpty(category))
+            throw new ArgumentException("Category cannot be null or empty.", nameof(category));
+
+        if (!_toolRegistry.CategorizedTools.ContainsKey(category))
+            _toolRegistry.CategorizedTools[category] = new();
+        _toolRegistry.CategorizedTools[category].Add(typeof(T));
         return this;
     }
 
@@ -294,6 +315,34 @@ public sealed class AIKitMcpBuilder
                         .WithResourcesFromAssembly(target)
                         .WithPromptsFromAssembly(target);
         return this;
+    }
+
+    /// <summary>
+    /// Gets tools for a specific type using reflection, similar to the MCP SDK sample.
+    /// </summary>
+    /// <typeparam name="T">The tool type to scan for methods with McpServerToolAttribute.</typeparam>
+    /// <returns>An array of McpServerTool instances.</returns>
+    public static McpServerTool[] GetToolsForType<T>() where T : class
+    {
+        var tools = new List<McpServerTool>();
+        var toolType = typeof(T);
+        var methods = toolType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Where(m => m.GetCustomAttributes(typeof(McpServerToolAttribute), false).Any());
+        foreach (var method in methods)
+        {
+            try
+            {
+                var tool = McpServerTool.Create(method, target: null, new McpServerToolCreateOptions());
+                tools.Add(tool);
+            }
+            catch (Exception ex)
+            {
+                // Log error but continue with other tools
+                // Note: In a real app, use ILogger, but for library, perhaps throw or ignore
+                throw new InvalidOperationException($"Failed to create tool {toolType.Name}.{method.Name}: {ex.Message}", ex);
+            }
+        }
+        return tools.ToArray();
     }
 
     private void ConfigureMetadata()

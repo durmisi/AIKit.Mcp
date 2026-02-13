@@ -521,4 +521,121 @@ public class HttpTransportIntegrationTests
             _output.WriteLine("Echo tool not found");
         }
     }
+
+    [Fact]
+    public async Task PerSessionTools_FilterByCategory()
+    {
+        _output.WriteLine("=== Starting Per-Session Tools Test ===");
+        var builder = WebApplication.CreateBuilder();
+        builder.Services.AddHttpContextAccessor();
+
+        // Use random port
+        builder.Services.Configure<KestrelServerOptions>(options =>
+        {
+            options.Listen(IPAddress.Loopback, 0);
+        });
+
+        _output.WriteLine("Configuring MCP server with per-session tools...");
+
+        builder.Services.AddAIKitMcp(mcp =>
+        {
+            mcp.ServerName = "AIKit.Test.Server.PerSession";
+            mcp.ServerVersion = "1.0.0-test";
+
+            mcp.WithHttpTransport(opts =>
+            {
+                opts.HttpBasePath = "/mcp";
+                opts.ConfigureSessionOptions = async (httpContext, mcpOptions, cancellationToken) =>
+                {
+                    // Get category from route parameters
+                    var category = httpContext.Request.RouteValues["category"]?.ToString() ?? "all";
+                    _output.WriteLine($"Filtering tools for category: {category}");
+
+                    var registry = httpContext.RequestServices.GetRequiredService<PerSessionToolRegistry>();
+                    if (registry.CategorizedTools.TryGetValue(category, out var types))
+                    {
+                        mcpOptions.Capabilities = new();
+                        mcpOptions.Capabilities.Tools = new();
+                        var collection = mcpOptions.ToolCollection = [];
+                        foreach (var type in types)
+                        {
+                            var tools = type.Name switch
+                            {
+                                "ClockTool" => AIKitMcpBuilder.GetToolsForType<AIKit.Mcp.Tests.Tools.ClockTool>(),
+                                "CalculatorTool" => AIKitMcpBuilder.GetToolsForType<AIKit.Mcp.Tests.Tools.CalculatorTool>(),
+                                "UserInfoTool" => AIKitMcpBuilder.GetToolsForType<AIKit.Mcp.Tests.Tools.UserInfoTool>(),
+                                _ => Array.Empty<McpServerTool>()
+                            };
+                            foreach (var tool in tools)
+                            {
+                                collection.Add(tool);
+                            }
+                        }
+                    }
+                };
+            });
+
+            // Register tools with categories
+            mcp.WithTools<AIKit.Mcp.Tests.Tools.ClockTool>("clock");
+            mcp.WithTools<AIKit.Mcp.Tests.Tools.CalculatorTool>("calculator");
+            mcp.WithTools<AIKit.Mcp.Tests.Tools.UserInfoTool>("userinfo");
+        });
+
+        var app = builder.Build();
+        app.UseAIKitMcp("/mcp/{category?}");
+
+        _output.WriteLine("Starting server...");
+        await app.StartAsync();
+
+        try
+        {
+            var serverAddress = app.Urls.First();
+            _output.WriteLine($"Server started at {serverAddress}");
+
+            // Test with clock category
+            var transport = new HttpClientTransport(new()
+            {
+                Endpoint = new Uri($"{serverAddress}/mcp/clock"),
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+
+            await using var mcpClient = await McpClient.CreateAsync(transport, new McpClientOptions
+            {
+                ClientInfo = new Implementation { Name = "TestClient", Version = "1.0.0" }
+            });
+
+            var tools = await mcpClient.ListToolsAsync();
+            _output.WriteLine($"Clock tools: {string.Join(", ", tools.Select(t => t.Name))}");
+
+            Assert.Single(tools);
+            Assert.Equal("get-current-time", tools[0].Name);
+
+            await mcpClient.DisposeAsync();
+
+            // Test with calculator category
+            transport = new HttpClientTransport(new()
+            {
+                Endpoint = new Uri($"{serverAddress}/mcp/calculator"),
+                TransportMode = HttpTransportMode.StreamableHttp
+            });
+
+            await using var calcClient = await McpClient.CreateAsync(transport, new McpClientOptions
+            {
+                ClientInfo = new Implementation { Name = "TestClient", Version = "1.0.0" }
+            });
+
+            tools = await calcClient.ListToolsAsync();
+            _output.WriteLine($"Calculator tools: {string.Join(", ", tools.Select(t => t.Name))}");
+
+            Assert.Equal(2, tools.Count);
+            Assert.Contains(tools, t => t.Name == "add-numbers");
+            Assert.Contains(tools, t => t.Name == "multiply-numbers");
+
+            await calcClient.DisposeAsync();
+        }
+        finally
+        {
+            await app.StopAsync();
+        }
+    }
 }
