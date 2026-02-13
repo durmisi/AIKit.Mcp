@@ -4,75 +4,71 @@
 
 A .NET wrapper library for the Model Context Protocol (MCP) SDK that simplifies MCP server configuration with fluent builder patterns. Designed to reduce complexity when building MCP servers in .NET Core, providing an intuitive API on top of the official MCP SDK.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Tool Implementation](#tool-implementation)
+- [Configuration Options](#configuration-options)
+- [Authentication (HTTP only)](#authentication-http-only)
+- [Advanced Usage](#advanced-usage)
+- [Building and Testing](#building-and-testing)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+
 ## Features
 
 - **Fluent Builder API**: Easy-to-use configuration with `AIKitMcpBuilder`
 - **Transport Support**: Stdio and HTTP transports out of the box
-- **Authentication**: OAuth 2.0, JWT Bearer, and custom authentication for HTTP transport
+- **Authentication**: OAuth 2.0, JWT Bearer, MCP-specific, and custom authentication for HTTP transport
 - **Auto-Discovery**: Automatically discovers tools, resources, and prompts from assemblies
 - **Advanced MCP Features**: Tasks, progress notifications, completion, sampling, and elicitation
 - **Logging**: Configurable logging with stderr redirection for clean stdio
 
 ## Architecture
 
-AIKit.Mcp provides a clean abstraction over the MCP SDK, allowing you to focus on business logic while the framework handles protocol complexities.
+AIKit.Mcp is a **abstraction layer** built on top of the [official Model Context Protocol C# SDK](https://github.com/modelcontextprotocol/csharp-sdk). It simplifies MCP server development while maintaining full compatibility with the MCP specification.
 
-```mermaid
-graph TB
-    %% Developer
-    A[Developer]
+### Relationship to Official MCP SDK
 
-    %% Builder Layer
-    subgraph Builder["AIKit SDK / Builder"]
-        B[AIKit MCP Builder]
-    end
+- **What AIKit.Mcp provides**: Fluent configuration APIs, auto-discovery, simplified authentication, and developer-friendly patterns
+- **What the official SDK provides**: Low-level MCP protocol implementation, core types, and protocol primitives
+- **When to use official SDK docs**: For understanding MCP protocol concepts, advanced customization, or when AIKit.Mcp abstractions don't meet your needs
 
-    %% Runtime Layer
-    subgraph Runtime["MCP Server Runtime"]
-        C[MCP Server]
+### Core Components
 
-        subgraph Transport["Transport Layer"]
-            D1[STDIO]
-            D2[HTTP]
-        end
+- **AIKitMcpBuilder**: Fluent API for configuring your MCP server (wraps MCP SDK configuration)
+- **Transports**: Handle communication (Stdio for CLI clients, HTTP for web clients) using MCP SDK transports
+- **Authentication**: Secure your HTTP endpoints with various auth methods (extends MCP SDK authentication)
+- **Auto-Discovery**: Automatically finds and registers your tools, resources, and prompts (simplifies MCP SDK registration)
+- **MCP Server**: The runtime that handles MCP protocol communication (powered by official MCP SDK)
 
-        subgraph Auth["Authentication"]
-            E1[OAuth 2.0]
-            E2[JWT Bearer]
-            E3[Custom]
-        end
+### Development Flow
 
-        subgraph Discovery["Auto-Discovery"]
-            F1[MCP Tools]
-            F2[MCP Resources]
-            F3[MCP Prompts]
-        end
+1. **Configure**: Use `AIKitMcpBuilder` to set up your server (vs manual MCP SDK setup)
+2. **Implement**: Create tools, resources, and prompts with simple attributes (vs MCP SDK protocol types)
+3. **Register**: Call `WithAutoDiscovery()` to automatically register your components (vs manual registration)
+4. **Run**: Start your server with `app.RunAsync()` (same as MCP SDK)
 
-        subgraph Advanced["Advanced Features"]
-            G1[Progress]
-            G2[Tasks]
-            G3[Sampling]
-        end
-    end
+### Key Abstractions
 
-    %% Developer Extensions
-    subgraph Extensions["Developer-Provided Extensions"]
-        H[Business Logic<br/>Custom Tools<br/>Resources]
-    end
+The library handles MCP protocol complexities so you can focus on business logic. Your code is automatically mapped to MCP concepts:
 
-    %% Flow
-    A --> B
-    B --> C
+- Classes with `[McpServerToolType]` → MCP Tools (see [MCP Tool specification](https://modelcontextprotocol.io/specification/2024-11-05/server/tools))
+- Classes with `[McpServerResourceType]` → MCP Resources (see [MCP Resource specification](https://modelcontextprotocol.io/specification/2024-11-05/server/resources))
+- Classes with `[McpServerPromptType]` → MCP Prompts (see [MCP Prompt specification](https://modelcontextprotocol.io/specification/2024-11-05/server/prompts))
 
-    C --> Transport
-    C --> Auth
-    C --> Discovery
-    C --> Advanced
+### When to Consult Official Documentation
 
-    B --> H
-    H --> C
+For advanced topics, refer to the [official MCP C# SDK documentation](https://github.com/modelcontextprotocol/csharp-sdk):
 
-```
+- **MCP Protocol Details**: Understanding the full MCP specification and protocol flow
+- **Custom Transport Implementation**: Building transports beyond stdio/HTTP
+- **Advanced Authentication**: Custom auth schemes beyond the provided options
+- **Protocol Extensions**: Implementing custom MCP message types or extensions
+- **Performance Tuning**: Low-level optimization of MCP communication
+- **Debugging Protocol Issues**: Deep troubleshooting of MCP message flow
 
 ## Installation
 
@@ -86,81 +82,97 @@ dotnet add package AIKit.Mcp
 
 ### Basic Stdio Server
 
+Create a simple MCP server that runs via stdio for command-line MCP clients:
+
 ```csharp
 using AIKit.Mcp;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddAIKitMcp(mcp =>
 {
     mcp.ServerName = "MyMcpServer";
+    mcp.ServerVersion = "1.0.0";
     mcp.WithStdioTransport();
-    mcp.WithAutoDiscovery();
+    mcp.WithAutoDiscovery(); // Automatically finds tools, resources, and prompts
 });
 
 var app = builder.Build();
 await app.RunAsync();
 ```
 
-### HTTP Server with Authentication
+### HTTP Server with JWT Authentication
+
+Create an HTTP-based MCP server with JWT authentication:
 
 ```csharp
 using AIKit.Mcp;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAIKitMcp(mcp =>
 {
-    mcp.ServerName = "MyMcpServer";
+    mcp.ServerName = "MySecureMcpServer";
+    mcp.ServerVersion = "1.0.0";
+
     mcp.WithHttpTransport(opts =>
     {
         opts.HttpBasePath = "/mcp";
-        opts.WithOAuth(oauth =>
+        opts.WithJwtAuth(jwt =>
         {
-            oauth.OAuthClientId = "your-client-id";
-            oauth.OAuthScopes = new() { "mcp:tools" };
-            oauth.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateIssuerSigningKey = true,
-                ValidAudience = "https://your-mcp-server.com/mcp",
-                ValidIssuer = "https://your-oauth-server.com"
-            };
+            jwt.JwtIssuer = "https://your-issuer.com";
+            jwt.JwtAudience = "your-mcp-server";
+            jwt.SigningKey = "your-256-bit-secret-key-here"; // Use a secure key in production
         });
-
-        // Or JWT Bearer authentication
-        // opts.WithJwtAuth(jwt =>
-        // {
-        //     jwt.Authority = "https://your-oauth-server.com";
-        //     jwt.TokenValidationParameters = new TokenValidationParameters
-        //     {
-        //         ValidateIssuer = true,
-        //         ValidateAudience = true,
-        //         ValidateIssuerSigningKey = true,
-        //         ValidAudience = "https://your-mcp-server.com/mcp",
-        //         ValidIssuer = "https://your-oauth-server.com"
-        //     };
-        //     jwt.SigningKey = "your-secret-key"; // For symmetric key validation
-        // });
-
-        // Or custom authentication
-        // opts.WithCustomAuth(custom =>
-        // {
-        //     custom.SchemeName = "MyAuth";
-        //     custom.RegisterScheme = builder =>
-        //         builder.AddScheme<AuthenticationSchemeOptions, MyAuthHandler>("MyAuth", null);
-        // });
     });
+
     mcp.WithAutoDiscovery();
 });
 
 var app = builder.Build();
+app.UseAIKitMcp("/mcp");
 await app.RunAsync();
 ```
+
+### Adding Resources and Prompts
+
+MCP servers can provide resources (data) and prompts (reusable prompt templates) in addition to tools.
+
+**Resources Example:**
+
+```csharp
+[McpServerResourceType]
+public class DataResources
+{
+    [McpServerResource(Name = "config",
+                      Description = "Application configuration data",
+                      MimeType = "application/json")]
+    public async Task<string> GetConfig()
+    {
+        return JsonSerializer.Serialize(new { version = "1.0", environment = "prod" });
+    }
+}
+```
+
+**Prompts Example:**
+
+```csharp
+[McpServerPromptType]
+public class AnalysisPrompts
+{
+    [McpServerPrompt(Name = "analyze_data",
+                    Description = "Prompt for data analysis tasks")]
+    public string AnalyzeDataPrompt(string dataType)
+    {
+        return $"Please analyze the following {dataType} data and provide insights...";
+    }
+}
+```
+
+Both resources and prompts are automatically discovered when you call `WithAutoDiscovery()`.
 
 ## Tool Implementation
 
@@ -189,14 +201,212 @@ public class MathTools
 
 ### Authentication (HTTP only)
 
-AIKit.Mcp supports multiple authentication methods for HTTP transport:
+AIKit.Mcp supports multiple authentication methods for HTTP transport. Choose based on your security requirements and integration needs.
 
-- `OAuthAuth`: OAuth 2.0 with client credentials and JWT Bearer token validation
-- `JwtAuth`: Direct JWT Bearer token validation with symmetric key support
-- `McpAuth`: MCP-specific authentication with JWT Bearer and OAuth 2.0 resource metadata
-- `CustomAuth`: Custom authentication logic
+#### Quick Authentication Setup
 
-All authentication methods support direct configuration of `TokenValidationParameters` for full control over JWT validation, following the same pattern as the official MCP SDK.
+**For Development (Simple JWT):**
+
+```csharp
+opts.WithJwtAuth(jwt =>
+{
+    jwt.JwtIssuer = "dev-issuer";
+    jwt.JwtAudience = "dev-audience";
+    jwt.SigningKey = "your-dev-signing-key-min-32-chars";
+});
+```
+
+**For Production (OAuth 2.0):**
+
+```csharp
+opts.WithOAuth(oauth =>
+{
+    oauth.OAuthClientId = Environment.GetEnvironmentVariable("OAUTH_CLIENT_ID");
+    oauth.OAuthClientSecret = Environment.GetEnvironmentVariable("OAUTH_CLIENT_SECRET");
+    oauth.OAuthAuthorizationServerUrl = new Uri("https://login.microsoftonline.com/your-tenant/v2.0/authorize");
+    oauth.OAuthScopes.Add("openid");
+    oauth.OAuthScopes.Add("profile");
+    oauth.JwtIssuer = "https://login.microsoftonline.com/your-tenant/v2.0";
+    oauth.JwtAudience = Environment.GetEnvironmentVariable("OAUTH_CLIENT_ID");
+});
+```
+
+#### Using OAuthAuth
+
+OAuth 2.0 authentication implements the full OAuth 2.0 authorization code flow with JWT Bearer token validation. This is suitable for scenarios where you need to authenticate users through an external OAuth provider (like Microsoft Entra ID, Google, etc.) and then validate the issued JWT tokens.
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    mcp.ServerName = "MyOAuthServer";
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.WithOAuth(oauth =>
+        {
+            oauth.OAuthClientId = "your-client-id";
+            oauth.OAuthClientSecret = "your-client-secret";
+            oauth.OAuthRedirectUri = new Uri("https://yourapp.com/callback");
+            oauth.OAuthAuthorizationServerUrl = new Uri("https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize");
+            oauth.OAuthScopes.Add("openid");
+            oauth.OAuthScopes.Add("profile");
+            oauth.JwtIssuer = "https://login.microsoftonline.com/tenant/v2.0";
+            oauth.JwtAudience = "your-client-id";
+
+            // Optional: Custom token validation
+            oauth.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidAudience = "your-client-id",
+                ValidIssuer = "https://login.microsoftonline.com/tenant/v2.0"
+            };
+
+            // Optional: JWT events for custom handling
+            oauth.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = context =>
+                {
+                    // Custom validation logic
+                    return Task.CompletedTask;
+                }
+            };
+        });
+    });
+    mcp.WithAutoDiscovery();
+});
+```
+
+**Key Features of OAuthAuth:**
+
+- **Full OAuth 2.0 Flow**: Supports authorization code flow with external providers
+- **JWT Integration**: Validates JWT tokens issued by OAuth providers
+- **Flexible Configuration**: Configure client credentials, scopes, and validation parameters
+- **Event Handling**: Custom JWT events for additional validation logic
+
+**When to Use OAuthAuth:**
+
+- Integrating with external identity providers (Microsoft Entra ID, Google, etc.)
+- Applications requiring user authentication through OAuth 2.0
+- Scenarios needing the full OAuth authorization flow
+
+#### Using JwtAuth
+
+Direct JWT Bearer authentication validates JWT tokens without the OAuth 2.0 flow. This is useful when you have pre-issued JWT tokens or want to integrate with systems that provide JWT tokens directly.
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    mcp.ServerName = "MyJwtServer";
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.WithJwtAuth(jwt =>
+        {
+            jwt.JwtIssuer = "your-issuer";
+            jwt.JwtAudience = "your-audience";
+            jwt.SigningKey = "your-symmetric-signing-key";
+
+            // Or use authority for asymmetric keys:
+            // jwt.Authority = "https://your-authority.com";
+
+            // Optional: Custom token validation
+            jwt.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidAudience = "your-audience",
+                ValidIssuer = "your-issuer"
+            };
+
+            // Optional: JWT events for custom handling
+            jwt.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = context =>
+                {
+                    // Custom validation logic
+                    return Task.CompletedTask;
+                }
+            };
+        });
+    });
+    mcp.WithAutoDiscovery();
+});
+```
+
+**Key Features of JwtAuth:**
+
+- **Direct JWT Validation**: No OAuth flow required
+- **Symmetric/Asymmetric Keys**: Support for both HMAC and RSA/ECDSA signing
+- **Authority Support**: Automatic key resolution from OAuth authorities
+- **Simple Configuration**: Minimal setup for basic JWT validation
+
+**When to Use JwtAuth:**
+
+- Working with pre-issued JWT tokens
+- Internal services with direct token issuance
+- Simple authentication scenarios without OAuth complexity
+- Integration with JWT-based authentication systems
+
+#### Using CustomAuth
+
+Custom authentication allows you to implement any authentication scheme by providing your own authentication handler. This gives maximum flexibility for proprietary or specialized authentication requirements.
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    mcp.ServerName = "MyCustomAuthServer";
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.WithCustomAuth(custom =>
+        {
+            custom.SchemeName = "ApiKey";
+            custom.RegisterScheme = builder =>
+            {
+                builder.AddScheme<ApiKeyOptions, ApiKeyHandler>("ApiKey", options => { });
+            };
+        });
+    });
+    mcp.WithAutoDiscovery();
+});
+```
+
+Where `ApiKeyHandler` is your custom implementation:
+
+```csharp
+public class ApiKeyHandler : AuthenticationHandler<ApiKeyOptions>
+{
+    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
+        var apiKey = Request.Headers["X-API-Key"].FirstOrDefault();
+        if (string.IsNullOrEmpty(apiKey) || apiKey != "valid-key")
+        {
+            return AuthenticateResult.Fail("Invalid API key");
+        }
+
+        var identity = new ClaimsIdentity(Scheme.Name);
+        var principal = new ClaimsPrincipal(identity);
+        return AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name));
+    }
+}
+
+public class ApiKeyOptions : AuthenticationSchemeOptions { }
+```
+
+**Key Features of CustomAuth:**
+
+- **Full Flexibility**: Implement any authentication logic
+- **ASP.NET Core Integration**: Uses standard authentication handler pattern
+- **Custom Schemes**: Support for proprietary authentication methods
+- **Handler Pattern**: Leverage ASP.NET Core's authentication infrastructure
+
+**When to Use CustomAuth:**
+
+- Proprietary authentication schemes
+- API key authentication
+- Custom token formats
+- Integration with legacy authentication systems
+- Specialized security requirements
 
 #### Using McpAuth
 
@@ -405,6 +615,61 @@ dotnet build src/AIKit.Mcp.slnx
 dotnet test src/AIKit.Mcp.Tests/AIKit.Mcp.Tests.csproj
 ```
 
+## Troubleshooting
+
+### Common Issues
+
+**"No tools found" error**
+
+- Ensure your tool classes are decorated with `[McpServerToolType]`
+- Check that tool methods have `[McpServerTool(Name = "...")]` attributes
+- Verify `WithAutoDiscovery()` is called in your configuration
+
+**Authentication failures**
+
+- For JWT: Verify issuer, audience, and signing key match your token
+- For OAuth: Check client ID, scopes, and token validation parameters
+- Ensure tokens are sent in `Authorization: Bearer <token>` header
+
+**HTTP transport not working**
+
+- Verify `app.UseAIKitMcp("/mcp")` is called in your middleware pipeline
+- Check that the base path matches your `HttpBasePath` configuration
+- Ensure authentication is properly configured for HTTP transport
+
+**Stdio transport issues**
+
+- Stdio servers should be run directly by MCP clients
+- Check logging output for connection errors
+- Verify the server starts without exceptions
+
+### Debug Logging
+
+Enable detailed logging to troubleshoot issues:
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    mcp.EnableDevelopmentFeatures = true;
+    // This enables debug logging and additional error details
+});
+```
+
+### Testing Your Server
+
+Use the MCP Inspector to test your server:
+
+```bash
+# Install MCP CLI if not already installed
+npm install -g @modelcontextprotocol/cli
+
+# Test stdio server
+mcp dev --stdio "dotnet run --project YourProject.csproj"
+
+# Test HTTP server
+mcp dev --http "http://localhost:5000/mcp"
+```
+
 ## Dependencies
 
 - ModelContextProtocol (>= 0.8.0-preview.1)
@@ -414,6 +679,67 @@ dotnet test src/AIKit.Mcp.Tests/AIKit.Mcp.Tests.csproj
 ## Contributing
 
 Contributions welcome! Please see issues for current tasks.
+
+## Best Practices
+
+### Tool Design
+
+- **Descriptive Names**: Use clear, descriptive names for tools and parameters
+- **Input Validation**: Always validate inputs and provide meaningful error messages
+- **Async Operations**: Use async methods for I/O operations and long-running tasks
+- **Progress Reporting**: For operations >5 seconds, implement progress reporting
+
+```csharp
+[McpServerToolType]
+public class DataProcessingTools
+{
+    [McpServerTool(Name = "process_large_dataset",
+                   Description = "Process a large dataset with progress reporting")]
+    public async Task<string> ProcessLargeDataset(string datasetId, McpServer server, ProgressToken token)
+    {
+        // Validate input
+        if (string.IsNullOrEmpty(datasetId))
+            throw new ArgumentException("Dataset ID is required");
+
+        // Report progress
+        for (int i = 0; i < 100; i += 10)
+        {
+            await McpTaskHelpers.ReportProgressAsync(server, token, i, 100, $"Processing batch {i/10}");
+            await Task.Delay(100); // Simulate work
+        }
+
+        return $"Dataset {datasetId} processed successfully";
+    }
+}
+```
+
+### Configuration Management
+
+- **Environment Variables**: Store sensitive configuration in environment variables
+- **Validation**: Validate configuration at startup
+- **Logging**: Enable appropriate log levels for different environments
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    mcp.ServerName = Environment.GetEnvironmentVariable("MCP_SERVER_NAME") ?? "MyServer";
+
+    // Validate required configuration
+    var jwtKey = Environment.GetEnvironmentVariable("JWT_SIGNING_KEY");
+    if (string.IsNullOrEmpty(jwtKey))
+        throw new InvalidOperationException("JWT_SIGNING_KEY environment variable is required");
+
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.WithJwtAuth(jwt =>
+        {
+            jwt.JwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+            jwt.JwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+            jwt.SigningKey = jwtKey;
+        });
+    });
+});
+```
 
 ## License
 
