@@ -686,4 +686,9 @@ public sealed class Program
 
         return computedChallenge == codeChallenge;
     }
+
+    /// <summary>
+    /// Gets the RSA public key for JWT validation.
+    /// </summary>
+    public RSA GetPublicKey() => _rsa;
 }

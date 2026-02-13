@@ -72,7 +72,8 @@ public abstract class OAuthTestBase : IAsyncLifetime
                     TokenValidationParameters = new TokenValidationParameters
                     {
                         NameClaimType = "name",
-                        RoleClaimType = "roles"
+                        RoleClaimType = "roles",
+                        IssuerSigningKey = new RsaSecurityKey(TestOAuthServer.GetPublicKey())
                     }
                 };
             });
