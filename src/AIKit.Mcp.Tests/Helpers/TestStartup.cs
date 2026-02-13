@@ -27,11 +27,11 @@ public class TestStartup
             mcp.AutoDiscoverTools = true;
             mcp.AutoDiscoverResources = true;
             mcp.AutoDiscoverPrompts = false;
-            mcp.EnableProgress = true;
+
             mcp.EnableCompletion = true;
-            mcp.EnableSampling = false;
+
             mcp.EnableDevelopmentFeatures = true;
-            mcp.EnableValidation = true;
+
         });
 
         Console.WriteLine("TestStartup.ConfigureServices completed");

@@ -44,42 +44,6 @@ public static class ToolFilteringHelpers
     }
 
     /// <summary>
-    /// Gets all tools for the specified tool types using reflection.
-    /// </summary>
-    public static List<ModelContextProtocol.Protocol.Tool> GetToolsForTypes(params Type[] toolTypes)
-    {
-        var tools = new List<ModelContextProtocol.Protocol.Tool>();
-        foreach (var type in toolTypes)
-        {
-            tools.AddRange(GetToolsForType(type));
-        }
-        return tools;
-    }
-
-    /// <summary>
-    /// Gets all tools for a specific tool type using reflection.
-    /// </summary>
-    public static List<ModelContextProtocol.Protocol.Tool> GetToolsForType(Type toolType)
-    {
-        var tools = new List<ModelContextProtocol.Protocol.Tool>();
-        var methods = toolType.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
-
-        foreach (var method in methods)
-        {
-            var toolAttribute = method.GetCustomAttribute<McpServerToolAttribute>();
-            if (toolAttribute != null)
-            {
-                var name = toolAttribute.Name ?? method.Name;
-                var description = "";
-                var inputSchema = GenerateInputSchema(method);
-                tools.Add(new ModelContextProtocol.Protocol.Tool { Name = name, Description = description, InputSchema = inputSchema });
-            }
-        }
-
-        return tools;
-    }
-
-    /// <summary>
     /// Generates a JSON schema for the method parameters.
     /// </summary>
     private static JsonElement GenerateInputSchema(MethodInfo method)

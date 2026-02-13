@@ -70,11 +70,11 @@ public class CustomAuthIntegrationTests
             });
 
             mcp.AutoDiscoverPrompts = false;
-            mcp.EnableProgress = true;
+
             mcp.EnableCompletion = true;
-            mcp.EnableSampling = false;
+
             mcp.EnableDevelopmentFeatures = true;
-            mcp.EnableValidation = true;
+
         });
 
         builder.Services.AddAuthorization();
@@ -142,11 +142,11 @@ public class CustomAuthIntegrationTests
             });
 
             mcp.AutoDiscoverPrompts = false;
-            mcp.EnableProgress = true;
+
             mcp.EnableCompletion = true;
-            mcp.EnableSampling = false;
+
             mcp.EnableDevelopmentFeatures = true;
-            mcp.EnableValidation = true;
+
         });
 
         builder.Services.AddAuthorization();

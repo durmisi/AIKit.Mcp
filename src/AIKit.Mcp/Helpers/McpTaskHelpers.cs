@@ -94,47 +94,9 @@ public static class McpTaskHelpers
         return task;
     }
 
-    /// <summary>
-    /// Polls a task until completion with optional progress callback.
-    /// </summary>
-    /// <param name="taskStore">The task store instance.</param>
-    /// <param name="taskId">The task ID to poll.</param>
-    /// <param name="progressCallback">Optional callback for progress updates.</param>
-    /// <param name="pollInterval">Interval between polls.</param>
-    /// <param name="sessionId">Optional session ID.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>The completed task.</returns>
-    public static async Task<McpTask> PollTaskUntilCompleteAsync(
-        IMcpTaskStore taskStore,
-        string taskId,
-        Action<McpTask>? progressCallback = null,
-        TimeSpan? pollInterval = null,
-        string? sessionId = null,
-        CancellationToken cancellationToken = default)
-    {
-        pollInterval ??= TimeSpan.FromSeconds(1);
-
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            var task = await taskStore.GetTaskAsync(taskId, sessionId, cancellationToken);
-            if (task == null)
-            {
-                throw new InvalidOperationException($"Task {taskId} not found");
-            }
-
-            progressCallback?.Invoke(task);
-
-            if (task.Status is McpTaskStatus.Completed or McpTaskStatus.Failed or McpTaskStatus.Cancelled)
-            {
-                return task;
-            }
-
-            await Task.Delay(pollInterval.Value, cancellationToken);
-        }
-
-        throw new OperationCanceledException();
-    }
 }
+
+
 
 /// <summary>
 /// Extension methods for McpServer to simplify common operations.

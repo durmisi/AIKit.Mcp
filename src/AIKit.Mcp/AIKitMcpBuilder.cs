@@ -93,24 +93,9 @@ public sealed class AIKitMcpBuilder
     public bool EnableDevelopmentFeatures { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether to enable validation.
-    /// </summary>
-    public bool EnableValidation { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to enable progress reporting.
-    /// </summary>
-    public bool EnableProgress { get; set; }
-
-    /// <summary>
     /// Gets or sets a value indicating whether to enable completion.
     /// </summary>
     public bool EnableCompletion { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to enable sampling.
-    /// </summary>
-    public bool EnableSampling { get; set; }
 
     /// <summary>
     /// Gets or sets the type of task store to use. Default is InMemory.

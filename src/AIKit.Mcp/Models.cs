@@ -243,22 +243,6 @@ public class OpenTelemetryOptions
 }
 
 /// <summary>
-/// Configuration for tool categories used in per-session filtering.
-/// </summary>
-public class ToolCategoryConfig
-{
-    /// <summary>
-    /// The category name (e.g., "math", "time").
-    /// </summary>
-    public string Category { get; set; } = string.Empty;
-
-    /// <summary>
-    /// The tool types to include in this category.
-    /// </summary>
-    public Type[] ToolTypes { get; set; } = Array.Empty<Type>();
-}
-
-/// <summary>
 /// Configuration options for file-based task store.
 /// </summary>
 public class FileBasedTaskStoreOptions

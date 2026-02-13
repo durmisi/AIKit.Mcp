@@ -43,11 +43,11 @@ public class HttpTransportIntegrationTests
             });
 
             mcp.AutoDiscoverPrompts = false;
-            mcp.EnableProgress = true;
+
             mcp.EnableCompletion = true;
-            mcp.EnableSampling = false;
+
             mcp.EnableDevelopmentFeatures = true;
-            mcp.EnableValidation = true;
+
         });
 
         builder.Services.AddScoped<TestTools>();
@@ -165,7 +165,7 @@ public class HttpTransportIntegrationTests
             });
 
             mcp.AutoDiscoverPrompts = false;
-            mcp.EnableProgress = true;
+
 
             mcp.WithAllFromAssembly(typeof(TestTools).Assembly);
         });
@@ -300,7 +300,7 @@ public class HttpTransportIntegrationTests
             });
 
             mcp.AutoDiscoverPrompts = false;
-            mcp.EnableProgress = true;
+
 
             mcp.WithAllFromAssembly(typeof(TestTools).Assembly);
         });

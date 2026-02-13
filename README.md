@@ -130,7 +130,6 @@ builder.Services.AddAIKitMcp(mcp =>
         };
     });
     mcp.AutoDiscoverTools = true;
-    mcp.EnableProgress = true;
 });
 
 var app = builder.Build();
@@ -176,9 +175,7 @@ public class MathTools
 
 ### Features
 
-- `EnableProgress`: Progress notifications
 - `EnableCompletion`: Auto-completion
-- `EnableSampling`: LLM sampling
 - `EnableDevelopmentFeatures`: Debug logging
 
 ### Task Management
