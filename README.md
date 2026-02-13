@@ -163,8 +163,7 @@ public class MathTools
 
 ### Discovery
 
-- `AutoDiscoverResources`: Scan for `[McpServerResource]` classes
-- `AutoDiscoverPrompts`: Scan for `[McpServerPrompt]` classes
+- `WithAutoDiscovery()`: Automatically discovers tools, resources, and prompts from assemblies
 
 ### Features
 

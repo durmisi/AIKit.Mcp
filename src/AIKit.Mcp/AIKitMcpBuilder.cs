@@ -66,17 +66,7 @@ public sealed class AIKitMcpBuilder
     private Stream? _streamOutput;
 
     // Discovery
-    private bool _autoDiscoverTools = false;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to automatically discover resources from the assembly.
-    /// </summary>
-    public bool AutoDiscoverResources { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to automatically discover prompts from the assembly.
-    /// </summary>
-    public bool AutoDiscoverPrompts { get; set; } = true;
+    private bool _autoDiscovery = false;
 
     /// <summary>
     /// Gets or sets the assembly to scan for tools, resources, and prompts.
@@ -173,11 +163,11 @@ public sealed class AIKitMcpBuilder
     }
 
     /// <summary>
-    /// Enables automatic discovery of tools from the assembly.
+    /// Enables automatic discovery of tools, resources, and prompts from the assembly.
     /// </summary>
     public AIKitMcpBuilder WithAutoDiscovery()
     {
-        _autoDiscoverTools = true;
+        _autoDiscovery = true;
         return this;
     }
 
@@ -341,17 +331,10 @@ public sealed class AIKitMcpBuilder
     {
         var assembly = this.Assembly ?? Assembly.GetCallingAssembly();
 
-        if (_autoDiscoverTools)
+        if (_autoDiscovery)
         {
             _mcpServerBuilder.WithToolsFromAssembly(assembly);
-        }
-
-        if (this.AutoDiscoverResources)
-        {
             _mcpServerBuilder.WithResourcesFromAssembly(assembly);
-        }
-
-        if (this.AutoDiscoverPrompts) {
             _mcpServerBuilder.WithPromptsFromAssembly(assembly);
         }
     }

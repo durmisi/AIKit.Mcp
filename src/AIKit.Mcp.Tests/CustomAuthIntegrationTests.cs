@@ -69,7 +69,6 @@ public class CustomAuthIntegrationTests
                 };
             });
 
-            mcp.AutoDiscoverPrompts = false;
 
             mcp.EnableCompletion = true;
 
@@ -141,7 +140,6 @@ public class CustomAuthIntegrationTests
                 };
             });
 
-            mcp.AutoDiscoverPrompts = false;
 
             mcp.EnableCompletion = true;
 

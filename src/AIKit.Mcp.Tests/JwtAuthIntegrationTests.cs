@@ -42,7 +42,6 @@ public class JwtAuthIntegrationTests
                 };
             });
 
-            mcp.AutoDiscoverPrompts = false;
             mcp.EnableCompletion = true;
             mcp.EnableDevelopmentFeatures = true;
         });
@@ -115,7 +114,6 @@ public class JwtAuthIntegrationTests
                 };
             });
 
-            mcp.AutoDiscoverPrompts = false;
             mcp.EnableCompletion = true;
             mcp.EnableDevelopmentFeatures = true;
         });
@@ -188,7 +186,6 @@ public class JwtAuthIntegrationTests
                 };
             });
 
-            mcp.AutoDiscoverPrompts = false;
 
             mcp.EnableCompletion = true;
 
@@ -264,7 +261,6 @@ public class JwtAuthIntegrationTests
                 };
             });
 
-            mcp.AutoDiscoverPrompts = false;
 
             mcp.EnableCompletion = true;
 
@@ -338,7 +334,6 @@ public class JwtAuthIntegrationTests
                 };
             });
 
-            mcp.AutoDiscoverPrompts = false;
 
             mcp.EnableCompletion = true;
 
@@ -414,7 +409,6 @@ public class JwtAuthIntegrationTests
                 };
             });
 
-            mcp.AutoDiscoverPrompts = false;
 
             mcp.EnableCompletion = true;
 
@@ -490,7 +484,6 @@ public class JwtAuthIntegrationTests
                 };
             });
 
-            mcp.AutoDiscoverPrompts = false;
 
             mcp.EnableCompletion = true;
 

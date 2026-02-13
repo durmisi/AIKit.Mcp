@@ -42,8 +42,6 @@ public class HttpTransportIntegrationTests
                 opts.HttpBasePath = "/mcp";
             });
 
-            mcp.AutoDiscoverPrompts = false;
-
             mcp.EnableCompletion = true;
 
             mcp.EnableDevelopmentFeatures = true;
@@ -120,7 +118,6 @@ public class HttpTransportIntegrationTests
             mcp.ServerVersion = "1.0.0-test";
             mcp.Assembly = typeof(TestTools).Assembly;
             mcp.WithAutoDiscovery();
-            mcp.AutoDiscoverResources = true;
 
             mcp.WithHttpTransport(opts =>
             {
@@ -164,7 +161,6 @@ public class HttpTransportIntegrationTests
                 _output.WriteLine($"ToolCollection after filtering: {((dynamic)mcpOptions.ToolCollection).Count}");
             });
 
-            mcp.AutoDiscoverPrompts = false;
 
 
             mcp.WithAllFromAssembly(typeof(TestTools).Assembly);
@@ -255,7 +251,6 @@ public class HttpTransportIntegrationTests
             mcp.ServerVersion = "1.0.0-test";
             mcp.Assembly = typeof(TestTools).Assembly;
             mcp.WithAutoDiscovery();
-            mcp.AutoDiscoverResources = true;
 
             mcp.WithHttpTransport(opts =>
             {
@@ -299,7 +294,6 @@ public class HttpTransportIntegrationTests
                 _output.WriteLine($"ToolCollection after filtering: {((dynamic)mcpOptions.ToolCollection).Count}");
             });
 
-            mcp.AutoDiscoverPrompts = false;
 
 
             mcp.WithAllFromAssembly(typeof(TestTools).Assembly);
@@ -388,7 +382,6 @@ public class HttpTransportIntegrationTests
             mcp.ServerVersion = "1.0.0-test";
             mcp.Assembly = typeof(TestTools).Assembly;
             mcp.WithAutoDiscovery();
-            mcp.AutoDiscoverResources = true;
 
             mcp.WithHttpTransport(opts =>
             {

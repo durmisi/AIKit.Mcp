@@ -28,8 +28,7 @@ builder.Services.AddAIKitMcp(mcp =>
 
     // Auto-discover tools, resources, and prompts
     mcp.WithAutoDiscovery();
-    mcp.AutoDiscoverResources = true;
-    mcp.AutoDiscoverPrompts = true;
+    // Resources and prompts auto-discovery enabled by default
 });
 
 var app = builder.Build();

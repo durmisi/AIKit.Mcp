@@ -25,8 +25,6 @@ public class TestStartup
             });
 
             mcp.WithAutoDiscovery();
-            mcp.AutoDiscoverResources = true;
-            mcp.AutoDiscoverPrompts = false;
 
             mcp.EnableCompletion = true;
 
