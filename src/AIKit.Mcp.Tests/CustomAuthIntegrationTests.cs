@@ -8,6 +8,7 @@ using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;
 
+[Collection("Integration")]
 public class CustomAuthIntegrationTests
 {
     private readonly ITestOutputHelper _output;

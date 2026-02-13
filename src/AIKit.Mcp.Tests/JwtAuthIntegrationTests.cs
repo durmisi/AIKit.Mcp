@@ -4,6 +4,7 @@ using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;
 
+[Collection("Integration")]
 public class JwtAuthIntegrationTests
 {
     private readonly ITestOutputHelper _output;

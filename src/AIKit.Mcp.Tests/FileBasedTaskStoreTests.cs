@@ -5,6 +5,7 @@ using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;
 
+[Collection("Integration")]
 public class FileBasedTaskStoreTests : IDisposable
 {
     private readonly string _testDirectory;

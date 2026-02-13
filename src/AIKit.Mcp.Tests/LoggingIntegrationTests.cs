@@ -2,6 +2,7 @@ using Xunit.Abstractions;
 
 namespace AIKit.Mcp.Tests;
 
+[Collection("Integration")]
 public class LoggingIntegrationTests : McpServerTestBase
 {
     private readonly ITestOutputHelper _output;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -172,6 +173,11 @@ public class OAuthAuth : AuthenticationOptions
     /// Optional token validation parameters for JWT validation.
     /// </summary>
     public TokenValidationParameters? TokenValidationParameters { get; set; }
+
+/// <summary>
+///  Optional JWT Bearer events for handling authentication events during OAuth token validation.
+/// </summary>
+    public JwtBearerEvents? Events { get; set; }
 }
 
 /// <summary>
@@ -203,6 +209,11 @@ public class JwtAuth : AuthenticationOptions
     /// Optional token validation parameters for JWT validation.
     /// </summary>
     public TokenValidationParameters? TokenValidationParameters { get; set; }
+
+/// <summary>
+///  Optional JWT Bearer events for handling authentication events during OAuth token validation.
+/// </summary>
+    public JwtBearerEvents? Events { get; set; }
 }
 
 /// <summary>

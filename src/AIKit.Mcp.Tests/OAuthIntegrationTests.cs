@@ -13,6 +13,7 @@ namespace AIKit.Mcp.Tests;
 /// <summary>
 /// Integration tests for OAuth 2.0 authentication in MCP servers.
 /// </summary>
+[Collection("Integration")]
 public class OAuthIntegrationTests : OAuthTestBase, IAsyncLifetime
 {
     private WebApplication? _mcpApp;

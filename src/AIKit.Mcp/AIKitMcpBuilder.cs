@@ -529,7 +529,18 @@ public sealed class AIKitMcpBuilder
         }
         else
         {
-            target.TokenValidationParameters = new TokenValidationParameters();
+            target.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+            };
+        }
+
+        if(source.Events != null)
+        {
+            target.Events = source.Events;
         }
 
         target.Authority = source.Authority ?? target.Authority;
@@ -553,6 +564,21 @@ public sealed class AIKitMcpBuilder
         {
             target.TokenValidationParameters = source.TokenValidationParameters;
         }
+        else
+        {
+            target.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+            };
+        }
+
+        if(source.Events != null)
+        {
+            target.Events = source.Events;
+        }  
 
         target.Authority = source.Authority ?? target.Authority;
 
