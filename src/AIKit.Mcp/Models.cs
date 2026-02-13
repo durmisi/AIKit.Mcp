@@ -80,6 +80,19 @@ public class HttpTransportOptions
         AuthOptions = custom;
         return this;
     }
+
+    /// <summary>
+    /// Configures MCP authentication with JWT Bearer and resource metadata.
+    /// </summary>
+    /// <param name="configure">Action to configure MCP auth options.</param>
+    /// <returns>The current options instance for chaining.</returns>
+    public HttpTransportOptions WithMcpAuth(Action<McpAuth> configure)
+    {
+        var mcp = new McpAuth();
+        configure(mcp);
+        AuthOptions = mcp;
+        return this;
+    }
 }
 
 /// <summary>
@@ -231,6 +244,42 @@ public class CustomAuth : AuthenticationOptions
     /// The consumer should use this to call AddScheme with the appropriate generic types.
     /// </summary>
     public Action<Microsoft.AspNetCore.Authentication.AuthenticationBuilder>? RegisterScheme { get; set; }
+}
+
+/// <summary>
+/// MCP authentication options with JWT Bearer and resource metadata.
+/// </summary>
+public class McpAuth : AuthenticationOptions
+{
+    /// <summary>
+    /// JWT issuer.
+    /// </summary>
+    public string? JwtIssuer { get; set; }
+
+    /// <summary>
+    /// JWT audience.
+    /// </summary>
+    public string? JwtAudience { get; set; }
+
+    /// <summary>
+    /// Authority for JWT token validation.
+    /// </summary>
+    public string? Authority { get; set; }
+
+    /// <summary>
+    /// Optional token validation parameters for JWT validation.
+    /// </summary>
+    public TokenValidationParameters? TokenValidationParameters { get; set; }
+
+    /// <summary>
+    /// Optional JWT Bearer events for handling authentication events.
+    /// </summary>
+    public JwtBearerEvents? Events { get; set; }
+
+    /// <summary>
+    /// Resource metadata for OAuth authorization.
+    /// </summary>
+    public ModelContextProtocol.Authentication.ProtectedResourceMetadata? ResourceMetadata { get; set; }
 }
 
 /// <summary>

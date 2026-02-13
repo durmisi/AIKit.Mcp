@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using ModelContextProtocol;
+using ModelContextProtocol.AspNetCore.Authentication;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using OpenTelemetry.Logs;
@@ -516,6 +517,60 @@ public sealed class AIKitMcpBuilder
                 }
                 break;
 
+            case McpAuth mcp:
+                _services
+                    .AddAuthentication(options =>
+                    {
+                        options.DefaultChallengeScheme = McpAuthenticationDefaults.AuthenticationScheme;
+                        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    })
+                    .AddJwtBearer(options =>
+                    {
+                        if (mcp.TokenValidationParameters != null)
+                        {
+                            options.TokenValidationParameters = mcp.TokenValidationParameters;
+                        }
+                        else
+                        {
+                            options.TokenValidationParameters = new TokenValidationParameters
+                            {
+                                ValidateIssuer = true,
+                                ValidateAudience = true,
+                                ValidateLifetime = true,
+                                ValidateIssuerSigningKey = true,
+                            };
+                        }
+
+                        if (mcp.Events != null)
+                        {
+                            options.Events = mcp.Events;
+                        }
+
+                        options.Authority = mcp.Authority ?? options.Authority;
+
+                        if (string.IsNullOrEmpty(options.TokenValidationParameters.ValidAudience))
+                        {
+                            options.TokenValidationParameters.ValidAudience = mcp.JwtAudience;
+                        }
+
+                        if (string.IsNullOrEmpty(options.TokenValidationParameters.ValidIssuer))
+                        {
+                            options.TokenValidationParameters.ValidIssuer = mcp.JwtIssuer;
+                        }
+
+                        options.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
+                    })
+                    .AddMcp(options =>
+                    {
+                        if (mcp.ResourceMetadata == null)
+                        {
+                            throw new InvalidOperationException("McpAuth requires ResourceMetadata to be set for the MCP authentication scheme.");
+                        }
+
+                        options.ResourceMetadata = mcp.ResourceMetadata;
+                    });
+                break;
+
             default:
                 throw new InvalidOperationException("Unknown authentication type.");
         }
@@ -538,7 +593,7 @@ public sealed class AIKitMcpBuilder
             };
         }
 
-        if(source.Events != null)
+        if (source.Events != null)
         {
             target.Events = source.Events;
         }
@@ -575,10 +630,10 @@ public sealed class AIKitMcpBuilder
             };
         }
 
-        if(source.Events != null)
+        if (source.Events != null)
         {
             target.Events = source.Events;
-        }  
+        }
 
         target.Authority = source.Authority ?? target.Authority;
 
