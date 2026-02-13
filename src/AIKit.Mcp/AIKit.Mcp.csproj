@@ -7,7 +7,7 @@
     <NoWarn>$(NoWarn);MCPEXP001</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>AIKit.Mcp</PackageId>
-    <Version>1.0.0-preview.1</Version>
+    <Version>0.0.1</Version>
     <Authors>Admir Durmishi</Authors>
     <Description>A .NET wrapper library for the Model Context Protocol (MCP) SDK that simplifies MCP server configuration with fluent builder patterns and helper classes.</Description>
     <PackageTags>MCP;ModelContextProtocol;AI;LLM;Server</PackageTags>
