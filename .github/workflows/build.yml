@@ -23,6 +23,6 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore src/AIKit.Mcp.slnx
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build src/AIKit.Mcp.slnx --no-restore --configuration Release
       - name: Test
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test src/AIKit.Mcp.Tests/AIKit.Mcp.Tests.csproj --no-build --verbosity normal
