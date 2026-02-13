@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="AIKit.Mcp/AIKit.Mcp.csproj" />
+  <Project Path="../samples/AIKit.Mcp.PerSessionTools/AIKit.Mcp.PerSessionTools.csproj" />
   <Project Path="AIKit.Mcp.Tests/AIKit.Mcp.Tests.csproj" />
   <Project Path="TestOAuthServer/TestOAuthServer.csproj" />
 </Solution>
