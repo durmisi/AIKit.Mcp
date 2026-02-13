@@ -43,19 +43,6 @@ public class HttpTransportOptions
     public Func<HttpContext, McpServerOptions, CancellationToken, Task>? ConfigureSessionOptions { get; set; }
 
     /// <summary>
-    /// Configures OAuth 2.0 authentication.
-    /// </summary>
-    /// <param name="configure">Action to configure OAuth options.</param>
-    /// <returns>The current options instance for chaining.</returns>
-    public HttpTransportOptions WithOAuth(Action<OAuthAuth> configure)
-    {
-        var oauth = new OAuthAuth();
-        configure(oauth);
-        AuthOptions = oauth;
-        return this;
-    }
-
-    /// <summary>
     /// Configures JWT Bearer authentication.
     /// </summary>
     /// <param name="configure">Action to configure JWT options.</param>
@@ -100,97 +87,7 @@ public class HttpTransportOptions
 /// </summary>
 public abstract class AuthenticationOptions
 {
-    /// <summary>
-    /// The authentication scheme to use (e.g., "Bearer", "oauth", "jwt").
-    /// </summary>
-    public string? AuthenticationScheme { get; set; }
-}
-
-/// <summary>
-/// OAuth 2.0 authentication options.
-/// </summary>
-public class OAuthAuth : AuthenticationOptions
-{
-    /// <summary>
-    /// OAuth 2.0 client ID.
-    /// </summary>
-    public string? OAuthClientId { get; set; }
-
-    /// <summary>
-    /// OAuth 2.0 client secret.
-    /// </summary>
-    public string? OAuthClientSecret { get; set; }
-
-    /// <summary>
-    /// OAuth 2.0 redirect URI.
-    /// </summary>
-    public Uri? OAuthRedirectUri { get; set; }
-
-    /// <summary>
-    /// OAuth 2.0 authorization server URL.
-    /// </summary>
-    public Uri? OAuthAuthorizationServerUrl { get; set; }
-
-    /// <summary>
-    /// OAuth 2.0 scopes.
-    /// </summary>
-    public List<string> OAuthScopes { get; set; } = new();
-
-    /// <summary>
-    /// OAuth 2.0 authorization redirect delegate.
-    /// </summary>
-    public Func<Uri, Uri, CancellationToken, Task<string?>>? OAuthAuthorizationRedirectDelegate { get; set; }
-
-    /// <summary>
-    /// Protected resource URI.
-    /// </summary>
-    public Uri? ProtectedResource { get; set; }
-
-    /// <summary>
-    /// Protected authorization servers.
-    /// </summary>
-    public List<Uri> ProtectedAuthorizationServers { get; set; } = new();
-
-    /// <summary>
-    /// Protected scopes supported.
-    /// </summary>
-    public List<string> ProtectedScopesSupported { get; set; } = new();
-
-    /// <summary>
-    /// Protected resource name.
-    /// </summary>
-    public string? ProtectedResourceName { get; set; }
-
-    /// <summary>
-    /// Protected resource documentation.
-    /// </summary>
-    public Uri? ProtectedResourceDocumentation { get; set; }
-
-    // JWT properties for OAuth (since OAuth uses JWT Bearer)
-    /// <summary>
-    /// JWT issuer.
-    /// </summary>
-    public string? JwtIssuer { get; set; }
-
-    /// <summary>
-    /// JWT audience.
-    /// </summary>
-    public string? JwtAudience { get; set; }
-
-    /// <summary>
-    /// Authority.
-    /// </summary>
-    public string? Authority { get; set; }
-
-    /// <summary>
-    /// Optional token validation parameters for JWT validation.
-    /// </summary>
-    public TokenValidationParameters? TokenValidationParameters { get; set; }
-
-/// <summary>
-///  Optional JWT Bearer events for handling authentication events during OAuth token validation.
-/// </summary>
-    public JwtBearerEvents? Events { get; set; }
+    
 }
 
 /// <summary>

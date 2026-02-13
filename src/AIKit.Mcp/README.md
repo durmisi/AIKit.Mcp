@@ -50,12 +50,12 @@ builder.Services.AddAIKitMcp(mcp =>
     {
         opts.HttpBasePath = "/mcp";
 
-        // OAuth 2.0 authentication
-        opts.WithOAuth(oauth =>
+        // JWT Bearer authentication
+        opts.WithJwtAuth(jwt =>
         {
-            oauth.OAuthClientId = "your-client-id";
-            oauth.OAuthScopes = new() { "mcp:tools" };
-            oauth.TokenValidationParameters = new TokenValidationParameters
+            jwt.JwtIssuer = "your-issuer";
+            jwt.JwtAudience = "your-audience";
+            jwt.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,

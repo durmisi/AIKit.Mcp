@@ -4,19 +4,6 @@
 
 A .NET wrapper library for the Model Context Protocol (MCP) SDK that simplifies MCP server configuration with fluent builder patterns. Designed to reduce complexity when building MCP servers in .NET Core, providing an intuitive API on top of the official MCP SDK.
 
-## Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Tool Implementation](#tool-implementation)
-- [Configuration Options](#configuration-options)
-- [Authentication (HTTP only)](#authentication-http-only)
-- [Advanced Usage](#advanced-usage)
-- [Building and Testing](#building-and-testing)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-
 ## Features
 
 - **Fluent Builder API**: Easy-to-use configuration with `AIKitMcpBuilder`
@@ -57,7 +44,7 @@ The library handles MCP protocol complexities so you can focus on business logic
 
 - Classes with `[McpServerToolType]` → MCP Tools (see [MCP Tool specification](https://modelcontextprotocol.io/specification/2024-11-05/server/tools))
 - Classes with `[McpServerResourceType]` → MCP Resources (see [MCP Resource specification](https://modelcontextprotocol.io/specification/2024-11-05/server/resources))
-- Classes with `[McpServerPromptType]` → MCP Prompts (see [MCP Prompt specification](https://modelcontextprotocol.io/specification/2024-11-05/server/prompts))
+- Prompt classes registered via `WithPrompts<T>()` → MCP Prompts (see [MCP Prompt specification](https://modelcontextprotocol.io/specification/2024-11-05/server/prompts))
 
 ### When to Consult Official Documentation
 
@@ -219,19 +206,14 @@ opts.WithJwtAuth(jwt =>
 **For Production (OAuth 2.0):**
 
 ```csharp
-opts.WithOAuth(oauth =>
+opts.WithJwtAuth(jwt =>
 {
-    oauth.OAuthClientId = Environment.GetEnvironmentVariable("OAUTH_CLIENT_ID");
-    oauth.OAuthClientSecret = Environment.GetEnvironmentVariable("OAUTH_CLIENT_SECRET");
-    oauth.OAuthAuthorizationServerUrl = new Uri("https://login.microsoftonline.com/your-tenant/v2.0/authorize");
-    oauth.OAuthScopes.Add("openid");
-    oauth.OAuthScopes.Add("profile");
-    oauth.JwtIssuer = "https://login.microsoftonline.com/your-tenant/v2.0";
-    oauth.JwtAudience = Environment.GetEnvironmentVariable("OAUTH_CLIENT_ID");
+    jwt.JwtIssuer = "https://login.microsoftonline.com/your-tenant/v2.0";
+    jwt.JwtAudience = Environment.GetEnvironmentVariable("OAUTH_CLIENT_ID");
 });
 ```
 
-#### Using OAuthAuth
+#### Using JwtAuth
 
 OAuth 2.0 authentication implements the full OAuth 2.0 authorization code flow with JWT Bearer token validation. This is suitable for scenarios where you need to authenticate users through an external OAuth provider (like Microsoft Entra ID, Google, etc.) and then validate the issued JWT tokens.
 
@@ -241,19 +223,13 @@ builder.Services.AddAIKitMcp(mcp =>
     mcp.ServerName = "MyOAuthServer";
     mcp.WithHttpTransport(opts =>
     {
-        opts.WithOAuth(oauth =>
+        opts.WithJwtAuth(jwt =>
         {
-            oauth.OAuthClientId = "your-client-id";
-            oauth.OAuthClientSecret = "your-client-secret";
-            oauth.OAuthRedirectUri = new Uri("https://yourapp.com/callback");
-            oauth.OAuthAuthorizationServerUrl = new Uri("https://login.microsoftonline.com/tenant/oauth2/v2.0/authorize");
-            oauth.OAuthScopes.Add("openid");
-            oauth.OAuthScopes.Add("profile");
-            oauth.JwtIssuer = "https://login.microsoftonline.com/tenant/v2.0";
-            oauth.JwtAudience = "your-client-id";
+            jwt.JwtIssuer = "https://login.microsoftonline.com/tenant/v2.0";
+            jwt.JwtAudience = "your-client-id";
 
             // Optional: Custom token validation
-            oauth.TokenValidationParameters = new TokenValidationParameters
+            jwt.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
                 ValidateAudience = true,

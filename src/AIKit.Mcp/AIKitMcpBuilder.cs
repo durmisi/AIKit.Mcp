@@ -487,17 +487,6 @@ public sealed class AIKitMcpBuilder
 
         switch (auth)
         {
-            case OAuthAuth oauth:
-                if (string.IsNullOrEmpty(oauth.OAuthClientId)) throw new InvalidOperationException("OAuthClientId missing.");
-                _services
-                    .AddAuthentication(a =>
-                    {
-                        a.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                        a.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    })
-                    .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, j => ApplyJwt(j, oauth));
-                break;
-
             case JwtAuth jwt:
                 _services
                     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -539,43 +528,6 @@ public sealed class AIKitMcpBuilder
             default:
                 throw new InvalidOperationException("Unknown authentication type.");
         }
-    }
-
-    private void ApplyJwt(JwtBearerOptions target, OAuthAuth source)
-    {
-        if (source.TokenValidationParameters != null)
-        {
-            target.TokenValidationParameters = source.TokenValidationParameters;
-        }
-        else
-        {
-            target.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateLifetime = true,
-                ValidateIssuerSigningKey = true,
-            };
-        }
-
-        if (source.Events != null)
-        {
-            target.Events = source.Events;
-        }
-
-        target.Authority = source.Authority ?? target.Authority;
-
-         if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidAudience))
-        {
-            target.TokenValidationParameters.ValidAudience = source.JwtAudience;
-        }
-
-        if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidIssuer))
-        {
-            target.TokenValidationParameters.ValidIssuer = source.JwtIssuer;
-        }
-
-        target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
     }
 
     private void ApplyJwt(JwtBearerOptions target, JwtAuth source)

@@ -63,13 +63,12 @@ public abstract class OAuthTestBase : IAsyncLifetime
             mcp.ServerName = "TestOAuthServer";
             mcp.WithHttpTransport(opts =>
             {
-                opts.WithOAuth(oauth =>
+                opts.WithJwtAuth(jwt =>
                 {
-                    oauth.OAuthClientId = "test-client";
-                    oauth.Authority = OAuthServerUrl;
-                    oauth.JwtAudience = McpServerUrl + path;
-                    oauth.JwtIssuer = OAuthServerUrl;
-                    oauth.TokenValidationParameters = new TokenValidationParameters
+                    jwt.Authority = OAuthServerUrl;
+                    jwt.JwtAudience = McpServerUrl + path;
+                    jwt.JwtIssuer = OAuthServerUrl;
+                    jwt.TokenValidationParameters = new TokenValidationParameters
                     {
                         NameClaimType = "name",
                         RoleClaimType = "roles",
