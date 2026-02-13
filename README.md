@@ -122,14 +122,29 @@ builder.Services.AddAIKitMcp(mcp =>
         {
             oauth.OAuthClientId = "your-client-id";
             oauth.OAuthScopes = new() { "mcp:tools" };
+            oauth.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidAudience = "https://your-mcp-server.com/mcp",
+                ValidIssuer = "https://your-oauth-server.com"
+            };
         });
 
         // Or JWT Bearer authentication
         // opts.WithJwtAuth(jwt =>
         // {
-        //     jwt.JwtIssuer = "your-issuer";
-        //     jwt.JwtAudience = "your-audience";
-        //     jwt.SigningKey = "your-secret-key";
+        //     jwt.Authority = "https://your-oauth-server.com";
+        //     jwt.TokenValidationParameters = new TokenValidationParameters
+        //     {
+        //         ValidateIssuer = true,
+        //         ValidateAudience = true,
+        //         ValidateIssuerSigningKey = true,
+        //         ValidAudience = "https://your-mcp-server.com/mcp",
+        //         ValidIssuer = "https://your-oauth-server.com"
+        //     };
+        //     jwt.SigningKey = "your-secret-key"; // For symmetric key validation
         // });
 
         // Or custom authentication
@@ -174,9 +189,80 @@ public class MathTools
 
 ### Authentication (HTTP only)
 
-- `OAuthAuth`: OAuth 2.0 with client credentials
-- `JwtAuth`: JWT Bearer token validation
+AIKit.Mcp supports multiple authentication methods for HTTP transport:
+
+- `OAuthAuth`: OAuth 2.0 with client credentials and JWT Bearer token validation
+- `JwtAuth`: Direct JWT Bearer token validation with symmetric key support
+- `McpAuth`: MCP-specific authentication with JWT Bearer and OAuth 2.0 resource metadata
 - `CustomAuth`: Custom authentication logic
+
+All authentication methods support direct configuration of `TokenValidationParameters` for full control over JWT validation, following the same pattern as the official MCP SDK.
+
+#### Using McpAuth
+
+`McpAuth` provides MCP-compliant authentication that integrates JWT Bearer token validation with OAuth 2.0 protected resource metadata. This enables secure communication between MCP clients and servers following the [OAuth 2.0 Authorization Framework for Protected Resources](https://datatracker.ietf.org/doc/rfc8707/) specification.
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    mcp.ServerName = "MyProtectedServer";
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.WithMcpAuth(mcpAuth =>
+        {
+            // JWT configuration - matches the official MCP SDK demo
+            mcpAuth.Authority = "https://your-oauth-server.com";
+            mcpAuth.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidAudience = "https://your-mcp-server.com/mcp",
+                ValidIssuer = "https://your-oauth-server.com",
+                NameClaimType = "name",
+                RoleClaimType = "roles"
+            };
+            // Note: If TokenValidationParameters is not set, defaults with ValidateIssuer=true,
+            // ValidateAudience=true, ValidateLifetime=true (already default), ValidateIssuerSigningKey=true are used
+
+            // OAuth 2.0 protected resource metadata
+            mcpAuth.ResourceMetadata = new ModelContextProtocol.Authentication.ProtectedResourceMetadata
+            {
+                ResourceDocumentation = "https://docs.example.com/api/mcp",
+                AuthorizationServers = { "https://your-oauth-server.com" },
+                ScopesSupported = ["mcp:tools", "mcp:resources"]
+            };
+
+            // Optional: JWT events for custom handling
+            mcpAuth.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = context =>
+                {
+                    // Custom token validation logic
+                    return Task.CompletedTask;
+                }
+            };
+        });
+    });
+    mcp.WithAutoDiscovery();
+});
+```
+
+**Key Features of McpAuth:**
+
+- **JWT Bearer Integration**: Configure JWT token validation directly using standard JwtBearerOptions properties
+- **Resource Metadata**: Provides OAuth 2.0 protected resource information for client discovery
+- **MCP Compliance**: Follows MCP authentication specifications exactly like the official SDK
+- **Direct Configuration**: Set Authority, TokenValidationParameters, and Events directly for full control
+
+**When to Use McpAuth:**
+
+- Building production MCP servers that require secure authentication
+- Following the exact same authentication pattern as the [official MCP SDK ProtectedMcpServer](https://github.com/modelcontextprotocol/csharp-sdk/blob/main/samples/ProtectedMcpServer/Program.cs)
+- Integrating with OAuth 2.0 identity providers using JWT Bearer tokens and OAuth 2.0 resource metadata
+- Supporting multiple MCP clients with standardized authentication
+
+For a complete working example, see the [official MCP C# SDK ProtectedMcpServer sample](https://github.com/modelcontextprotocol/csharp-sdk/blob/main/samples/ProtectedMcpServer/Program.cs).
 
 ### Discovery
 

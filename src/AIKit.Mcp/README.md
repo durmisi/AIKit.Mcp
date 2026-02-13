@@ -55,14 +55,50 @@ builder.Services.AddAIKitMcp(mcp =>
         {
             oauth.OAuthClientId = "your-client-id";
             oauth.OAuthScopes = new() { "mcp:tools" };
+            oauth.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateIssuerSigningKey = true,
+                ValidAudience = "https://your-mcp-server.com/mcp",
+                ValidIssuer = "https://your-oauth-server.com"
+            };
         });
 
         // Or JWT Bearer authentication
         // opts.WithJwtAuth(jwt =>
         // {
-        //     jwt.JwtIssuer = "your-issuer";
-        //     jwt.JwtAudience = "your-audience";
-        //     jwt.SigningKey = "your-secret-key";
+        //     jwt.Authority = "https://your-oauth-server.com";
+        //     jwt.TokenValidationParameters = new TokenValidationParameters
+        //     {
+        //         ValidateIssuer = true,
+        //         ValidateAudience = true,
+        //         ValidateIssuerSigningKey = true,
+        //         ValidAudience = "https://your-mcp-server.com/mcp",
+        //         ValidIssuer = "https://your-oauth-server.com"
+        //     };
+        //     jwt.SigningKey = "your-secret-key"; // For symmetric key validation
+        // });
+
+        // Or MCP-specific authentication with JWT and OAuth 2.0 resource metadata
+        // opts.WithMcpAuth(mcpAuth =>
+        // {
+        //     mcpAuth.Authority = "https://your-oauth-server.com";
+        //     mcpAuth.TokenValidationParameters = new TokenValidationParameters
+        //     {
+        //         ValidateIssuer = true,
+        //         ValidateAudience = true,
+        //         ValidateIssuerSigningKey = true,
+        //         ValidAudience = "https://your-mcp-server.com/mcp",
+        //         ValidIssuer = "https://your-oauth-server.com",
+        //         NameClaimType = "name",
+        //         RoleClaimType = "roles"
+        //     };
+        //     mcpAuth.ResourceMetadata = new ModelContextProtocol.Authentication.ProtectedResourceMetadata
+        //     {
+        //         AuthorizationServers = { "https://your-oauth-server.com" },
+        //         ScopesSupported = ["mcp:tools"]
+        //     };
         // });
 
         // Or custom authentication
@@ -82,7 +118,7 @@ builder.Services.AddAIKitMcp(mcp =>
 
 - **Fluent Builder API**: Intuitive configuration with `AIKitMcpBuilder`
 - **Multiple Transports**: STDIO and HTTP support
-- **Authentication**: OAuth 2.0, JWT Bearer, and custom auth
+- **Authentication**: OAuth 2.0, JWT Bearer, MCP-specific auth, and custom auth
 - **Auto-Discovery**: Automatic registration of MCP tools, resources, and prompts
 - **Advanced Features**: Tasks, progress, completion, sampling, and elicitation helpers
 - **Logging**: Integrated logging with clean output

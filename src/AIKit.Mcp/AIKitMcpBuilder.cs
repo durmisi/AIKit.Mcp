@@ -565,7 +565,7 @@ public sealed class AIKitMcpBuilder
 
         target.Authority = source.Authority ?? target.Authority;
 
-        if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidAudience))
+         if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidAudience))
         {
             target.TokenValidationParameters.ValidAudience = source.JwtAudience;
         }
@@ -644,14 +644,9 @@ public sealed class AIKitMcpBuilder
 
         target.Authority = source.Authority ?? target.Authority;
 
-        if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidAudience))
-        {
-            target.TokenValidationParameters.ValidAudience = source.JwtAudience;
-        }
-
         if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidIssuer))
         {
-            target.TokenValidationParameters.ValidIssuer = source.JwtIssuer;
+            target.TokenValidationParameters.ValidIssuer = target.Authority;
         }
 
         target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;

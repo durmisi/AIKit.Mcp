@@ -67,10 +67,14 @@ public abstract class McpAuthTestBase : IAsyncLifetime
                 opts.WithMcpAuth(mcpAuth =>
                 {
                     mcpAuth.Authority = OAuthServerUrl;
-                    mcpAuth.JwtAudience = McpServerUrl + path;
-                    mcpAuth.JwtIssuer = OAuthServerUrl;
                     mcpAuth.TokenValidationParameters = new TokenValidationParameters
                     {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidAudience = McpServerUrl + path,
+                        ValidIssuer = OAuthServerUrl,
                         NameClaimType = "name",
                         RoleClaimType = "roles",
                         IssuerSigningKey = new RsaSecurityKey(TestOAuthServer.GetPublicKey())

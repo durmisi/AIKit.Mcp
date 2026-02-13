@@ -252,27 +252,17 @@ public class CustomAuth : AuthenticationOptions
 public class McpAuth : AuthenticationOptions
 {
     /// <summary>
-    /// JWT issuer.
-    /// </summary>
-    public string? JwtIssuer { get; set; }
-
-    /// <summary>
-    /// JWT audience.
-    /// </summary>
-    public string? JwtAudience { get; set; }
-
-    /// <summary>
-    /// Authority for JWT token validation.
+    /// Authority for JWT token validation (sets JwtBearerOptions.Authority).
     /// </summary>
     public string? Authority { get; set; }
 
     /// <summary>
-    /// Optional token validation parameters for JWT validation.
+    /// Token validation parameters for JWT validation (sets JwtBearerOptions.TokenValidationParameters).
     /// </summary>
     public TokenValidationParameters? TokenValidationParameters { get; set; }
 
     /// <summary>
-    /// Optional JWT Bearer events for handling authentication events.
+    /// JWT Bearer events for handling authentication events (sets JwtBearerOptions.Events).
     /// </summary>
     public JwtBearerEvents? Events { get; set; }
 
