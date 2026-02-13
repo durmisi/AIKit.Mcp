@@ -215,59 +215,6 @@ opts.WithJwtAuth(jwt =>
 
 #### Using JwtAuth
 
-OAuth 2.0 authentication implements the full OAuth 2.0 authorization code flow with JWT Bearer token validation. This is suitable for scenarios where you need to authenticate users through an external OAuth provider (like Microsoft Entra ID, Google, etc.) and then validate the issued JWT tokens.
-
-```csharp
-builder.Services.AddAIKitMcp(mcp =>
-{
-    mcp.ServerName = "MyOAuthServer";
-    mcp.WithHttpTransport(opts =>
-    {
-        opts.WithJwtAuth(jwt =>
-        {
-            jwt.JwtIssuer = "https://login.microsoftonline.com/tenant/v2.0";
-            jwt.JwtAudience = "your-client-id";
-
-            // Optional: Custom token validation
-            jwt.TokenValidationParameters = new TokenValidationParameters
-            {
-                ValidateIssuer = true,
-                ValidateAudience = true,
-                ValidateIssuerSigningKey = true,
-                ValidAudience = "your-client-id",
-                ValidIssuer = "https://login.microsoftonline.com/tenant/v2.0"
-            };
-
-            // Optional: JWT events for custom handling
-            oauth.Events = new JwtBearerEvents
-            {
-                OnTokenValidated = context =>
-                {
-                    // Custom validation logic
-                    return Task.CompletedTask;
-                }
-            };
-        });
-    });
-    mcp.WithAutoDiscovery();
-});
-```
-
-**Key Features of OAuthAuth:**
-
-- **Full OAuth 2.0 Flow**: Supports authorization code flow with external providers
-- **JWT Integration**: Validates JWT tokens issued by OAuth providers
-- **Flexible Configuration**: Configure client credentials, scopes, and validation parameters
-- **Event Handling**: Custom JWT events for additional validation logic
-
-**When to Use OAuthAuth:**
-
-- Integrating with external identity providers (Microsoft Entra ID, Google, etc.)
-- Applications requiring user authentication through OAuth 2.0
-- Scenarios needing the full OAuth authorization flow
-
-#### Using JwtAuth
-
 Direct JWT Bearer authentication validates JWT tokens without the OAuth 2.0 flow. This is useful when you have pre-issued JWT tokens or want to integrate with systems that provide JWT tokens directly.
 
 ```csharp
