@@ -175,7 +175,7 @@ public sealed class AIKitMcpBuilder
     /// <summary>
     /// Enables automatic discovery of tools from the assembly.
     /// </summary>
-    public AIKitMcpBuilder UseAutoDiscovery()
+    public AIKitMcpBuilder WithAutoDiscovery()
     {
         _autoDiscoverTools = true;
         return this;

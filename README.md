@@ -96,7 +96,7 @@ builder.Services.AddAIKitMcp(mcp =>
 {
     mcp.ServerName = "MyMcpServer";
     mcp.WithStdioTransport();
-    mcp.UseAutoDiscovery();
+    mcp.WithAutoDiscovery();
 });
 
 var app = builder.Build();
@@ -123,7 +123,7 @@ builder.Services.AddAIKitMcp(mcp =>
             OAuthScopes = new() { "mcp:tools" }
         };
     });
-    mcp.UseAutoDiscovery();
+    mcp.WithAutoDiscovery();
 });
 
 var app = builder.Build();
