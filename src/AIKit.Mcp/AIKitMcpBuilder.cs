@@ -524,42 +524,7 @@ public sealed class AIKitMcpBuilder
                         options.DefaultChallengeScheme = McpAuthenticationDefaults.AuthenticationScheme;
                         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                     })
-                    .AddJwtBearer(options =>
-                    {
-                        if (mcp.TokenValidationParameters != null)
-                        {
-                            options.TokenValidationParameters = mcp.TokenValidationParameters;
-                        }
-                        else
-                        {
-                            options.TokenValidationParameters = new TokenValidationParameters
-                            {
-                                ValidateIssuer = true,
-                                ValidateAudience = true,
-                                ValidateLifetime = true,
-                                ValidateIssuerSigningKey = true,
-                            };
-                        }
-
-                        if (mcp.Events != null)
-                        {
-                            options.Events = mcp.Events;
-                        }
-
-                        options.Authority = mcp.Authority ?? options.Authority;
-
-                        if (string.IsNullOrEmpty(options.TokenValidationParameters.ValidAudience))
-                        {
-                            options.TokenValidationParameters.ValidAudience = mcp.JwtAudience;
-                        }
-
-                        if (string.IsNullOrEmpty(options.TokenValidationParameters.ValidIssuer))
-                        {
-                            options.TokenValidationParameters.ValidIssuer = mcp.JwtIssuer;
-                        }
-
-                        options.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
-                    })
+                    .AddJwtBearer(options => ApplyJwt(options, mcp))
                     .AddMcp(options =>
                     {
                         if (mcp.ResourceMetadata == null)
@@ -653,5 +618,42 @@ public sealed class AIKitMcpBuilder
         {
             target.TokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(source.SigningKey));
         }
+    }
+
+    private void ApplyJwt(JwtBearerOptions target, McpAuth source)
+    {
+        if (source.TokenValidationParameters != null)
+        {
+            target.TokenValidationParameters = source.TokenValidationParameters;
+        }
+        else
+        {
+            target.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+            };
+        }
+
+        if (source.Events != null)
+        {
+            target.Events = source.Events;
+        }
+
+        target.Authority = source.Authority ?? target.Authority;
+
+        if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidAudience))
+        {
+            target.TokenValidationParameters.ValidAudience = source.JwtAudience;
+        }
+
+        if (string.IsNullOrEmpty(target.TokenValidationParameters.ValidIssuer))
+        {
+            target.TokenValidationParameters.ValidIssuer = source.JwtIssuer;
+        }
+
+        target.TokenValidationParameters.ClockSkew = TimeSpan.Zero;
     }
 }
