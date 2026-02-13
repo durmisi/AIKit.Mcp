@@ -108,6 +108,7 @@ await app.RunAsync();
 ```csharp
 using AIKit.Mcp;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -117,11 +118,27 @@ builder.Services.AddAIKitMcp(mcp =>
     mcp.WithHttpTransport(opts =>
     {
         opts.HttpBasePath = "/mcp";
-        opts.Authentication = new OAuthAuth
+        opts.WithOAuth(oauth =>
         {
-            OAuthClientId = "your-client-id",
-            OAuthScopes = new() { "mcp:tools" }
-        };
+            oauth.OAuthClientId = "your-client-id";
+            oauth.OAuthScopes = new() { "mcp:tools" };
+        });
+
+        // Or JWT Bearer authentication
+        // opts.WithJwtAuth(jwt =>
+        // {
+        //     jwt.JwtIssuer = "your-issuer";
+        //     jwt.JwtAudience = "your-audience";
+        //     jwt.SigningKey = "your-secret-key";
+        // });
+
+        // Or custom authentication
+        // opts.WithCustomAuth(custom =>
+        // {
+        //     custom.SchemeName = "MyAuth";
+        //     custom.RegisterScheme = builder =>
+        //         builder.AddScheme<AuthenticationSchemeOptions, MyAuthHandler>("MyAuth", null);
+        // });
     });
     mcp.WithAutoDiscovery();
 });
