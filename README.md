@@ -9,6 +9,7 @@ A .NET wrapper library for the Model Context Protocol (MCP) SDK that simplifies 
 - **Fluent Builder API**: Easy-to-use configuration with `AIKitMcpBuilder`
 - **Transport Support**: Stdio and HTTP transports out of the box
 - **Authentication**: OAuth 2.0, JWT Bearer, MCP-specific, and custom authentication for HTTP transport
+- **Per-Session Tools**: Dynamically filter and expose tools based on session context (e.g., route parameters)
 - **Auto-Discovery**: Automatically discovers tools, resources, and prompts from assemblies
 - **Advanced MCP Features**: Tasks, progress notifications, completion, sampling, and elicitation
 - **Logging**: Configurable logging with stderr redirection for clean stdio
@@ -527,6 +528,130 @@ builder.Services.AddAIKitMcp(mcp =>
     };
 });
 ```
+
+### Per-Session Tools
+
+Per-session tools allow you to dynamically filter and expose different sets of tools based on session context, such as HTTP route parameters, headers, or other request-specific data. This is useful for multi-tenant applications, role-based access control, or context-aware tool availability.
+
+#### Basic Setup
+
+First, create tool classes with categories:
+
+```csharp
+[McpServerToolType]
+public class ClockTool
+{
+    [McpServerTool(Name = "get_current_time", Description = "Get the current time")]
+    public string GetCurrentTime() => DateTime.Now.ToString("HH:mm:ss");
+}
+
+[McpServerToolType]
+public class CalculatorTool
+{
+    [McpServerTool(Name = "add_numbers", Description = "Add two numbers")]
+    public double Add(double a, double b) => a + b;
+}
+
+[McpServerToolType]
+public class UserInfoTool
+{
+    [McpServerTool(Name = "get_user_info", Description = "Get user information")]
+    public string GetUserInfo() => "User: admin, Role: administrator";
+}
+```
+
+#### Configuration
+
+Register tools with categories and enable session-based filtering:
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    mcp.ServerName = "MySessionServer";
+    mcp.ServerVersion = "1.0.0";
+
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.HttpBasePath = "/mcp";
+        // Optional: Configure session options
+        opts.WithSessionOptions(sessionOpts =>
+        {
+            sessionOpts.RouteParameterName = "category"; // Default is "category"
+        });
+    });
+
+    // Register tools with categories
+    mcp.WithTools<ClockTool>("time");
+    mcp.WithTools<CalculatorTool>("math");
+    mcp.WithTools<UserInfoTool>("admin");
+
+    // Enable auto-discovery for non-categorized tools if needed
+    mcp.WithAutoDiscovery();
+});
+```
+
+#### Session-Based Filtering
+
+Tools are filtered based on the session context. For HTTP transport, this typically uses route parameters:
+
+```csharp
+// Route: /mcp/time/* - Only time-related tools available
+app.MapGet("/mcp/time/{sessionId}", ...);
+
+// Route: /mcp/math/* - Only math-related tools available
+app.MapGet("/mcp/math/{sessionId}", ...);
+
+// Route: /mcp/admin/* - Only admin-related tools available
+app.MapGet("/mcp/admin/{sessionId}", ...);
+```
+
+#### Custom Session Context
+
+For more advanced scenarios, you can customize how session context is determined:
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.WithSessionOptions(sessionOpts =>
+        {
+            // Custom logic to extract session context from HTTP context
+            sessionOpts.GetSessionContext = httpContext =>
+            {
+                // Example: Use user role from claims
+                var userRole = httpContext.User.FindFirst("role")?.Value ?? "guest";
+                return userRole switch
+                {
+                    "admin" => "admin",
+                    "user" => "basic",
+                    _ => "guest"
+                };
+            };
+        });
+    });
+
+    // Register tools for different roles
+    mcp.WithTools<AdminTools>("admin");
+    mcp.WithTools<UserTools>("basic");
+    mcp.WithTools<GuestTools>("guest");
+});
+```
+
+#### Key Features
+
+- **Dynamic Filtering**: Tools are filtered at runtime based on session context
+- **Category-Based Registration**: Register tool types with string categories
+- **HTTP Route Integration**: Automatic filtering based on route parameters
+- **Custom Context Logic**: Implement custom session context extraction
+- **Backward Compatibility**: Non-categorized tools still work with auto-discovery
+
+#### Use Cases
+
+- **Multi-Tenant Applications**: Different tools for different tenants
+- **Role-Based Access**: Admin tools vs. user tools vs. guest tools
+- **Feature Flags**: Enable/disable tool sets based on configuration
+- **Context-Aware Services**: Tools that vary by user preferences or session state
 
 ## Building and Testing
 
