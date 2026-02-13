@@ -15,7 +15,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0
+          dotnet-version: "10.0.x"
       - name: Extract version
         id: version
         run: |
@@ -28,11 +28,12 @@ jobs:
         run: dotnet build src/AIKit.Mcp.slnx --no-restore --configuration Release
       - name: Test
         run: dotnet test src/AIKit.Mcp.Tests/AIKit.Mcp.Tests.csproj --no-build --configuration Release --verbosity normal
-      - name: Pack
+      - name: Pack NuGet packages
         run: dotnet pack src/AIKit.Mcp/AIKit.Mcp.csproj --configuration Release --no-build --output ./nupkgs --version ${{ steps.version.outputs.version }}
-      - name: Login to NuGet
+      - name: NuGet login (OIDC - temp API key)
+        id: login
         uses: NuGet/login@v1
         with:
-          username: durmisi
+          user: durmisi
       - name: Publish to NuGet
-        run: dotnet nuget push ./nupkgs/*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
