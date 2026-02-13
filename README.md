@@ -191,51 +191,6 @@ public class MathTools
 
 AIKit.Mcp supports multiple authentication methods for HTTP transport. Choose based on your security requirements and integration needs.
 
-#### Quick Authentication Setup
-
-**For Development (Simple JWT):**
-
-```csharp
-builder.Services.AddAIKitMcp(mcp =>
-{
-    mcp.ServerName = "MySecureMcpServer";
-    mcp.ServerVersion = "1.0.0";
-
-    mcp.WithHttpTransport(opts =>
-    {
-        opts.HttpBasePath = "/mcp";
-
-        opts.WithJwtAuth(jwt =>
-        {
-            jwt.JwtIssuer = "dev-issuer";
-            jwt.JwtAudience = "dev-audience";
-            jwt.SigningKey = "your-dev-signing-key-min-32-chars";
-        });
-    });
-});
-```
-
-**For Production (OAuth 2.0):**
-
-```csharp
-builder.Services.AddAIKitMcp(mcp =>
-{
-    mcp.ServerName = "MySecureMcpServer";
-    mcp.ServerVersion = "1.0.0";
-
-    mcp.WithHttpTransport(opts =>
-    {
-        opts.HttpBasePath = "/mcp";
-
-        opts.WithJwtAuth(jwt =>
-        {
-            jwt.JwtIssuer = "https://login.microsoftonline.com/your-tenant/v2.0";
-            jwt.JwtAudience = Environment.GetEnvironmentVariable("OAUTH_CLIENT_ID");
-        });
-    });
-});
-```
-
 #### Using JwtAuth
 
 Direct JWT Bearer authentication validates JWT tokens without the OAuth 2.0 flow. This is useful when you have pre-issued JWT tokens or want to integrate with systems that provide JWT tokens directly.
