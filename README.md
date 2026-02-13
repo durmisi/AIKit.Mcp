@@ -79,13 +79,7 @@ graph TB
 Install via NuGet:
 
 ```bash
-dotnet add package AIKit.Mcp --version 1.0.0-preview.1
-```
-
-For HTTP transport support, also install:
-
-```bash
-dotnet add package ModelContextProtocol.AspNetCore --version 0.8.0-preview.1
+dotnet add package AIKit.Mcp
 ```
 
 ## Quick Start
