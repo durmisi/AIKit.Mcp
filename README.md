@@ -66,6 +66,8 @@ dotnet add package AIKit.Mcp
 
 ## Quick Start
 
+**Note**: `ServerName` defaults to "AIKit.Mcp" and `ServerVersion` defaults to "1.0.0". You can omit these properties if the defaults suit your needs.
+
 ### Basic Stdio Server
 
 Create a simple MCP server that runs via stdio for command-line MCP clients:
@@ -79,8 +81,6 @@ var builder = Host.CreateApplicationBuilder(args);
 
 builder.Services.AddAIKitMcp(mcp =>
 {
-    mcp.ServerName = "MyMcpServer";
-    mcp.ServerVersion = "1.0.0";
     mcp.WithStdioTransport();
     mcp.WithAutoDiscovery(); // Automatically finds tools, resources, and prompts
 });
@@ -101,9 +101,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddAIKitMcp(mcp =>
 {
-    mcp.ServerName = "MySecureMcpServer";
-    mcp.ServerVersion = "1.0.0";
-
     mcp.WithHttpTransport(opts =>
     {
         opts.HttpBasePath = "/mcp";
@@ -196,7 +193,6 @@ Direct JWT Bearer authentication validates JWT tokens without the OAuth 2.0 flow
 ```csharp
 builder.Services.AddAIKitMcp(mcp =>
 {
-    mcp.ServerName = "MyJwtServer";
     mcp.WithHttpTransport(opts =>
     {
         opts.WithJwtAuth(jwt =>
@@ -254,7 +250,6 @@ Custom authentication allows you to implement any authentication scheme by provi
 ```csharp
 builder.Services.AddAIKitMcp(mcp =>
 {
-    mcp.ServerName = "MyCustomAuthServer";
     mcp.WithHttpTransport(opts =>
     {
         opts.WithCustomAuth(custom =>
@@ -314,7 +309,6 @@ public class ApiKeyOptions : AuthenticationSchemeOptions { }
 ```csharp
 builder.Services.AddAIKitMcp(mcp =>
 {
-    mcp.ServerName = "MyProtectedServer";
     mcp.WithHttpTransport(opts =>
     {
         opts.WithMcpAuth(mcpAuth =>
@@ -542,9 +536,6 @@ Register tools with categories and enable session-based filtering:
 ```csharp
 builder.Services.AddAIKitMcp(mcp =>
 {
-    mcp.ServerName = "MySessionServer";
-    mcp.ServerVersion = "1.0.0";
-
     mcp.WithHttpTransport(opts =>
     {
         opts.HttpBasePath = "/mcp";
@@ -745,8 +736,6 @@ public class DataProcessingTools
 ```csharp
 builder.Services.AddAIKitMcp(mcp =>
 {
-    mcp.ServerName = Environment.GetEnvironmentVariable("MCP_SERVER_NAME") ?? "MyServer";
-
     // Validate required configuration
     var jwtKey = Environment.GetEnvironmentVariable("JWT_SIGNING_KEY");
     if (string.IsNullOrEmpty(jwtKey))

@@ -32,9 +32,6 @@ public class StreamTransportIntegrationTests
 
         services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "AIKit.Test.Server";
-            mcp.ServerVersion = "1.0.0-test";
-
             mcp.WithStreamTransport(clientToServerPipe.Reader.AsStream(), serverToClientPipe.Writer.AsStream());
 
             mcp.Assembly = typeof(StreamTransportIntegrationTests).Assembly;

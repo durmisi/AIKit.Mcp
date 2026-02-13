@@ -61,7 +61,6 @@ public abstract class McpAuthTestBase : IAsyncLifetime
 
         builder.Services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "TestMcpAuthServer";
             mcp.WithHttpTransport(opts =>
             {
                 opts.WithMcpAuth(mcpAuth =>

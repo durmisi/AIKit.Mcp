@@ -29,9 +29,6 @@ public class JwtAuthIntegrationTests
 
         builder.Services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "AIKit.Test.Server";
-            mcp.ServerVersion = "1.0.0-test";
-
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
@@ -101,9 +98,6 @@ public class JwtAuthIntegrationTests
 
         builder.Services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "AIKit.Test.Server";
-            mcp.ServerVersion = "1.0.0-test";
-
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
@@ -173,9 +167,6 @@ public class JwtAuthIntegrationTests
 
         builder.Services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "AIKit.Test.Server";
-            mcp.ServerVersion = "1.0.0-test";
-
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
@@ -248,9 +239,6 @@ public class JwtAuthIntegrationTests
 
         builder.Services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "AIKit.Test.Server";
-            mcp.ServerVersion = "1.0.0-test";
-
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
@@ -321,9 +309,6 @@ public class JwtAuthIntegrationTests
 
         builder.Services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "AIKit.Test.Server";
-            mcp.ServerVersion = "1.0.0-test";
-
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
@@ -396,9 +381,6 @@ public class JwtAuthIntegrationTests
 
         builder.Services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "AIKit.Test.Server";
-            mcp.ServerVersion = "1.0.0-test";
-
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
@@ -471,9 +453,6 @@ public class JwtAuthIntegrationTests
 
         builder.Services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "AIKit.Test.Server";
-            mcp.ServerVersion = "1.0.0-test";
-
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";

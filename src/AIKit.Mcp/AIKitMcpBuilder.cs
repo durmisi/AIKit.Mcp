@@ -52,12 +52,12 @@ public sealed class AIKitMcpBuilder
     /// <summary>
     /// Gets or sets the name of the MCP server.
     /// </summary>
-    public string? ServerName { get; set; }
+    public string ServerName { get; set; } = "AIKit.Mcp";
 
     /// <summary>
     /// Gets or sets the version of the MCP server.
     /// </summary>
-    public string? ServerVersion { get; set; }
+    public string ServerVersion { get; set; } = "1.0.0";
 
     // Transport (private)
     private TransportType _transportType = TransportType.Stdio;

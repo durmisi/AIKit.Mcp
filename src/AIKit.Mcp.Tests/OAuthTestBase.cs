@@ -60,7 +60,6 @@ public abstract class OAuthTestBase : IAsyncLifetime
 
         builder.Services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "TestOAuthServer";
             mcp.WithHttpTransport(opts =>
             {
                 opts.WithJwtAuth(jwt =>

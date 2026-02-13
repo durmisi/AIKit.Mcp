@@ -23,7 +23,6 @@ public class LoggingIntegrationTests : McpServerTestBase
 
         services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "TestServer";
             mcp.WithStdioTransport();
             mcp.WithLogging(opts =>
             {
@@ -31,7 +30,7 @@ public class LoggingIntegrationTests : McpServerTestBase
                 opts.MinLogLevel = LogLevel.Debug;
             });
         });
-        _output.WriteLine("Configured AIKitMcp with logging: ServerName=TestServer, StdioTransport, RedirectToStderr=true, MinLogLevel=Debug");
+        _output.WriteLine("Configured AIKitMcp with logging: ServerName=AIKit.Mcp, StdioTransport, RedirectToStderr=true, MinLogLevel=Debug");
 
         var sp = services.BuildServiceProvider();
         _output.WriteLine("Built service provider");
@@ -62,7 +61,6 @@ public class LoggingIntegrationTests : McpServerTestBase
 
         services.AddAIKitMcp(mcp =>
         {
-            mcp.ServerName = "TestServer";
             mcp.WithStdioTransport();
             mcp.WithOpenTelemetry(opts =>
             {
@@ -72,7 +70,7 @@ public class LoggingIntegrationTests : McpServerTestBase
                 opts.EnableLogging = true;
             });
         });
-        _output.WriteLine("Configured AIKitMcp with OpenTelemetry: ServerName=TestServer, StdioTransport, ServiceName=TestService, Tracing=true, Metrics=true, Logging=true");
+        _output.WriteLine("Configured AIKitMcp with OpenTelemetry: ServerName=AIKit.Mcp, StdioTransport, ServiceName=TestService, Tracing=true, Metrics=true, Logging=true");
 
         var sp = services.BuildServiceProvider();
         _output.WriteLine("Built service provider with OpenTelemetry services");
