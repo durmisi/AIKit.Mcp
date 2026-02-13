@@ -294,21 +294,6 @@ builder.Services.AddAIKitMcp(mcp =>
 });
 ```
 
-## Sample Application
-
-See `samples/AIKit.Mcp.Sample/` for a complete example with:
-
-- Math tools
-- File system resources
-- Conversation prompts
-- HTTP transport with OAuth
-
-Run the sample:
-
-```bash
-dotnet run --project samples/AIKit.Mcp.Sample/AIKit.Mcp.Sample.csproj
-```
-
 ## Building and Testing
 
 ```bash
