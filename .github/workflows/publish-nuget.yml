@@ -19,16 +19,16 @@ jobs:
       - name: Extract version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore src/AIKit.Mcp.slnx
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build src/AIKit.Mcp.slnx --no-restore --configuration Release
       - name: Test
-        run: dotnet test --no-build --verbosity normal
+        run: dotnet test src/AIKit.Mcp.Tests/AIKit.Mcp.Tests.csproj --no-build --configuration Release --verbosity normal
       - name: Pack
         run: dotnet pack src/AIKit.Mcp/AIKit.Mcp.csproj --configuration Release --no-build --output ./nupkgs --version ${{ env.version }}
       - name: Login to NuGet
         uses: NuGet/login@v1
         with:
-          username: ${{ secrets.NUGET_USERNAME }}
+          username: durmisi
       - name: Publish to NuGet
         run: dotnet nuget push ./nupkgs/*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
