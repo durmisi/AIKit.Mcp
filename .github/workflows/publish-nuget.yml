@@ -17,7 +17,10 @@ jobs:
         with:
           dotnet-version: 10.0
       - name: Extract version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+        run: |
+          ref="${GITHUB_REF#refs/tags/}"
+          version="${ref#v}"
+          echo "version=$version" >> $GITHUB_ENV
       - name: Restore dependencies
         run: dotnet restore src/AIKit.Mcp.slnx
       - name: Build
