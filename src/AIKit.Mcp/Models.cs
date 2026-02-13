@@ -34,12 +34,51 @@ public class HttpTransportOptions
     /// <summary>
     /// Authentication configuration.
     /// </summary>
-    public AuthenticationOptions? Authentication { get; set; }
+    public AuthenticationOptions? AuthOptions { get; set; }
 
     /// <summary>
     /// Callback to configure session options per MCP session.
     /// </summary>
     public Func<HttpContext, McpServerOptions, CancellationToken, Task>? ConfigureSessionOptions { get; set; }
+
+    /// <summary>
+    /// Configures OAuth 2.0 authentication.
+    /// </summary>
+    /// <param name="configure">Action to configure OAuth options.</param>
+    /// <returns>The current options instance for chaining.</returns>
+    public HttpTransportOptions WithOAuth(Action<OAuthAuth> configure)
+    {
+        var oauth = new OAuthAuth();
+        configure(oauth);
+        AuthOptions = oauth;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures JWT Bearer authentication.
+    /// </summary>
+    /// <param name="configure">Action to configure JWT options.</param>
+    /// <returns>The current options instance for chaining.</returns>
+    public HttpTransportOptions WithJwtAuth(Action<JwtAuth> configure)
+    {
+        var jwt = new JwtAuth();
+        configure(jwt);
+        AuthOptions = jwt;
+        return this;
+    }
+
+    /// <summary>
+    /// Configures custom authentication.
+    /// </summary>
+    /// <param name="configure">Action to configure custom auth options.</param>
+    /// <returns>The current options instance for chaining.</returns>
+    public HttpTransportOptions WithCustomAuth(Action<CustomAuth> configure)
+    {
+        var custom = new CustomAuth();
+        configure(custom);
+        AuthOptions = custom;
+        return this;
+    }
 }
 
 /// <summary>

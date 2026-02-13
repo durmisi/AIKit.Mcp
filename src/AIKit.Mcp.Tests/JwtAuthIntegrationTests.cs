@@ -34,12 +34,12 @@ public class JwtAuthIntegrationTests
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = new JwtAuth
+                opts.WithJwtAuth(jwt =>
                 {
-                    JwtIssuer = "test-issuer",
-                    JwtAudience = "test-audience",
-                    SigningKey = "super-secret-key-for-jwt-testing-123456789"
-                };
+                    jwt.JwtIssuer = "test-issuer";
+                    jwt.JwtAudience = "test-audience";
+                    jwt.SigningKey = "super-secret-key-for-jwt-testing-123456789";
+                });
             });
 
             mcp.EnableCompletion = true;
@@ -106,12 +106,12 @@ public class JwtAuthIntegrationTests
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = new JwtAuth
+                opts.WithJwtAuth(jwt =>
                 {
-                    JwtIssuer = "test-issuer",
-                    JwtAudience = "test-audience",
-                    SigningKey = "super-secret-key-for-jwt-testing-123456789"
-                };
+                    jwt.JwtIssuer = "test-issuer";
+                    jwt.JwtAudience = "test-audience";
+                    jwt.SigningKey = "super-secret-key-for-jwt-testing-123456789";
+                });
             });
 
             mcp.EnableCompletion = true;
@@ -178,12 +178,12 @@ public class JwtAuthIntegrationTests
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = new JwtAuth
+                opts.WithJwtAuth(jwt =>
                 {
-                    JwtIssuer = "test-issuer",
-                    JwtAudience = "test-audience",
-                    SigningKey = "super-secret-key-for-jwt-testing-123456789"
-                };
+                    jwt.JwtIssuer = "test-issuer";
+                    jwt.JwtAudience = "test-audience";
+                    jwt.SigningKey = "super-secret-key-for-jwt-testing-123456789";
+                });
             });
 
 
@@ -253,12 +253,12 @@ public class JwtAuthIntegrationTests
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = new JwtAuth
+                opts.WithJwtAuth(jwt =>
                 {
-                    JwtIssuer = "test-issuer",
-                    JwtAudience = "test-audience",
-                    SigningKey = "super-secret-key-for-jwt-testing-123456789"
-                };
+                    jwt.JwtIssuer = "test-issuer";
+                    jwt.JwtAudience = "test-audience";
+                    jwt.SigningKey = "super-secret-key-for-jwt-testing-123456789";
+                });
             });
 
 
@@ -326,12 +326,12 @@ public class JwtAuthIntegrationTests
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = new JwtAuth
+                opts.WithJwtAuth(jwt =>
                 {
-                    JwtIssuer = "test-issuer",
-                    JwtAudience = "test-audience",
-                    SigningKey = "super-secret-key-for-jwt-testing-123456789"
-                };
+                    jwt.JwtIssuer = "test-issuer";
+                    jwt.JwtAudience = "test-audience";
+                    jwt.SigningKey = "super-secret-key-for-jwt-testing-123456789";
+                });
             });
 
 
@@ -401,12 +401,12 @@ public class JwtAuthIntegrationTests
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = new JwtAuth
+                opts.WithJwtAuth(jwt =>
                 {
-                    JwtIssuer = "test-issuer",
-                    JwtAudience = "test-audience",
-                    SigningKey = "super-secret-key-for-jwt-testing-123456789"
-                };
+                    jwt.JwtIssuer = "test-issuer";
+                    jwt.JwtAudience = "test-audience";
+                    jwt.SigningKey = "super-secret-key-for-jwt-testing-123456789";
+                });
             });
 
 
@@ -476,12 +476,12 @@ public class JwtAuthIntegrationTests
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = new JwtAuth
+                opts.WithJwtAuth(jwt =>
                 {
-                    JwtIssuer = "test-issuer",
-                    JwtAudience = "test-audience",
-                    SigningKey = "super-secret-key-for-jwt-testing-123456789"
-                };
+                    jwt.JwtIssuer = "test-issuer";
+                    jwt.JwtAudience = "test-audience";
+                    jwt.SigningKey = "super-secret-key-for-jwt-testing-123456789";
+                });
             });
 
 

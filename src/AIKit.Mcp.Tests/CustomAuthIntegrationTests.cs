@@ -62,11 +62,11 @@ public class CustomAuthIntegrationTests
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = new CustomAuth
+                opts.WithCustomAuth(custom =>
                 {
-                    SchemeName = "Custom",
-                    RegisterScheme = b => b.AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, TestCustomAuthHandler>("Custom", o => { })
-                };
+                    custom.SchemeName = "Custom";
+                    custom.RegisterScheme = b => b.AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, TestCustomAuthHandler>("Custom", o => { });
+                });
             });
 
 
@@ -133,11 +133,11 @@ public class CustomAuthIntegrationTests
             mcp.WithHttpTransport(opts =>
             {
                 opts.HttpBasePath = "/mcp";
-                opts.Authentication = new CustomAuth
+                opts.WithCustomAuth(custom =>
                 {
-                    SchemeName = "Custom",
-                    RegisterScheme = b => b.AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, TestCustomAuthHandler>("Custom", o => { })
-                };
+                    custom.SchemeName = "Custom";
+                    custom.RegisterScheme = b => b.AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, TestCustomAuthHandler>("Custom", o => { });
+                });
             });
 
 

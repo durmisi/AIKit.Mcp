@@ -478,9 +478,9 @@ public sealed class AIKitMcpBuilder
 
     private void ConfigureAuthentication()
     {
-        if (_transportType != TransportType.Http || _httpOptions == null || _httpOptions.Authentication == null) return;
+        if (_transportType != TransportType.Http || _httpOptions == null || _httpOptions.AuthOptions == null) return;
 
-        var auth = _httpOptions.Authentication;
+        var auth = _httpOptions.AuthOptions;
 
         _services.AddAuthorization();
 

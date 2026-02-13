@@ -36,6 +36,48 @@ app.UseAIKitMcp("/mcp");
 await app.RunAsync();
 ```
 
+## Authentication
+
+AIKit.Mcp supports OAuth 2.0, JWT Bearer, and custom authentication schemes. Configure authentication using the fluent API:
+
+```csharp
+builder.Services.AddAIKitMcp(mcp =>
+{
+    mcp.ServerName = "MyMcpServer";
+    mcp.ServerVersion = "1.0.0";
+
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.HttpBasePath = "/mcp";
+
+        // OAuth 2.0 authentication
+        opts.WithOAuth(oauth =>
+        {
+            oauth.OAuthClientId = "your-client-id";
+            oauth.OAuthScopes = new() { "mcp:tools" };
+        });
+
+        // Or JWT Bearer authentication
+        // opts.WithJwtAuth(jwt =>
+        // {
+        //     jwt.JwtIssuer = "your-issuer";
+        //     jwt.JwtAudience = "your-audience";
+        //     jwt.SigningKey = "your-secret-key";
+        // });
+
+        // Or custom authentication
+        // opts.WithCustomAuth(custom =>
+        // {
+        //     custom.SchemeName = "MyAuth";
+        //     custom.RegisterScheme = builder =>
+        //         builder.AddScheme<AuthenticationSchemeOptions, MyAuthHandler>("MyAuth", null);
+        // });
+    });
+
+    mcp.WithAutoDiscovery();
+});
+```
+
 ## Features
 
 - **Fluent Builder API**: Intuitive configuration with `AIKitMcpBuilder`
