@@ -196,21 +196,43 @@ AIKit.Mcp supports multiple authentication methods for HTTP transport. Choose ba
 **For Development (Simple JWT):**
 
 ```csharp
-opts.WithJwtAuth(jwt =>
+builder.Services.AddAIKitMcp(mcp =>
 {
-    jwt.JwtIssuer = "dev-issuer";
-    jwt.JwtAudience = "dev-audience";
-    jwt.SigningKey = "your-dev-signing-key-min-32-chars";
+    mcp.ServerName = "MySecureMcpServer";
+    mcp.ServerVersion = "1.0.0";
+
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.HttpBasePath = "/mcp";
+
+        opts.WithJwtAuth(jwt =>
+        {
+            jwt.JwtIssuer = "dev-issuer";
+            jwt.JwtAudience = "dev-audience";
+            jwt.SigningKey = "your-dev-signing-key-min-32-chars";
+        });
+    });
 });
 ```
 
 **For Production (OAuth 2.0):**
 
 ```csharp
-opts.WithJwtAuth(jwt =>
+builder.Services.AddAIKitMcp(mcp =>
 {
-    jwt.JwtIssuer = "https://login.microsoftonline.com/your-tenant/v2.0";
-    jwt.JwtAudience = Environment.GetEnvironmentVariable("OAUTH_CLIENT_ID");
+    mcp.ServerName = "MySecureMcpServer";
+    mcp.ServerVersion = "1.0.0";
+
+    mcp.WithHttpTransport(opts =>
+    {
+        opts.HttpBasePath = "/mcp";
+
+        opts.WithJwtAuth(jwt =>
+        {
+            jwt.JwtIssuer = "https://login.microsoftonline.com/your-tenant/v2.0";
+            jwt.JwtAudience = Environment.GetEnvironmentVariable("OAUTH_CLIENT_ID");
+        });
+    });
 });
 ```
 
