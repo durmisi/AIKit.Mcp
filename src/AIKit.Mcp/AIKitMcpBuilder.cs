@@ -12,6 +12,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Pipelines;
 using System.Reflection;
 
@@ -321,8 +322,10 @@ public sealed class AIKitMcpBuilder
     /// Gets tools for a specific type using reflection, similar to the MCP SDK sample.
     /// </summary>
     /// <typeparam name="T">The tool type to scan for methods with McpServerToolAttribute.</typeparam>
+    /// <param name="logger">Optional logger for error reporting.</param>
     /// <returns>An array of McpServerTool instances.</returns>
-    public static McpServerTool[] GetToolsForType<T>() where T : class
+    public static McpServerTool[] GetToolsForType<[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(
+        System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicMethods)] T>(ILogger? logger = null) where T : class
     {
         var tools = new List<McpServerTool>();
         var toolType = typeof(T);
@@ -337,12 +340,10 @@ public sealed class AIKitMcpBuilder
             }
             catch (Exception ex)
             {
-                // Log error but continue with other tools
-                // Note: In a real app, use ILogger, but for library, perhaps throw or ignore
-                throw new InvalidOperationException($"Failed to create tool {toolType.Name}.{method.Name}: {ex.Message}", ex);
+                logger?.LogWarning(ex, "Failed to create tool {TypeName}.{MethodName}", toolType.Name, method.Name);
             }
         }
-        return tools.ToArray();
+        return [.. tools];
     }
 
     private void ConfigureMetadata()

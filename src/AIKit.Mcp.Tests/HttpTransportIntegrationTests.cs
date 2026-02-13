@@ -552,6 +552,7 @@ public class HttpTransportIntegrationTests
                     _output.WriteLine($"Filtering tools for category: {category}");
 
                     var registry = httpContext.RequestServices.GetRequiredService<PerSessionToolRegistry>();
+                    var logger = httpContext.RequestServices.GetRequiredService<ILogger<AIKitMcpBuilder>>();
                     if (registry.CategorizedTools.TryGetValue(category, out var types))
                     {
                         mcpOptions.Capabilities = new();
@@ -561,9 +562,9 @@ public class HttpTransportIntegrationTests
                         {
                             var tools = type.Name switch
                             {
-                                "ClockTool" => AIKitMcpBuilder.GetToolsForType<AIKit.Mcp.Tests.Tools.ClockTool>(),
-                                "CalculatorTool" => AIKitMcpBuilder.GetToolsForType<AIKit.Mcp.Tests.Tools.CalculatorTool>(),
-                                "UserInfoTool" => AIKitMcpBuilder.GetToolsForType<AIKit.Mcp.Tests.Tools.UserInfoTool>(),
+                                "ClockTool" => AIKitMcpBuilder.GetToolsForType<AIKit.Mcp.Tests.Tools.ClockTool>(logger),
+                                "CalculatorTool" => AIKitMcpBuilder.GetToolsForType<AIKit.Mcp.Tests.Tools.CalculatorTool>(logger),
+                                "UserInfoTool" => AIKitMcpBuilder.GetToolsForType<AIKit.Mcp.Tests.Tools.UserInfoTool>(logger),
                                 _ => Array.Empty<McpServerTool>()
                             };
                             foreach (var tool in tools)
