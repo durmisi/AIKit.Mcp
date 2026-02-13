@@ -17,10 +17,11 @@ jobs:
         with:
           dotnet-version: 10.0
       - name: Extract version
+        id: version
         run: |
-          ref="${GITHUB_REF#refs/tags/}"
-          version="${ref#v}"
-          echo "version=$version" >> $GITHUB_ENV
+          TAG=${{ github.event.release.tag_name }}
+          VERSION=${TAG#v}  # Remove 'v' prefix (e.g., v1.0.0 -> 1.0.0)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       - name: Restore dependencies
         run: dotnet restore src/AIKit.Mcp.slnx
       - name: Build
@@ -28,7 +29,7 @@ jobs:
       - name: Test
         run: dotnet test src/AIKit.Mcp.Tests/AIKit.Mcp.Tests.csproj --no-build --configuration Release --verbosity normal
       - name: Pack
-        run: dotnet pack src/AIKit.Mcp/AIKit.Mcp.csproj --configuration Release --no-build --output ./nupkgs --version ${{ env.version }}
+        run: dotnet pack src/AIKit.Mcp/AIKit.Mcp.csproj --configuration Release --no-build --output ./nupkgs --version ${{ steps.version.outputs.version }}
       - name: Login to NuGet
         uses: NuGet/login@v1
         with:
