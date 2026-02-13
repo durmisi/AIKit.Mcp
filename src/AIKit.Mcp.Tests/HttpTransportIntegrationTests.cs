@@ -119,7 +119,7 @@ public class HttpTransportIntegrationTests
             mcp.ServerName = "AIKit.Test.Server";
             mcp.ServerVersion = "1.0.0-test";
             mcp.Assembly = typeof(TestTools).Assembly;
-            mcp.AutoDiscoverTools = true;
+            mcp.UseAutoDiscovery();
             mcp.AutoDiscoverResources = true;
 
             mcp.WithHttpTransport(opts =>
@@ -254,7 +254,7 @@ public class HttpTransportIntegrationTests
             mcp.ServerName = "AIKit.Test.Server";
             mcp.ServerVersion = "1.0.0-test";
             mcp.Assembly = typeof(TestTools).Assembly;
-            mcp.AutoDiscoverTools = true;
+            mcp.UseAutoDiscovery();
             mcp.AutoDiscoverResources = true;
 
             mcp.WithHttpTransport(opts =>
@@ -387,7 +387,7 @@ public class HttpTransportIntegrationTests
             mcp.ServerName = "AIKit.Test.Server";
             mcp.ServerVersion = "1.0.0-test";
             mcp.Assembly = typeof(TestTools).Assembly;
-            mcp.AutoDiscoverTools = true;
+            mcp.UseAutoDiscovery();
             mcp.AutoDiscoverResources = true;
 
             mcp.WithHttpTransport(opts =>

@@ -27,7 +27,7 @@ builder.Services.AddAIKitMcp(mcp =>
     });
 
     // Auto-discover tools, resources, and prompts
-    mcp.AutoDiscoverTools = true;
+    mcp.UseAutoDiscovery();
     mcp.AutoDiscoverResources = true;
     mcp.AutoDiscoverPrompts = true;
 });

@@ -24,7 +24,7 @@ public class TestStartup
                 opts.HttpBasePath = "/mcp";
             });
 
-            mcp.AutoDiscoverTools = true;
+            mcp.UseAutoDiscovery();
             mcp.AutoDiscoverResources = true;
             mcp.AutoDiscoverPrompts = false;
 

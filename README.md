@@ -96,7 +96,7 @@ builder.Services.AddAIKitMcp(mcp =>
 {
     mcp.ServerName = "MyMcpServer";
     mcp.WithStdioTransport();
-    mcp.AutoDiscoverTools = true;
+    mcp.UseAutoDiscovery();
 });
 
 var app = builder.Build();
@@ -123,7 +123,7 @@ builder.Services.AddAIKitMcp(mcp =>
             OAuthScopes = new() { "mcp:tools" }
         };
     });
-    mcp.AutoDiscoverTools = true;
+    mcp.UseAutoDiscovery();
 });
 
 var app = builder.Build();
@@ -163,7 +163,6 @@ public class MathTools
 
 ### Discovery
 
-- `AutoDiscoverTools`: Scan assembly for `[McpServerTool]` methods
 - `AutoDiscoverResources`: Scan for `[McpServerResource]` classes
 - `AutoDiscoverPrompts`: Scan for `[McpServerPrompt]` classes
 
